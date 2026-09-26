@@ -1,149 +1,161 @@
 "use client";
 
-import { useState } from "react";
-import { X } from "lucide-react";
+import { useEffect, useState } from "react";
 import PageHeader from "@/components/PageHeader";
-import ChipGroup from "@/components/ChipGroup";
-import { categoryStyles } from "@/lib/categories";
-import { formatTime } from "@/lib/time";
+import Avatar from "@/components/Avatar";
+import WeatherCard from "@/components/WeatherCard";
+import CommuteCard from "@/components/CommuteCard";
+import ParkingCard from "@/components/ParkingCard";
+import Timeline from "@/components/Timeline";
+import DayAlert from "@/components/DayAlert";
+import {
+  mockDay,
+  mockProfile,
+  type Profile,
+  type RouteAlert,
+  type SavedEvent,
+} from "@/data/mock";
+import { ALERT_KEY } from "@/lib/alerts";
+import { minusMinutes } from "@/lib/time";
+import { PROFILE_KEY } from "@/lib/options";
 import { useStoredState } from "@/lib/useStoredState";
-import { mockDay, type EventCategory, type SavedEvent } from "@/data/mock";
+import { getScheduleForDate } from "@/lib/database/schedule";
 
-const categoryOptions = (Object.keys(categoryStyles) as EventCategory[]).map((c) => ({
-  value: c,
-  label: categoryStyles[c].label,
-  icon: categoryStyles[c].icon,
-}));
+type DatabaseScheduleEvent = {
+  id: string;
+  title: string;
+  category: SavedEvent["category"];
+  building: string;
+  room: string | null;
+  event_date: string;
+  start_time: string;
+  end_time: string;
+};
 
-const inputClass = "w-full rounded-2xl border border-ink/15 bg-cream p-3";
+export default function TodayPage() {
+  const day = mockDay;
 
-export default function AddPage() {
-  // The saved list lives in localStorage; the form fields live in normal useState.
-  const [events, saveEvents] = useStoredState<SavedEvent[]>("moway.events", []);
-  const [category, setCategory] = useState<EventCategory>("class");
-  const [title, setTitle] = useState("");
-  const [date, setDate] = useState(mockDay.date);
-  const [start, setStart] = useState("");
-  const [end, setEnd] = useState("");
-  const [building, setBuilding] = useState("");
-  const [room, setRoom] = useState("");
-  const [error, setError] = useState("");
+  const [alert, saveAlert] =
+    useStoredState<RouteAlert | null>(
+      ALERT_KEY,
+      day.alert
+    );
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault(); // stop the browser from reloading the page
-    if (!title.trim() || !date || !start || !end || !building.trim()) {
-      setError("Please fill in the name, date, times, and building.");
-      return;
+  const [profile] = useStoredState<Profile>(
+    PROFILE_KEY,
+    mockProfile
+  );
+
+  const [databaseEvents, setDatabaseEvents] =
+    useState<SavedEvent[]>([]);
+
+  // Load this user's schedule from Supabase.
+  useEffect(() => {
+    async function loadSchedule() {
+      try {
+        const rows = await getScheduleForDate(day.date);
+
+        const savedEvents: SavedEvent[] = (
+          rows as DatabaseScheduleEvent[]
+        ).map((row) => ({
+          id: row.id,
+          category: row.category,
+          title: row.title,
+          building: row.building,
+          room: row.room || undefined,
+          date: row.event_date,
+
+          // PostgreSQL may return time values with seconds.
+          // The rest of MoWay currently uses HH:MM.
+          start: row.start_time.slice(0, 5),
+          end: row.end_time.slice(0, 5),
+        }));
+
+        setDatabaseEvents(savedEvents);
+      } catch (error) {
+        console.error(
+          "Could not load schedule from Supabase:",
+          error
+        );
+      }
     }
-    if (end <= start) {
-      setError("The end time has to be after the start time.");
-      return;
-    }
-    setError("");
-    const newEvent: SavedEvent = {
-      id: crypto.randomUUID(),
-      category,
-      title: title.trim(),
-      building: building.trim(),
-      room: room.trim() || undefined,
-      date,
-      start,
-      end,
-    };
-    saveEvents([...events, newEvent]);
-    setTitle("");
-    setBuilding("");
-    setRoom("");
-  }
 
-  const sorted = [...events].sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
+    loadSchedule();
+  }, [day.date]);
+
+  // Keep the demo schedule, then add the user's real
+  // Supabase events for this date.
+  const events = [
+    ...day.events,
+    ...databaseEvents,
+  ].sort((a, b) =>
+    a.start.localeCompare(b.start)
+  );
+
+  // Arrive before the first event using the user's
+  // preferred parking buffer.
+  const firstEvent = events[0];
+
+  const arriveBy = firstEvent
+    ? minusMinutes(
+        firstEvent.start,
+        profile.parkingBufferMinutes
+      )
+    : day.arriveBy;
+
+  const baseLeaveBy = minusMinutes(
+    arriveBy,
+    day.driveMinutes
+  );
+
+  // Active route reports can make the user leave earlier.
+  const leaveBy = alert
+    ? minusMinutes(
+        baseLeaveBy,
+        alert.extraMinutes
+      )
+    : baseLeaveBy;
+
+  const reason = alert
+    ? "Leaving earlier because of a new report on your route"
+    : day.leaveByReason;
 
   return (
     <>
-      <PageHeader title="Add to your day" subtitle="Classes, events, errands" tone="sun" />
-      <div className="-mt-6 space-y-6 px-4">
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-3xl bg-white p-5 shadow-sm">
-        <div>
-          <p className="mb-2 text-sm font-bold">Type</p>
-          <ChipGroup
-            options={categoryOptions}
-            selected={[category]}
-            onToggle={(v) => setCategory(v as EventCategory)}
-          />
-        </div>
+      <PageHeader
+        title={`Hi ${profile.name || "there"}`}
+        subtitle="Here's your day"
+        right={<Avatar name={profile.name} />}
+        large
+        brand
+      >
+        <WeatherCard
+          weather={day.weather}
+          date={day.date}
+        />
+      </PageHeader>
 
-        <div>
-          <label className="mb-1 block text-sm font-bold" htmlFor="title">Name</label>
-          <input id="title" value={title} onChange={(e) => setTitle(e.target.value)}
-            placeholder="MAC 2312" className={inputClass} />
-        </div>
+      <div className="-mt-6 space-y-6 px-4 pb-4">
+        <DayAlert
+          alert={alert}
+          onDismiss={() => saveAlert(null)}
+          onReset={() => saveAlert(day.alert)}
+        />
 
-        <div>
-          <label className="mb-1 block text-sm font-bold" htmlFor="date">Date</label>
-          <input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)}
-            className={inputClass} />
-          <p className="mt-1 text-xs text-ink/60">
-            The Today screen shows {mockDay.date} (your demo Thursday). Events on that date appear there.
-          </p>
-        </div>
+        <CommuteCard
+          leaveBy={leaveBy}
+          driveMinutes={day.driveMinutes}
+          arriveBy={arriveBy}
+          reason={reason}
+        />
 
-        <div className="flex gap-3">
-          <div className="flex-1">
-            <label className="mb-1 block text-sm font-bold" htmlFor="start">Start</label>
-            <input id="start" type="time" value={start} onChange={(e) => setStart(e.target.value)}
-              className={inputClass} />
-          </div>
-          <div className="flex-1">
-            <label className="mb-1 block text-sm font-bold" htmlFor="end">End</label>
-            <input id="end" type="time" value={end} onChange={(e) => setEnd(e.target.value)}
-              className={inputClass} />
-          </div>
-        </div>
+        <ParkingCard parking={day.parking} />
 
-        <div className="flex gap-3">
-          <div className="flex-[2]">
-            <label className="mb-1 block text-sm font-bold" htmlFor="building">Building</label>
-            <input id="building" value={building} onChange={(e) => setBuilding(e.target.value)}
-              placeholder="CIS" className={inputClass} />
-          </div>
-          <div className="flex-1">
-            <label className="mb-1 block text-sm font-bold" htmlFor="room">Room</label>
-            <input id="room" value={room} onChange={(e) => setRoom(e.target.value)}
-              placeholder="1045" className={inputClass} />
-          </div>
-        </div>
-
-        {error && <p className="text-sm font-medium text-red-600">{error}</p>}
-
-        <button type="submit"
-          className="w-full rounded-full bg-ink py-3.5 font-semibold text-white active:bg-ink/80">
-          Add to my schedule
-        </button>
-      </form>
-
-      {sorted.length > 0 && (
-        <section className="space-y-2">
-          <h2 className="text-2xl font-bold">Added events</h2>
-          {sorted.map((ev) => (
-            <div key={ev.id}
-              className={`flex items-center justify-between rounded-3xl p-4 ${categoryStyles[ev.category].bg}`}>
-              <div>
-                <p className="font-semibold">{ev.title}</p>
-                <p className="text-sm text-ink/80">
-                  {ev.date}, {formatTime(ev.start)} - {formatTime(ev.end)}, {ev.building}
-                  {ev.room && ` ${ev.room}`}
-                </p>
-              </div>
-              <button type="button" aria-label={`Delete ${ev.title}`}
-                onClick={() => saveEvents(events.filter((x) => x.id !== ev.id))}
-                className="ml-2 rounded-full bg-white/60 p-1.5">
-                <X className="size-4" />
-              </button>
-            </div>
-          ))}
-        </section>
-      )}
-    </div>
+        <Timeline
+          events={events}
+          legs={day.legs}
+        />
+      </div>
     </>
   );
 }
