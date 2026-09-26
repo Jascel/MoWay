@@ -47,6 +47,7 @@ export interface Leg {
 export interface ParkingRecommendation {
   garage: string; // "Collins Garage"
   reason: string; // why it's best for the WHOLE day
+  savesWalkMinutes: number; // total walking saved today vs. the default lot
   spotsLeftPercent: number; // 0-100 how full it is
   walkMinutesToFirstClass: number;
   walkMinutesFromLastClass: number;
@@ -56,6 +57,7 @@ export interface Weather {
   tempF: number;
   condition: "sunny" | "cloudy" | "rain" | "storm";
   rainChancePercent: number;
+  stormAt?: string; // "HH:MM" when storms are expected
   summary: string;
 }
 
@@ -74,6 +76,7 @@ export interface DayPlan {
   leaveBy: string;
   leaveByReason: string; // "Traffic on I-275 adds 8 min"
   driveMinutes: number;
+  fasterThan: { time: string; minutes: number }; // "10 min faster than leaving at 08:00"
   weather: Weather;
   parking: ParkingRecommendation;
   events: ClassEvent[];
@@ -98,19 +101,22 @@ export const mockReport: Report = {
 };
 
 export const mockDay: DayPlan = {
-  date: "2026-09-28",
-  leaveBy: "08:10",
+  date: "2026-09-25",
+  leaveBy: "08:05",
   leaveByReason: "Traffic on I-275 adds 8 min",
-  driveMinutes: 32,
+  driveMinutes: 20,
+  fasterThan: { time: "08:00", minutes: 10 },
   weather: {
-    tempF: 88,
+    tempF: 91,
     condition: "storm",
     rainChancePercent: 70,
-    summary: "Afternoon storms likely. Bring an umbrella.",
+    stormAt: "14:30",
+    summary: "Storms this afternoon. Bring an umbrella.",
   },
   parking: {
     garage: "Collins Garage",
-    reason: "Closest to both your 9:30 and 2:00 classes",
+    reason: "Closest to both your 9:30 and 2:15 classes",
+    savesWalkMinutes: 19,
     spotsLeftPercent: 34,
     walkMinutesToFirstClass: 6,
     walkMinutesFromLastClass: 4,
