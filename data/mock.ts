@@ -24,6 +24,7 @@ export interface Profile {
   name: string;
   modes: Mode[];
   prefs: AccessPref[];
+  parkingBufferMinutes: number; // arrive this many min before first class so parking isn't stressful
 }
 
 // Drives the card color (see lib/categories.ts).
@@ -37,6 +38,11 @@ export interface ClassEvent {
   room?: string;
   start: string;
   end: string;
+}
+
+// An event the user added through the Add form (stored in localStorage for now).
+export interface SavedEvent extends ClassEvent {
+  date: string; // "YYYY-MM-DD"
 }
 
 // Walking/rolling leg between two consecutive events.
@@ -93,6 +99,7 @@ export const mockProfile: Profile = {
   name: "Connie",
   modes: ["drive_walk", "wheelchair"],
   prefs: ["avoid_stairs", "paved_paths"],
+  parkingBufferMinutes: 24,
 };
 
 export const mockReport: Report = {
