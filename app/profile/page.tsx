@@ -11,6 +11,7 @@ import { Car } from "lucide-react";
 import { mockProfile, type Mode, type Profile } from "@/data/mock";
 import { useDriveEstimate } from "@/lib/driveTime";
 import { syncProfile } from "@/lib/syncProfile";
+import { photoToDataUrl } from "@/lib/photo";
 
 // Every change is saved right away (no Save button), in the browser under PROFILE_KEY.
 export default function ProfilePage() {
@@ -40,15 +41,60 @@ export default function ProfilePage() {
     saveProfile({ ...profile, modes, activeMode });
   }
 
+  // Shrink the chosen picture and save it with the profile.
+  async function choosePhoto(file: File | undefined) {
+    if (!file) return;
+    try {
+      saveProfile({ ...profile, photo: await photoToDataUrl(file) });
+    } catch {
+      alert("Sorry, that picture couldn't be used. Try a different one.");
+    }
+  }
+
   return (
     <>
       <PageHeader
         title="Profile"
         subtitle="How you get around"
         tone="aqua"
-        right={<Avatar name={profile.name} size="lg" />}
+        right={<Avatar name={profile.name} photo={profile.photo} size="lg" />}
       />
       <div className="-mt-6 space-y-6 px-4">
+        <section className="flex items-center gap-4 rounded-3xl bg-white p-5 shadow-sm">
+          <Avatar name={profile.name} photo={profile.photo} size="lg" />
+          <div>
+            <p className="font-display text-lg font-bold">Profile photo</p>
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <label
+                htmlFor="photo"
+                className="cursor-pointer rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white active:bg-ink/80"
+              >
+                {profile.photo ? "Change photo" : "Add a photo"}
+              </label>
+              <input
+                id="photo"
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={(e) => {
+                  void choosePhoto(e.target.files?.[0]);
+                  e.target.value = ""; // lets you pick the same picture again
+                }}
+              />
+              {profile.photo && (
+                <button
+                  type="button"
+                  onClick={() => saveProfile({ ...profile, photo: undefined })}
+                  className="text-sm text-ink/60 underline"
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+            <p className="mt-2 text-xs text-ink/60">Saved only on this device.</p>
+          </div>
+        </section>
+
         <section className="rounded-3xl bg-white p-5 shadow-sm">
           <label className="mb-2 block text-lg font-bold" htmlFor="name">
             Your name
