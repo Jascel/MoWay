@@ -14,7 +14,7 @@ export type MobilityProfileInput = {
   stepFree: boolean;
   pavedSurface: boolean;
   accessibleEntrances: boolean;
-  willingExtraWalking: boolean;
+  willingExtraDistance: boolean;
   preferShade: boolean;
   preferCovered: boolean;
   avoidCrowds: boolean;
@@ -45,7 +45,7 @@ export async function saveMobilityProfile(
       step_free: input.stepFree,
       paved_surface: input.pavedSurface,
       accessible_entrances: input.accessibleEntrances,
-      willing_extra_distance: input.willingExtraWalking,
+      willing_extra_distance: input.willingExtraDistance,
       prefer_shade: input.preferShade,
       prefer_covered: input.preferCovered,
       avoid_crowds: input.avoidCrowds,
