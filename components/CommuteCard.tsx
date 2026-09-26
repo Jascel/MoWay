@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Car, House } from "lucide-react";
 import { formatTime } from "@/lib/time";
+import AlertIcon from "@/components/AlertIcon";
 
 // "Smart Commute": when to leave home. Props are plain values so it's easy to reuse.
 export default function CommuteCard({
@@ -31,7 +32,8 @@ export default function CommuteCard({
             <span className="ml-1.5 text-lg">{suffix}</span>
           </p>
           {changedFrom && (
-            <p className="mt-1.5 text-xs font-semibold text-ink/70">
+            <p className="mt-1.5 flex items-center gap-1.5 text-xs font-semibold text-ink/70">
+              <AlertIcon label="Changed by a report" />
               Moved earlier from <span className="line-through">{formatTime(changedFrom)}</span>
             </p>
           )}

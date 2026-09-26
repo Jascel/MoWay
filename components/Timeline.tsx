@@ -6,6 +6,7 @@ import type { ClassEvent, Leg } from "@/data/mock";
 import { formatTime, minusMinutes, plusMinutes } from "@/lib/time";
 import { categoryStyles } from "@/lib/categories";
 import RouteChips from "@/components/RouteChips";
+import AlertIcon from "@/components/AlertIcon";
 
 // One class/stop card, colored by category (like a calendar app).
 function EventCard({
@@ -103,7 +104,7 @@ function WalkConnector({ leg, arriveBy, extraMinutes = 0 }: { leg: Leg; arriveBy
       }
     >
       <p className="flex items-center gap-2 text-sm font-medium">
-        <StepIcon mode={leg.mode} />
+        {changed ? <AlertIcon /> : <StepIcon mode={leg.mode} />}
         {minutes} min {leg.steps ? "total" : leg.mode === "drive" ? "drive" : "walk"}, leave by{" "}
         {formatTime(minusMinutes(arriveBy, minutes))}
         {changed && <span className="text-xs font-semibold text-ink/60">(was {leg.minutes} min)</span>}
