@@ -5,6 +5,16 @@ export type MapPosition = {
 
 export type CampusBuilding = {
   readonly id: string;
+  /** USF building code as it appears on schedules, e.g. "CIS", "ENB". */
+  readonly code: string;
+  readonly name: string;
+  /** Extra labels that should resolve to this building (see findBuildingByLabel). */
+  readonly aliases?: readonly string[];
+  readonly position: MapPosition;
+};
+
+export type CampusGarage = {
+  readonly id: string;
   readonly name: string;
   readonly position: MapPosition;
 };
