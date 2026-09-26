@@ -1,3 +1,4 @@
+import { Car } from "lucide-react";
 import { formatTime } from "@/lib/time";
 
 // "Smart Commute": when to leave home. Props are plain values so it's easy to reuse.
@@ -12,14 +13,21 @@ export default function CommuteCard({
   arriveBy: string;
   reason: string;
 }) {
+  // "8:40 AM" -> big "8:40" plus small "AM"
+  const [time, suffix] = formatTime(leaveBy).split(" ");
   return (
-    <section className="rounded-2xl bg-white p-4 shadow-sm">
-      <p className="text-xs font-semibold uppercase tracking-wide text-usf-green">Smart Commute</p>
-      <p className="mt-1 text-2xl font-bold">Leave home at {formatTime(leaveBy)}</p>
-      <p className="mt-1 text-sm text-gray-600">
+    <section className="rounded-3xl bg-aqua p-6">
+      <p className="text-xs font-bold uppercase tracking-wider text-leaf">Smart Commute</p>
+      <p className="mt-3 text-base font-semibold text-ink/70">Leave home at</p>
+      <p className="font-display text-7xl font-extrabold leading-none">
+        {time}
+        <span className="ml-1 text-2xl">{suffix}</span>
+      </p>
+      <p className="mt-4 flex items-center gap-2 text-sm font-medium">
+        <Car className="size-4 text-leaf" />
         {driveMinutes} min drive, arrive by {formatTime(arriveBy)}
       </p>
-      <p className="mt-2 text-xs text-gray-500">{reason}</p>
+      <p className="mt-2 text-xs text-ink/70">{reason}</p>
     </section>
   );
 }

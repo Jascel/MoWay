@@ -1,6 +1,7 @@
 "use client";
 
 import PageHeader from "@/components/PageHeader";
+import Avatar from "@/components/Avatar";
 import ChipGroup from "@/components/ChipGroup";
 import { useStoredState } from "@/lib/useStoredState";
 import { modeOptions, prefOptions } from "@/lib/options";
@@ -19,23 +20,28 @@ export default function ProfilePage() {
 
   return (
     <>
-      <PageHeader title="Profile" subtitle="How you get around" />
-      <div className="space-y-6 p-4">
-        <section>
-          <label className="mb-2 block text-sm font-bold" htmlFor="name">
+      <PageHeader
+        title="Profile"
+        subtitle="How you get around"
+        tone="aqua"
+        right={<Avatar name={profile.name} size="lg" />}
+      />
+      <div className="-mt-6 space-y-6 px-4">
+        <section className="rounded-3xl bg-white p-5 shadow-sm">
+          <label className="mb-2 block font-display text-lg font-extrabold" htmlFor="name">
             Your name
           </label>
           <input
             id="name"
             value={profile.name}
             onChange={(e) => saveProfile({ ...profile, name: e.target.value })}
-            className="w-full rounded-xl border border-gray-300 bg-white p-3"
+            className="w-full rounded-2xl border border-ink/15 bg-cream p-3"
           />
         </section>
 
-        <section>
-          <h2 className="text-sm font-bold">How do you get around?</h2>
-          <p className="mb-2 text-xs text-gray-500">Pick all that apply.</p>
+        <section className="rounded-3xl bg-mint p-5">
+          <h2 className="font-display text-lg font-extrabold">How do you get around?</h2>
+          <p className="mb-3 text-xs text-ink/70">Pick all that apply.</p>
           <ChipGroup
             options={modeOptions}
             selected={profile.modes}
@@ -43,9 +49,9 @@ export default function ProfilePage() {
           />
         </section>
 
-        <section>
-          <h2 className="text-sm font-bold">Accessibility & comfort</h2>
-          <p className="mb-2 text-xs text-gray-500">We&apos;ll plan routes around these.</p>
+        <section className="rounded-3xl bg-aqua p-5">
+          <h2 className="font-display text-lg font-extrabold">Accessibility & comfort</h2>
+          <p className="mb-3 text-xs text-ink/70">We&apos;ll plan routes around these.</p>
           <ChipGroup
             options={prefOptions}
             selected={profile.prefs}
@@ -53,9 +59,9 @@ export default function ProfilePage() {
           />
         </section>
 
-        <section>
-          <h2 className="text-sm font-bold">Parking buffer</h2>
-          <p className="mb-2 text-xs text-gray-500">
+        <section className="rounded-3xl bg-sun p-5">
+          <h2 className="font-display text-lg font-extrabold">Parking buffer</h2>
+          <p className="mb-3 text-xs text-ink/70">
             Arrive this early before your first class so parking isn&apos;t stressful.
           </p>
           <div className="flex items-center gap-3">
@@ -67,13 +73,13 @@ export default function ProfilePage() {
               onChange={(e) =>
                 saveProfile({ ...profile, parkingBufferMinutes: Number(e.target.value) })
               }
-              className="w-24 rounded-xl border border-gray-300 bg-white p-3"
+              className="w-24 rounded-2xl border border-ink/15 bg-white p-3"
             />
-            <span className="text-sm text-gray-600">minutes</span>
+            <span className="text-sm font-medium">minutes</span>
           </div>
         </section>
 
-        <p className="text-xs text-gray-400">Saved automatically on this device.</p>
+        <p className="pb-2 text-center text-xs text-ink/40">Saved automatically on this device.</p>
       </div>
     </>
   );

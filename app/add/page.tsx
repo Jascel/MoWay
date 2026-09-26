@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { X } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import ChipGroup from "@/components/ChipGroup";
 import { categoryStyles } from "@/lib/categories";
@@ -11,9 +12,10 @@ import { mockDay, type EventCategory, type SavedEvent } from "@/data/mock";
 const categoryOptions = (Object.keys(categoryStyles) as EventCategory[]).map((c) => ({
   value: c,
   label: categoryStyles[c].label,
+  icon: categoryStyles[c].icon,
 }));
 
-const inputClass = "w-full rounded-xl border border-gray-300 bg-white p-3";
+const inputClass = "w-full rounded-2xl border border-ink/15 bg-cream p-3";
 
 export default function AddPage() {
   // The saved list lives in localStorage; the form fields live in normal useState.
@@ -58,8 +60,9 @@ export default function AddPage() {
 
   return (
     <>
-      <PageHeader title="Add to your day" subtitle="Classes, events, errands" />
-      <form onSubmit={handleSubmit} className="space-y-4 p-4">
+      <PageHeader title="Add to your day" subtitle="Classes, events, errands" tone="sun" />
+      <div className="-mt-6 space-y-6 px-4">
+      <form onSubmit={handleSubmit} className="space-y-4 rounded-3xl bg-white p-5 shadow-sm">
         <div>
           <p className="mb-2 text-sm font-bold">Type</p>
           <ChipGroup
@@ -79,7 +82,7 @@ export default function AddPage() {
           <label className="mb-1 block text-sm font-bold" htmlFor="date">Date</label>
           <input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)}
             className={inputClass} />
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-ink/60">
             The Today screen shows {mockDay.date} (your demo Thursday). Events on that date appear there.
           </p>
         </div>
@@ -110,36 +113,37 @@ export default function AddPage() {
           </div>
         </div>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm font-medium text-red-600">{error}</p>}
 
         <button type="submit"
-          className="w-full rounded-xl bg-usf-green py-3 font-semibold text-white active:bg-usf-green-dark">
+          className="w-full rounded-full bg-ink py-3.5 font-semibold text-white active:bg-ink/80">
           Add to my schedule
         </button>
       </form>
 
       {sorted.length > 0 && (
-        <section className="space-y-2 p-4 pt-0">
-          <h2 className="text-lg font-bold">Added events</h2>
+        <section className="space-y-2">
+          <h2 className="font-display text-2xl font-extrabold">Added events</h2>
           {sorted.map((ev) => (
             <div key={ev.id}
-              className={`flex items-center justify-between rounded-2xl p-3 text-white ${categoryStyles[ev.category].bg}`}>
+              className={`flex items-center justify-between rounded-3xl p-4 ${categoryStyles[ev.category].bg}`}>
               <div>
                 <p className="font-semibold">{ev.title}</p>
-                <p className="text-sm text-white/90">
+                <p className="text-sm text-ink/80">
                   {ev.date}, {formatTime(ev.start)} - {formatTime(ev.end)}, {ev.building}
                   {ev.room && ` ${ev.room}`}
                 </p>
               </div>
               <button type="button" aria-label={`Delete ${ev.title}`}
                 onClick={() => saveEvents(events.filter((x) => x.id !== ev.id))}
-                className="ml-2 text-xl">
-                ✕
+                className="ml-2 rounded-full bg-white/60 p-1.5">
+                <X className="size-4" />
               </button>
             </div>
           ))}
         </section>
       )}
+    </div>
     </>
   );
 }

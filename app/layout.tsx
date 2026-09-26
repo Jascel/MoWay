@@ -27,7 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
       <body className="font-sans">
-        <main className="mx-auto min-h-screen max-w-md bg-gray-50 pb-24 shadow-sm md:my-0">
+        <main className="mx-auto min-h-screen max-w-md bg-cream pb-28 shadow-sm">
           {children}
         </main>
         <BottomNav />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Check } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import StillThereCard from "@/components/StillThereCard";
 import { reportCategories, categoryInfo } from "@/lib/reportCategories";
@@ -44,33 +45,34 @@ export default function ReportPage() {
 
   return (
     <>
-      <PageHeader title="Report an issue" subtitle="Help others around campus" />
-      <div className="space-y-6 p-4">
+      <PageHeader title="Report an issue" subtitle="Help others around campus" tone="blush" />
+      <div className="-mt-6 space-y-6 px-4">
         {sent && (
-          <p className="rounded-2xl bg-usf-green-light p-4 text-sm font-medium text-usf-green-dark">
-            Thanks for reporting! Other people&apos;s routes will update. 🙌
+          <p className="flex items-center gap-2 rounded-3xl bg-mint p-4 text-sm font-semibold">
+            <Check className="size-5 shrink-0 text-leaf" />
+            Thanks for reporting! Other people&apos;s routes will update.
           </p>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <h2 className="text-lg font-bold">What&apos;s going on?</h2>
+        <form onSubmit={handleSubmit} className="space-y-4 rounded-3xl bg-white p-5 shadow-sm">
+          <h2 className="font-display text-2xl font-extrabold">What&apos;s going on?</h2>
           <div className="grid grid-cols-2 gap-3">
-            {reportCategories.map((c) => (
+            {reportCategories.map(({ value, label, icon: Icon }) => (
               <button
-                key={c.value}
+                key={value}
                 type="button"
                 onClick={() => {
-                  setCategory(c.value);
+                  setCategory(value);
                   setSent(false);
                 }}
-                className={`flex flex-col items-center gap-1 rounded-2xl border p-4 text-sm font-medium ${
-                  category === c.value
-                    ? "border-usf-green bg-usf-green text-white"
-                    : "border-gray-200 bg-white text-gray-700"
+                className={`flex flex-col items-center gap-2 rounded-2xl border p-4 text-sm font-semibold ${
+                  category === value
+                    ? "border-ink bg-ink text-white"
+                    : "border-ink/10 bg-cream text-ink"
                 }`}
               >
-                <span className="text-3xl">{c.icon}</span>
-                {c.label}
+                <Icon className="size-7" strokeWidth={1.75} />
+                {label}
               </button>
             ))}
           </div>
@@ -82,7 +84,7 @@ export default function ReportPage() {
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder="Ramp by the Marshall Student Center"
-              className="w-full rounded-xl border border-gray-300 bg-white p-3"
+              className="w-full rounded-2xl border border-ink/15 bg-cream p-3"
             />
           </div>
 
@@ -93,36 +95,41 @@ export default function ReportPage() {
               value={note}
               onChange={(e) => setNote(e.target.value)}
               rows={2}
-              className="w-full rounded-xl border border-gray-300 bg-white p-3"
+              className="w-full rounded-2xl border border-ink/15 bg-cream p-3"
             />
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm font-medium text-red-600">{error}</p>}
 
           <button
             type="submit"
-            className="w-full rounded-xl bg-usf-green py-3 font-semibold text-white active:bg-usf-green-dark"
+            className="w-full rounded-full bg-ink py-3.5 font-semibold text-white active:bg-ink/80"
           >
             Submit report
           </button>
         </form>
 
         <section className="space-y-3">
-          <h2 className="text-lg font-bold">Near you</h2>
+          <h2 className="font-display text-2xl font-extrabold">Near you</h2>
           <StillThereCard report={mockReport} />
         </section>
 
         {myReports.length > 0 && (
           <section className="space-y-2">
-            <h2 className="text-lg font-bold">Your reports</h2>
-            {myReports.map((r) => (
-              <div key={r.id} className="rounded-2xl bg-white p-3 shadow-sm">
-                <p className="font-semibold">
-                  {categoryInfo(r.category).icon} {categoryInfo(r.category).label}
-                </p>
-                <p className="text-sm text-gray-600">{r.location}</p>
-              </div>
-            ))}
+            <h2 className="font-display text-2xl font-extrabold">Your reports</h2>
+            {myReports.map((r) => {
+              const info = categoryInfo(r.category);
+              const Icon = info.icon;
+              return (
+                <div key={r.id} className="rounded-3xl bg-white p-4 shadow-sm">
+                  <p className="flex items-center gap-2 font-semibold">
+                    <Icon className="size-4 text-leaf" />
+                    {info.label}
+                  </p>
+                  <p className="text-sm text-ink/70">{r.location}</p>
+                </div>
+              );
+            })}
           </section>
         )}
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import PageHeader from "@/components/PageHeader";
+import Avatar from "@/components/Avatar";
 import WeatherCard from "@/components/WeatherCard";
 import CommuteCard from "@/components/CommuteCard";
 import ParkingCard from "@/components/ParkingCard";
@@ -38,9 +39,13 @@ export default function TodayPage() {
 
   return (
     <>
-      <PageHeader title={`Hi ${profile.name || "there"} 👋`} subtitle="Here's your day" />
-      <WeatherCard weather={day.weather} date={day.date} />
-      <div className="space-y-4 p-4">
+      <PageHeader
+        title={`Hi ${profile.name || "there"}`}
+        subtitle="Here's your day"
+        right={<Avatar name={profile.name} />}
+      />
+      <div className="-mt-6 space-y-6 px-4 pb-4">
+        <WeatherCard weather={day.weather} date={day.date} />
         <DayAlert alert={alert} onDismiss={() => saveAlert(null)} onReset={() => saveAlert(day.alert)} />
         <CommuteCard
           leaveBy={leaveBy}
