@@ -1,13 +1,25 @@
-import { Car, Footprints, House, MapPin } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { Car, Footprints, House, MapPin, Pencil, Trash2 } from "lucide-react";
 import type { ClassEvent, Leg } from "@/data/mock";
 import { formatTime, minusMinutes, plusMinutes } from "@/lib/time";
 import { categoryStyles } from "@/lib/categories";
 import RouteChips from "@/components/RouteChips";
 
 // One class/stop card, colored by category (like a calendar app).
-function EventCard({ event }: { event: ClassEvent }) {
+function EventCard({
+  event,
+  onEdit,
+  onDelete,
+}: {
+  event: ClassEvent;
+  onEdit?: (event: ClassEvent) => void;
+  onDelete?: (event: ClassEvent) => void;
+}) {
   const style = categoryStyles[event.category];
   const Icon = style.icon;
+  const [confirming, setConfirming] = useState(false);
   return (
     <div className={`rounded-3xl p-4 ${style.bg}`}>
       <div className="flex items-center justify-between">
@@ -25,6 +37,49 @@ function EventCard({ event }: { event: ClassEvent }) {
         {event.building}
         {event.room && ` ${event.room}`}
       </p>
+
+      {(onEdit || onDelete) && (
+        <div className="mt-3 flex items-center gap-2">
+          {confirming ? (
+            <>
+              <span className="text-xs font-semibold">Delete this?</span>
+              <button
+                onClick={() => {
+                  onDelete?.(event);
+                  setConfirming(false);
+                }}
+                className="rounded-full bg-ink px-3 py-1 text-xs font-semibold text-white"
+              >
+                Yes, delete
+              </button>
+              <button onClick={() => setConfirming(false)} className="text-xs underline">
+                Cancel
+              </button>
+            </>
+          ) : (
+            <>
+              {onEdit && (
+                <button
+                  onClick={() => onEdit(event)}
+                  aria-label={`Edit ${event.title}`}
+                  className="flex items-center gap-1 rounded-full bg-white/60 px-3 py-1 text-xs font-semibold"
+                >
+                  <Pencil className="size-3" /> Edit
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  onClick={() => setConfirming(true)}
+                  aria-label={`Delete ${event.title}`}
+                  className="flex items-center gap-1 rounded-full bg-white/60 px-3 py-1 text-xs font-semibold"
+                >
+                  <Trash2 className="size-3" /> Delete
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -99,25 +154,43 @@ export default function Timeline({
   events,
   legs,
   homeTrip,
+  onEdit,
+  onDelete,
+  hiddenCount = 0,
+  onRestore,
 }: {
   events: ClassEvent[];
   legs: Leg[];
   homeTrip?: { walkMinutes: number; driveMinutes: number };
+  onEdit?: (event: ClassEvent) => void;
+  onDelete?: (event: ClassEvent) => void;
+  hiddenCount?: number;
+  onRestore?: () => void;
 }) {
   return (
     <section>
       <h2 className="font-display mb-3 text-2xl font-bold">Your day</h2>
       {events.map((event) => {
-        const leg = legs.find((l) => l.toEventId === event.id);
+        // Only show the walk if the stop it starts from is still on the schedule.
+        const leg = legs.find(
+          (l) =>
+            l.toEventId === event.id &&
+            (l.fromEventId === "parking" || l.fromEventId === "home" || events.some((e) => e.id === l.fromEventId))
+        );
         return (
           <div key={event.id} className="mb-3">
             {leg && <WalkConnector leg={leg} arriveBy={event.start} />}
-            <EventCard event={event} />
+            <EventCard event={event} onEdit={onEdit} onDelete={onDelete} />
           </div>
         );
       })}
       {homeTrip && events.length > 0 && (
         <HomeTrip last={events[events.length - 1]} walkMinutes={homeTrip.walkMinutes} driveMinutes={homeTrip.driveMinutes} />
+      )}
+      {hiddenCount > 0 && onRestore && (
+        <button onClick={onRestore} className="mb-3 text-sm text-ink/60 underline">
+          Restore {hiddenCount} deleted {hiddenCount === 1 ? "event" : "events"}
+        </button>
       )}
     </section>
   );

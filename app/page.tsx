@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import PageHeader from "@/components/PageHeader";
@@ -9,11 +10,13 @@ import WeatherCard from "@/components/WeatherCard";
 import CommuteCard from "@/components/CommuteCard";
 import ParkingCard from "@/components/ParkingCard";
 import Timeline from "@/components/Timeline";
+import EventEditor from "@/components/EventEditor";
 import DayAlert from "@/components/DayAlert";
 
 import {
   mockDay,
   mockProfile,
+  type ClassEvent,
   type Profile,
   type RouteAlert,
   type SavedEvent,
@@ -21,7 +24,11 @@ import {
 
 import { ALERT_KEY, alertFromReport } from "@/lib/alerts";
 import { useLiveReport } from "@/lib/database/useLiveReport";
-import { getScheduleForDate } from "@/lib/database/schedule";
+import {
+  deleteScheduleEvent,
+  getScheduleForDate,
+  updateScheduleEvent,
+} from "@/lib/database/schedule";
 import { minusMinutes } from "@/lib/time";
 import { PROFILE_KEY } from "@/lib/options";
 import { ONBOARDED_KEY } from "@/lib/onboarding";
@@ -114,12 +121,60 @@ export default function TodayPage() {
     void loadSchedule();
   }, [day.date]);
 
-  const events = [
-    ...day.events,
-    ...added,
-  ].sort((a, b) =>
+  // Demo classes can be deleted (hidden) or edited on this device. Events saved in Supabase
+  // are edited and deleted in Supabase.
+  const [hiddenIds, saveHidden] = useStoredState<string[]>("moway.hiddenEvents.v1", []);
+  const [edits, saveEdits] = useStoredState<Record<string, ClassEvent>>("moway.eventEdits.v1", {});
+  const [editing, setEditing] = useState<ClassEvent | null>(null);
+
+  const baseEvents = day.events
+    .filter((e) => !hiddenIds.includes(e.id))
+    .map((e) => edits[e.id] ?? e);
+
+  const events = [...baseEvents, ...added].sort((a, b) =>
     a.start.localeCompare(b.start)
   );
+
+  const hiddenCount = day.events.filter((e) => hiddenIds.includes(e.id)).length;
+
+  async function deleteEvent(ev: ClassEvent) {
+    if (added.some((a) => a.id === ev.id)) {
+      try {
+        await deleteScheduleEvent(ev.id);
+        setAdded((prev) => prev.filter((a) => a.id !== ev.id));
+      } catch (error) {
+        console.error("Could not delete event:", error);
+        window.alert("Sorry, that event could not be deleted. Try again.");
+      }
+    } else {
+      saveHidden([...hiddenIds, ev.id]);
+    }
+  }
+
+  async function saveEdit(updated: ClassEvent) {
+    const saved = added.find((a) => a.id === updated.id);
+    if (saved) {
+      try {
+        await updateScheduleEvent(updated.id, {
+          title: updated.title,
+          category: updated.category,
+          building: updated.building,
+          room: updated.room,
+          date: saved.date,
+          start: updated.start,
+          end: updated.end,
+        });
+        setAdded((prev) => prev.map((a) => (a.id === updated.id ? { ...a, ...updated } : a)));
+        setEditing(null);
+      } catch (error) {
+        console.error("Could not update event:", error);
+        window.alert("Sorry, that change could not be saved. Try again.");
+      }
+    } else {
+      saveEdits({ ...edits, [updated.id]: updated });
+      setEditing(null);
+    }
+  }
 
   // --------------------
   // PROFILE
@@ -141,26 +196,24 @@ export default function TodayPage() {
   const driveMinutes =
     drive.minutes ?? day.driveMinutes;
 
-  const arriveBy = minusMinutes(
-    events[0].start,
-    profile.parkingBufferMinutes
-  );
+  const first = events[0];
 
-  const baseLeaveBy = minusMinutes(
-    arriveBy,
-    driveMinutes
-  );
+  const arriveBy = first
+    ? minusMinutes(first.start, profile.parkingBufferMinutes)
+    : null;
+
+  const baseLeaveBy = arriveBy
+    ? minusMinutes(arriveBy, driveMinutes)
+    : null;
 
   if (!loaded || !onboarded) {
     return null;
   }
 
-  const leaveBy = alert
-    ? minusMinutes(
-        baseLeaveBy,
-        alert.extraMinutes
-      )
-    : baseLeaveBy;
+  const leaveBy =
+    baseLeaveBy && alert
+      ? minusMinutes(baseLeaveBy, alert.extraMinutes)
+      : baseLeaveBy;
 
   const reason = alert
     ? "Leaving earlier because of a new report on your route"
@@ -193,29 +246,51 @@ export default function TodayPage() {
           onReset={() => saveAlert(day.alert)}
         />
 
-        <CommuteCard
-          leaveBy={leaveBy}
-          driveMinutes={driveMinutes}
-          arriveBy={arriveBy}
-          reason={reason}
-          hasHome={Boolean(
-            profile.homeAddress?.trim()
-          )}
-        />
+        {leaveBy && arriveBy ? (
+          <>
+            <CommuteCard
+              leaveBy={leaveBy}
+              driveMinutes={driveMinutes}
+              arriveBy={arriveBy}
+              reason={reason}
+              hasHome={Boolean(profile.homeAddress?.trim())}
+            />
 
-        <ParkingCard
-          parking={day.parking}
-        />
+            <ParkingCard parking={day.parking} />
+          </>
+        ) : (
+          <section className="rounded-3xl bg-white p-5 text-center shadow-sm">
+            <p className="font-display text-xl font-bold">Nothing on your schedule</p>
+            <p className="mt-1 text-sm text-ink/70">
+              Add a class or event and we&apos;ll plan your day.
+            </p>
+            <Link
+              href="/add"
+              className="mt-4 inline-block rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-white"
+            >
+              Add something
+            </Link>
+          </section>
+        )}
 
         <Timeline
           events={events}
           legs={day.legs}
-          homeTrip={{
-            walkMinutes: 2,
-            driveMinutes,
-          }}
+          homeTrip={{ walkMinutes: 2, driveMinutes }}
+          onEdit={setEditing}
+          onDelete={deleteEvent}
+          hiddenCount={hiddenCount}
+          onRestore={() => saveHidden([])}
         />
       </div>
+
+      {editing && (
+        <EventEditor
+          event={editing}
+          onSave={saveEdit}
+          onClose={() => setEditing(null)}
+        />
+      )}
     </>
   );
 }
