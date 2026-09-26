@@ -38,6 +38,7 @@ import {
 
 import { toReportInput } from "@/lib/backendMapping";
 import { rowToReport } from "@/lib/database/mapReport";
+import { isNearCampus } from "@/lib/campus";
 import { subscribeToReports } from "@/lib/database/realtime";
 
 type Coords = {
@@ -104,7 +105,9 @@ export default function ReportPage() {
   async function loadReports() {
     try {
       const reports = await getActiveReports();
-      setNearbyReport(reports.length > 0 ? rowToReport(reports[0]) : null);
+      // "Near you" only lists reports near campus.
+      const nearby = reports.filter((r) => isNearCampus(r.latitude, r.longitude));
+      setNearbyReport(nearby.length > 0 ? rowToReport(nearby[0]) : null);
     } catch (err) {
       console.error("Could not load active reports:", err);
     }
