@@ -17,6 +17,11 @@ import { PROFILE_KEY } from "@/lib/options";
 import { ONBOARDED_KEY } from "@/lib/onboarding";
 import { useDriveEstimate } from "@/lib/driveTime";
 import { useStoredState } from "@/lib/useStoredState";
+import { findBuildingByLabel } from "@/lib/maps/campus-buildings";
+import { CAMPUS_GARAGES } from "@/lib/maps/campus-parking";
+import type { CampusBuilding } from "@/lib/maps/types";
+import { campusMode } from "@/lib/profileMode";
+import { planSmartPark, toParkingRecommendation } from "@/lib/smartPark";
 
 // The Today screen arranges the components and hands each its slice of mock data.
 // The alert is stored in localStorage, so the Report screen can turn it on or off.
@@ -50,6 +55,16 @@ export default function TodayPage() {
 
   // Your Profile settings (name, parking buffer) are saved by the Profile screen.
   const [profile] = useStoredState<Profile>(PROFILE_KEY, mockProfile);
+
+  // Smart Park: rank the 3 garages by total campus travel for today's buildings in the
+  // user's campus mode (wheelchair for a driver who rolls on campus). Events whose building
+  // we don't have coordinates for are skipped. Falls back to the mock pick if nothing resolves.
+  const dayBuildings = events
+    .map((event) => findBuildingByLabel(event.building))
+    .filter((building): building is CampusBuilding => building !== undefined);
+  const smartPark = planSmartPark(CAMPUS_GARAGES, dayBuildings, campusMode(profile));
+  const parking =
+    toParkingRecommendation(smartPark, { spotsLeftPercent: day.parking.spotsLeftPercent }) ?? day.parking;
 
   // Real drive time from the home address when we have one; otherwise the demo number.
   const drive = useDriveEstimate(profile.homeAddress ?? "");
@@ -86,7 +101,7 @@ export default function TodayPage() {
           reason={reason}
           hasHome={Boolean(profile.homeAddress?.trim())}
         />
-        <ParkingCard parking={day.parking} />
+        <ParkingCard parking={parking} />
         <Timeline events={events} legs={day.legs} homeTrip={{ walkMinutes: 2, driveMinutes }} />
       </div>
     </>

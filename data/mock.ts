@@ -89,6 +89,10 @@ export interface ParkingRecommendation {
   spotsLeftPercent: number; // 0-100 how full it is
   walkMinutesToFirstClass: number;
   walkMinutesFromLastClass: number;
+  // Filled in by Smart Park (lib/smartPark.ts) so the card can show its reasoning.
+  totalWalkMinutes?: number; // whole day: garage -> every stop -> garage
+  alternatives?: { garage: string; totalWalkMinutes: number }[]; // the garages it did not pick, best first
+  modeVerb?: string; // "walking" | "rolling" | ... for the user's campus mode
 }
 
 export interface Weather {
