@@ -1,3 +1,5 @@
+import Logo from "@/components/Logo";
+
 // Big colored header with a rounded bottom edge. `tone` picks the color block,
 // `right` is an optional spot for something on the right (like the avatar).
 const tones = {
@@ -5,6 +7,7 @@ const tones = {
   aqua: "bg-aqua",
   sun: "bg-sun",
   blush: "bg-blush",
+  ice: "bg-ice",
 };
 
 export default function PageHeader({
@@ -30,13 +33,8 @@ export default function PageHeader({
     >
       {brand && (
         <div className="mb-5 flex items-center justify-between">
-          <span className="font-display text-xl font-bold tracking-tight">MoWay</span>
-          <div className="flex items-center gap-2">
-            <span className="rounded-md bg-usf-green px-2 py-1 text-[11px] font-bold tracking-wider text-usf-gold">
-              USF
-            </span>
-            {right}
-          </div>
+          <Logo />
+          {right}
         </div>
       )}
       <div className="flex items-start justify-between gap-3">

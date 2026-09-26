@@ -153,7 +153,7 @@ async function handleSubmit(e: React.FormEvent) {    e.preventDefault(); // stop
 
       {sorted.length > 0 && (
         <section className="space-y-2">
-          <h2 className="text-2xl font-bold">Added events</h2>
+          <h2 className="font-display text-2xl font-bold">Added events</h2>
           {sorted.map((ev) => (
             <div key={ev.id}
               className={`flex items-center justify-between rounded-3xl p-4 ${categoryStyles[ev.category].bg}`}>

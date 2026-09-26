@@ -1,6 +1,6 @@
-import { Car, Footprints, MapPin } from "lucide-react";
+import { Car, Footprints, House, MapPin } from "lucide-react";
 import type { ClassEvent, Leg } from "@/data/mock";
-import { formatTime, minusMinutes } from "@/lib/time";
+import { formatTime, minusMinutes, plusMinutes } from "@/lib/time";
 import { categoryStyles } from "@/lib/categories";
 import RouteChips from "@/components/RouteChips";
 
@@ -60,11 +60,53 @@ function WalkConnector({ leg, arriveBy }: { leg: Leg; arriveBy: string }) {
   );
 }
 
+// The trip home after your last stop: a short walk to the car, then the drive.
+function HomeTrip({ last, walkMinutes, driveMinutes }: { last: ClassEvent; walkMinutes: number; driveMinutes: number }) {
+  const total = walkMinutes + driveMinutes;
+  return (
+    <div className="mb-3">
+      <div className="ml-6 border-l-2 border-dashed border-leaf/50 py-3 pl-4">
+        <p className="flex items-center gap-2 text-sm font-medium">
+          <Car className="size-4 shrink-0 text-leaf" />
+          {total} min total, leave after {last.title} ({formatTime(last.end)})
+        </p>
+        <ul className="mt-1.5 space-y-1 text-xs text-ink/70">
+          <li className="flex items-center gap-2">
+            <Footprints className="size-4 shrink-0 text-leaf" />
+            Walk to your car ({walkMinutes} min)
+          </li>
+          <li className="flex items-center gap-2">
+            <Car className="size-4 shrink-0 text-leaf" />
+            Drive home ({driveMinutes} min)
+          </li>
+        </ul>
+      </div>
+      <div className="flex items-center justify-between rounded-3xl bg-aqua p-4">
+        <div>
+          <p className="text-sm font-bold">Home</p>
+          <p className="text-sm text-ink/70">Arrive about {formatTime(plusMinutes(last.end, total))}</p>
+        </div>
+        <div className="flex size-10 items-center justify-center rounded-2xl bg-white/60">
+          <House className="size-5 text-leaf" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Loops over events. For each one, first shows the walk that gets you there (if any), then the card.
-export default function Timeline({ events, legs }: { events: ClassEvent[]; legs: Leg[] }) {
+export default function Timeline({
+  events,
+  legs,
+  homeTrip,
+}: {
+  events: ClassEvent[];
+  legs: Leg[];
+  homeTrip?: { walkMinutes: number; driveMinutes: number };
+}) {
   return (
     <section>
-      <h2 className="mb-3 text-2xl font-bold">Your day</h2>
+      <h2 className="font-display mb-3 text-2xl font-bold">Your day</h2>
       {events.map((event) => {
         const leg = legs.find((l) => l.toEventId === event.id);
         return (
@@ -74,6 +116,9 @@ export default function Timeline({ events, legs }: { events: ClassEvent[]; legs:
           </div>
         );
       })}
+      {homeTrip && events.length > 0 && (
+        <HomeTrip last={events[events.length - 1]} walkMinutes={homeTrip.walkMinutes} driveMinutes={homeTrip.driveMinutes} />
+      )}
     </section>
   );
 }

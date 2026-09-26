@@ -14,7 +14,7 @@ export default function MapPage() {
       <PageHeader
         title="Map"
         subtitle="Walking directions around USF Tampa"
-        tone="aqua"
+        tone="ice"
       />
       <div className="-mt-6 space-y-6 px-4 pb-4">
         <CampusMap apiKey={apiKey} mapId={mapId} buildings={CAMPUS_BUILDINGS} />

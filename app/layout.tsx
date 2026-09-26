@@ -1,16 +1,24 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Fraunces } from "next/font/google";
+import { Bricolage_Grotesque, Fraunces, Lilita_One } from "next/font/google";
 import "./globals.css";
 import BottomNav from "@/components/BottomNav";
 import AnonymousAuth from "@/components/AnonymousAuth";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Main font for all normal text.
+const bricolage = Bricolage_Grotesque({
+  variable: "--font-bricolage",
   subsets: ["latin"],
 });
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",
+  subsets: ["latin"],
+});
+
+// Rounded font used only for the logo and the name "MoWay" (font-logo class).
+const lilita = Lilita_One({
+  weight: "400",
+  variable: "--font-lilita",
   subsets: ["latin"],
 });
 
@@ -39,7 +47,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${fraunces.variable} h-full antialiased`}
+      className={`${bricolage.variable} ${fraunces.variable} ${lilita.variable} h-full antialiased`}
     >
       <body className="font-sans">
         <AnonymousAuth />

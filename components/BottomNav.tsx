@@ -15,6 +15,8 @@ const tabs = [
 export default function BottomNav() {
   const pathname = usePathname(); // current URL path, e.g. "/map"
 
+  if (pathname.startsWith("/welcome")) return null; // no tab bar on the welcome screens
+
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 pb-[env(safe-area-inset-bottom)]">
       <ul className="mx-auto flex max-w-md rounded-t-3xl border-t border-ink/10 bg-white px-2 pt-2 shadow-[0_-6px_20px_rgba(31,42,68,0.08)]">
