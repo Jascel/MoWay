@@ -1,108 +1,251 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+
 import PageHeader from "@/components/PageHeader";
 import Avatar from "@/components/Avatar";
 import WeatherCard from "@/components/WeatherCard";
 import CommuteCard from "@/components/CommuteCard";
 import ParkingCard from "@/components/ParkingCard";
 import Timeline from "@/components/Timeline";
-import DayAlert from "@/components/DayAlert";
-import Link from "next/link";
 import EventEditor from "@/components/EventEditor";
-import { mockDay, mockProfile, type ClassEvent, type Profile, type RouteAlert, type SavedEvent } from "@/data/mock";
+import DayAlert from "@/components/DayAlert";
+
+import {
+  mockDay,
+  mockProfile,
+  type ClassEvent,
+  type Profile,
+  type RouteAlert,
+  type SavedEvent,
+} from "@/data/mock";
+
 import { ALERT_KEY, alertFromReport } from "@/lib/alerts";
 import { useLiveReport } from "@/lib/database/useLiveReport";
+import {
+  deleteScheduleEvent,
+  getScheduleForDate,
+  updateScheduleEvent,
+} from "@/lib/database/schedule";
 import { minusMinutes } from "@/lib/time";
 import { PROFILE_KEY } from "@/lib/options";
 import { ONBOARDED_KEY } from "@/lib/onboarding";
 import { useDriveEstimate } from "@/lib/driveTime";
 import { useStoredState } from "@/lib/useStoredState";
 
-// The Today screen arranges the components and hands each its slice of mock data.
-// The alert is stored in localStorage, so the Report screen can turn it on or off.
-// Later, mockDay gets replaced by a real API call and the components stay the same.
 export default function TodayPage() {
   const day = mockDay;
   const router = useRouter();
 
-  // New visitors go to the welcome screens first.
-  const [onboarded, , loaded] = useStoredState<boolean>(ONBOARDED_KEY, false);
-  useEffect(() => {
-    if (loaded && !onboarded) router.replace("/welcome");
-  }, [loaded, onboarded, router]);
-  const [alert, saveAlert] = useStoredState<RouteAlert | null>(ALERT_KEY, day.alert);
+  // --------------------
+  // ONBOARDING
+  // --------------------
 
-  // A new community report (from anyone, live) turns on the alert once. Dismissing it keeps it dismissed.
-  const liveReport = useLiveReport();
-  const [seenReportId, saveSeenReportId] = useStoredState<string | null>("moway.lastLiveReport", null);
+  const [onboarded, , loaded] = useStoredState<boolean>(
+    ONBOARDED_KEY,
+    false
+  );
+
   useEffect(() => {
-    if (liveReport && liveReport.id !== seenReportId) {
+    if (loaded && !onboarded) {
+      router.replace("/welcome");
+    }
+  }, [loaded, onboarded, router]);
+
+  // --------------------
+  // LIVE REPORT ALERTS
+  // --------------------
+
+  const [alert, saveAlert] = useStoredState<RouteAlert | null>(
+    ALERT_KEY,
+    day.alert
+  );
+
+  const liveReport = useLiveReport();
+
+  const [seenReportId, saveSeenReportId] = useStoredState<string | null>(
+    "moway.lastLiveReport",
+    null
+  );
+
+  useEffect(() => {
+    if (
+      liveReport &&
+      liveReport.id !== seenReportId
+    ) {
       saveSeenReportId(liveReport.id);
       saveAlert(alertFromReport(liveReport));
     }
-  }, [liveReport, seenReportId, saveSeenReportId, saveAlert]);
+  }, [
+    liveReport,
+    seenReportId,
+    saveSeenReportId,
+    saveAlert,
+  ]);
 
-  // Events added on the Add screen for this day get mixed in with the mock ones, sorted by start time.
-  // The demo classes can be deleted (hidden) or edited too. Both are remembered in the browser.
-  const [added, saveAdded] = useStoredState<SavedEvent[]>("moway.events", []);
+  // --------------------
+  // SCHEDULE
+  // --------------------
+
+  const [added, setAdded] = useState<SavedEvent[]>([]);
+
+  useEffect(() => {
+    async function loadSchedule() {
+      try {
+        const savedEvents = await getScheduleForDate(day.date);
+
+        const formattedEvents: SavedEvent[] = savedEvents.map(
+          (event) => ({
+            id: event.id,
+            category: event.category,
+            title: event.title,
+            building: event.building,
+            room: event.room ?? undefined,
+            date: event.event_date,
+            start: event.start_time,
+            end: event.end_time,
+          })
+        );
+
+        setAdded(formattedEvents);
+      } catch (error) {
+        console.error(
+          "Could not load schedule:",
+          error
+        );
+      }
+    }
+
+    void loadSchedule();
+  }, [day.date]);
+
+  // Demo classes can be deleted (hidden) or edited on this device. Events saved in Supabase
+  // are edited and deleted in Supabase.
   const [hiddenIds, saveHidden] = useStoredState<string[]>("moway.hiddenEvents.v1", []);
   const [edits, saveEdits] = useStoredState<Record<string, ClassEvent>>("moway.eventEdits.v1", {});
   const [editing, setEditing] = useState<ClassEvent | null>(null);
 
-  const baseEvents = day.events.filter((e) => !hiddenIds.includes(e.id)).map((e) => edits[e.id] ?? e);
-  const events = [...baseEvents, ...added.filter((e) => e.date === day.date)].sort((a, b) =>
+  const baseEvents = day.events
+    .filter((e) => !hiddenIds.includes(e.id))
+    .map((e) => edits[e.id] ?? e);
+
+  const events = [...baseEvents, ...added].sort((a, b) =>
     a.start.localeCompare(b.start)
   );
+
   const hiddenCount = day.events.filter((e) => hiddenIds.includes(e.id)).length;
 
-  function deleteEvent(ev: ClassEvent) {
-    if (added.some((a) => a.id === ev.id)) saveAdded(added.filter((a) => a.id !== ev.id));
-    else saveHidden([...hiddenIds, ev.id]);
+  async function deleteEvent(ev: ClassEvent) {
+    if (added.some((a) => a.id === ev.id)) {
+      try {
+        await deleteScheduleEvent(ev.id);
+        setAdded((prev) => prev.filter((a) => a.id !== ev.id));
+      } catch (error) {
+        console.error("Could not delete event:", error);
+        window.alert("Sorry, that event could not be deleted. Try again.");
+      }
+    } else {
+      saveHidden([...hiddenIds, ev.id]);
+    }
   }
 
-  function saveEdit(updated: ClassEvent) {
-    if (added.some((a) => a.id === updated.id)) {
-      saveAdded(added.map((a) => (a.id === updated.id ? { ...a, ...updated } : a)));
+  async function saveEdit(updated: ClassEvent) {
+    const saved = added.find((a) => a.id === updated.id);
+    if (saved) {
+      try {
+        await updateScheduleEvent(updated.id, {
+          title: updated.title,
+          category: updated.category,
+          building: updated.building,
+          room: updated.room,
+          date: saved.date,
+          start: updated.start,
+          end: updated.end,
+        });
+        setAdded((prev) => prev.map((a) => (a.id === updated.id ? { ...a, ...updated } : a)));
+        setEditing(null);
+      } catch (error) {
+        console.error("Could not update event:", error);
+        window.alert("Sorry, that change could not be saved. Try again.");
+      }
     } else {
       saveEdits({ ...edits, [updated.id]: updated });
+      setEditing(null);
     }
-    setEditing(null);
   }
 
-  // Your Profile settings (name, parking buffer) are saved by the Profile screen.
-  const [profile] = useStoredState<Profile>(PROFILE_KEY, mockProfile);
+  // --------------------
+  // PROFILE
+  // --------------------
 
-  // Real drive time from the home address when we have one; otherwise the demo number.
-  const drive = useDriveEstimate(profile.homeAddress ?? "");
-  const driveMinutes = drive.minutes ?? day.driveMinutes;
+  const [profile] = useStoredState<Profile>(
+    PROFILE_KEY,
+    mockProfile
+  );
 
-  // Arrive `parkingBufferMinutes` before your first class, then work backwards by the drive.
-  // (Andres's routing will replace this with real traffic later.)
+  // --------------------
+  // COMMUTE
+  // --------------------
+
+  const drive = useDriveEstimate(
+    profile.homeAddress ?? ""
+  );
+
+  const driveMinutes =
+    drive.minutes ?? day.driveMinutes;
+
   const first = events[0];
-  const arriveBy = first ? minusMinutes(first.start, profile.parkingBufferMinutes) : null;
-  const baseLeaveBy = arriveBy ? minusMinutes(arriveBy, driveMinutes) : null;
 
-  if (!loaded || !onboarded) return null; // wait for the saved value (or redirect to /welcome)
+  const arriveBy = first
+    ? minusMinutes(first.start, profile.parkingBufferMinutes)
+    : null;
 
-  // With an alert active, leave earlier by the extra minutes.
-  const leaveBy = baseLeaveBy && alert ? minusMinutes(baseLeaveBy, alert.extraMinutes) : baseLeaveBy;
-  const reason = alert ? "Leaving earlier because of a new report on your route" : day.leaveByReason;
+  const baseLeaveBy = arriveBy
+    ? minusMinutes(arriveBy, driveMinutes)
+    : null;
+
+  if (!loaded || !onboarded) {
+    return null;
+  }
+
+  const leaveBy =
+    baseLeaveBy && alert
+      ? minusMinutes(baseLeaveBy, alert.extraMinutes)
+      : baseLeaveBy;
+
+  const reason = alert
+    ? "Leaving earlier because of a new report on your route"
+    : day.leaveByReason;
 
   return (
     <>
       <PageHeader
         title={`Hi ${profile.name || "there"}`}
         subtitle="Here's your day"
-        right={<Avatar name={profile.name} photo={profile.photo} />}
+        right={
+          <Avatar
+            name={profile.name}
+            photo={profile.photo}
+          />
+        }
         large
         brand
       >
-        <WeatherCard weather={day.weather} date={day.date} />
+        <WeatherCard
+          weather={day.weather}
+          date={day.date}
+        />
       </PageHeader>
+
       <div className="-mt-6 space-y-6 px-4 pb-4">
-        <DayAlert alert={alert} onDismiss={() => saveAlert(null)} onReset={() => saveAlert(day.alert)} />
+        <DayAlert
+          alert={alert}
+          onDismiss={() => saveAlert(null)}
+          onReset={() => saveAlert(day.alert)}
+        />
+
         {leaveBy && arriveBy ? (
           <>
             <CommuteCard
@@ -112,17 +255,24 @@ export default function TodayPage() {
               reason={reason}
               hasHome={Boolean(profile.homeAddress?.trim())}
             />
+
             <ParkingCard parking={day.parking} />
           </>
         ) : (
           <section className="rounded-3xl bg-white p-5 text-center shadow-sm">
             <p className="font-display text-xl font-bold">Nothing on your schedule</p>
-            <p className="mt-1 text-sm text-ink/70">Add a class or event and we&apos;ll plan your day.</p>
-            <Link href="/add" className="mt-4 inline-block rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-white">
+            <p className="mt-1 text-sm text-ink/70">
+              Add a class or event and we&apos;ll plan your day.
+            </p>
+            <Link
+              href="/add"
+              className="mt-4 inline-block rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-white"
+            >
               Add something
             </Link>
           </section>
         )}
+
         <Timeline
           events={events}
           legs={day.legs}
@@ -133,7 +283,14 @@ export default function TodayPage() {
           onRestore={() => saveHidden([])}
         />
       </div>
-      {editing && <EventEditor event={editing} onSave={saveEdit} onClose={() => setEditing(null)} />}
+
+      {editing && (
+        <EventEditor
+          event={editing}
+          onSave={saveEdit}
+          onClose={() => setEditing(null)}
+        />
+      )}
     </>
   );
 }

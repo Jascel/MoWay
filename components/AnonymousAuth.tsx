@@ -9,32 +9,38 @@ export default function AnonymousAuth() {
       try {
         const supabase = getSupabaseClient();
 
-        // getSession() reads the saved session from this browser. (getUser() returns the error
-        // "Auth session missing!" for a brand-new visitor, which used to stop the sign-in below.)
+        // Check whether this browser already has a session.
         const {
           data: { session },
-          error,
         } = await supabase.auth.getSession();
 
-        if (error) {
-          console.error("Could not check auth:", error);
+        // Already signed in.
+        if (session?.user) {
+          console.log(
+            "Existing Supabase user:",
+            session.user.id
+          );
           return;
         }
 
-        // Already signed in, so nothing else is needed.
-        if (session) {
-          return;
-        }
-
-        const { error: signInError } =
-          await supabase.auth.signInAnonymously();
+        // No session yet, so create an anonymous user.
+        const {
+          data,
+          error: signInError,
+        } = await supabase.auth.signInAnonymously();
 
         if (signInError) {
           console.error(
             "Anonymous sign-in failed:",
             signInError
           );
+          return;
         }
+
+        console.log(
+          "Anonymous Supabase user created:",
+          data.user?.id
+        );
       } catch (error) {
         console.error(
           "Could not initialize Supabase:",
