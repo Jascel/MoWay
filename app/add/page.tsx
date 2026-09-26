@@ -8,6 +8,10 @@ import { categoryStyles } from "@/lib/categories";
 import { formatTime } from "@/lib/time";
 import { useStoredState } from "@/lib/useStoredState";
 import { mockDay, type EventCategory, type SavedEvent } from "@/data/mock";
+import {
+  createScheduleEvent,
+  deleteScheduleEvent,
+} from "@/lib/database/schedule";
 
 const categoryOptions = (Object.keys(categoryStyles) as EventCategory[]).map((c) => ({
   value: c,
@@ -29,8 +33,7 @@ export default function AddPage() {
   const [room, setRoom] = useState("");
   const [error, setError] = useState("");
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault(); // stop the browser from reloading the page
+async function handleSubmit(e: React.FormEvent) {    e.preventDefault(); // stop the browser from reloading the page
     if (!title.trim() || !date || !start || !end || !building.trim()) {
       setError("Please fill in the name, date, times, and building.");
       return;
@@ -50,10 +53,37 @@ export default function AddPage() {
       start,
       end,
     };
-    saveEvents([...events, newEvent]);
-    setTitle("");
-    setBuilding("");
-    setRoom("");
+    try {
+  const saved = await createScheduleEvent({
+    title: newEvent.title,
+    category: newEvent.category,
+    building: newEvent.building,
+    room: newEvent.room,
+    date: newEvent.date,
+    start: newEvent.start,
+    end: newEvent.end,
+  });
+
+  const savedEvent: SavedEvent = {
+    ...newEvent,
+    id: saved.id,
+  };
+
+  saveEvents([...events, savedEvent]);
+
+  setTitle("");
+  setBuilding("");
+  setRoom("");
+} catch (err) {
+  console.error(err);
+
+  setError(
+    err instanceof Error
+      ? err.message
+      : "Could not save the event."
+  );
+}
+
   }
 
   const sorted = [...events].sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
@@ -135,8 +165,23 @@ export default function AddPage() {
                 </p>
               </div>
               <button type="button" aria-label={`Delete ${ev.title}`}
-                onClick={() => saveEvents(events.filter((x) => x.id !== ev.id))}
-                className="ml-2 rounded-full bg-white/60 p-1.5">
+onClick={async () => {
+  try {
+    await deleteScheduleEvent(ev.id);
+
+    saveEvents(
+      events.filter((x) => x.id !== ev.id)
+    );
+  } catch (err) {
+    console.error(err);
+
+    setError(
+      err instanceof Error
+        ? err.message
+        : "Could not delete the event."
+    );
+  }
+}}                className="ml-2 rounded-full bg-white/60 p-1.5">
                 <X className="size-4" />
               </button>
             </div>

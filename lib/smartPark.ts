@@ -1,6 +1,6 @@
 import type { ParkingRecommendation } from "@/data/mock";
 import { estimatedPathMeters } from "@/lib/maps/geo";
-import { minutesFor, minutesForExact } from "@/lib/maps/speeds";
+import { estimateLeg, type LegEstimate } from "@/lib/maps/speeds";
 import type { CampusBuilding, CampusGarage } from "@/lib/maps/types";
 import { campusModeVerb, type CampusMode } from "@/lib/profileMode";
 
@@ -32,17 +32,25 @@ export type SmartParkPlan = {
   readonly reason: string;
 };
 
-function legMinutesExact(from: CampusBuilding | CampusGarage, to: CampusBuilding | CampusGarage, mode: CampusMode) {
-  return minutesForExact(estimatedPathMeters(from.position, to.position), mode);
+type Place = CampusBuilding | CampusGarage;
+
+/** One leg between two campus places. Same helper the timeline uses (see lib/dayLegs.ts). */
+export function legEstimate(from: Place, to: Place, mode: CampusMode): LegEstimate {
+  return estimateLeg(from.position, to.position, mode);
 }
 
-/** Total minutes between consecutive stops (same building twice in a row costs 0). */
-function betweenMinutesExact(buildings: readonly CampusBuilding[], mode: CampusMode): number {
-  let total = 0;
+/** Legs between consecutive stops, summed. */
+function betweenLegs(buildings: readonly CampusBuilding[], mode: CampusMode): LegEstimate {
+  let minutes = 0;
+  let exactMinutes = 0;
+  let distanceMeters = 0;
   for (let i = 1; i < buildings.length; i += 1) {
-    total += legMinutesExact(buildings[i - 1], buildings[i], mode);
+    const leg = legEstimate(buildings[i - 1], buildings[i], mode);
+    minutes += leg.minutes;
+    exactMinutes += leg.exactMinutes;
+    distanceMeters += leg.distanceMeters;
   }
-  return total;
+  return { minutes, exactMinutes, distanceMeters };
 }
 
 export function rankGarages(
@@ -54,22 +62,22 @@ export function rankGarages(
 
   const first = dayBuildings[0];
   const last = dayBuildings[dayBuildings.length - 1];
-  const between = betweenMinutesExact(dayBuildings, mode);
+  const between = betweenLegs(dayBuildings, mode);
 
-  // Sort on exact totals so two garages that round to the same minute still order correctly.
+  // The displayed total is the sum of the whole-minute legs, exactly what the timeline
+  // adds up. Sorting uses the unrounded sum so near-ties still order correctly.
   return garages
     .map((garage) => {
-      const toFirst = legMinutesExact(garage, first, mode);
-      const fromLast = legMinutesExact(last, garage, mode);
-      const exact = toFirst + between + fromLast;
+      const toFirst = legEstimate(garage, first, mode);
+      const fromLast = legEstimate(last, garage, mode);
       const ranking: GarageRanking = {
         garage,
-        totalMinutes: Math.round(exact),
-        toFirstMinutes: Math.round(toFirst),
-        betweenMinutes: Math.round(between),
-        fromLastMinutes: Math.round(fromLast),
+        totalMinutes: toFirst.minutes + between.minutes + fromLast.minutes,
+        toFirstMinutes: toFirst.minutes,
+        betweenMinutes: between.minutes,
+        fromLastMinutes: fromLast.minutes,
       };
-      return { exact, ranking };
+      return { exact: toFirst.exactMinutes + between.exactMinutes + fromLast.exactMinutes, ranking };
     })
     .sort((a, b) => a.exact - b.exact)
     .map(({ ranking }) => ranking);
@@ -177,7 +185,3 @@ export function toParkingRecommendation(
   };
 }
 
-/** Whole minutes for one garage-to-building leg. Handy for the Today timeline. */
-export function legMinutes(from: CampusBuilding | CampusGarage, to: CampusBuilding | CampusGarage, mode: CampusMode) {
-  return minutesFor(estimatedPathMeters(from.position, to.position), mode);
-}
