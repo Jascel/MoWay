@@ -6,7 +6,7 @@ import ChipGroup from "@/components/ChipGroup";
 import { categoryStyles } from "@/lib/categories";
 import { formatTime } from "@/lib/time";
 import { useStoredState } from "@/lib/useStoredState";
-import type { EventCategory, SavedEvent } from "@/data/mock";
+import { mockDay, type EventCategory, type SavedEvent } from "@/data/mock";
 
 const categoryOptions = (Object.keys(categoryStyles) as EventCategory[]).map((c) => ({
   value: c,
@@ -20,7 +20,7 @@ export default function AddPage() {
   const [events, saveEvents] = useStoredState<SavedEvent[]>("moway.events", []);
   const [category, setCategory] = useState<EventCategory>("class");
   const [title, setTitle] = useState("");
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(mockDay.date);
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [building, setBuilding] = useState("");
@@ -79,6 +79,9 @@ export default function AddPage() {
           <label className="mb-1 block text-sm font-bold" htmlFor="date">Date</label>
           <input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)}
             className={inputClass} />
+          <p className="mt-1 text-xs text-gray-500">
+            The Today screen shows {mockDay.date} (your demo Thursday). Events on that date appear there.
+          </p>
         </div>
 
         <div className="flex gap-3">
