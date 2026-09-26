@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
 import Avatar from "@/components/Avatar";
@@ -9,7 +9,9 @@ import CommuteCard from "@/components/CommuteCard";
 import ParkingCard from "@/components/ParkingCard";
 import Timeline from "@/components/Timeline";
 import DayAlert from "@/components/DayAlert";
-import { mockDay, mockProfile, type Profile, type RouteAlert, type SavedEvent } from "@/data/mock";
+import Link from "next/link";
+import EventEditor from "@/components/EventEditor";
+import { mockDay, mockProfile, type ClassEvent, type Profile, type RouteAlert, type SavedEvent } from "@/data/mock";
 import { ALERT_KEY, alertFromReport } from "@/lib/alerts";
 import { useLiveReport } from "@/lib/database/useLiveReport";
 import { minusMinutes } from "@/lib/time";
@@ -43,10 +45,31 @@ export default function TodayPage() {
   }, [liveReport, seenReportId, saveSeenReportId, saveAlert]);
 
   // Events added on the Add screen for this day get mixed in with the mock ones, sorted by start time.
-  const [added] = useStoredState<SavedEvent[]>("moway.events", []);
-  const events = [...day.events, ...added.filter((e) => e.date === day.date)].sort((a, b) =>
+  // The demo classes can be deleted (hidden) or edited too. Both are remembered in the browser.
+  const [added, saveAdded] = useStoredState<SavedEvent[]>("moway.events", []);
+  const [hiddenIds, saveHidden] = useStoredState<string[]>("moway.hiddenEvents.v1", []);
+  const [edits, saveEdits] = useStoredState<Record<string, ClassEvent>>("moway.eventEdits.v1", {});
+  const [editing, setEditing] = useState<ClassEvent | null>(null);
+
+  const baseEvents = day.events.filter((e) => !hiddenIds.includes(e.id)).map((e) => edits[e.id] ?? e);
+  const events = [...baseEvents, ...added.filter((e) => e.date === day.date)].sort((a, b) =>
     a.start.localeCompare(b.start)
   );
+  const hiddenCount = day.events.filter((e) => hiddenIds.includes(e.id)).length;
+
+  function deleteEvent(ev: ClassEvent) {
+    if (added.some((a) => a.id === ev.id)) saveAdded(added.filter((a) => a.id !== ev.id));
+    else saveHidden([...hiddenIds, ev.id]);
+  }
+
+  function saveEdit(updated: ClassEvent) {
+    if (added.some((a) => a.id === updated.id)) {
+      saveAdded(added.map((a) => (a.id === updated.id ? { ...a, ...updated } : a)));
+    } else {
+      saveEdits({ ...edits, [updated.id]: updated });
+    }
+    setEditing(null);
+  }
 
   // Your Profile settings (name, parking buffer) are saved by the Profile screen.
   const [profile] = useStoredState<Profile>(PROFILE_KEY, mockProfile);
@@ -57,13 +80,14 @@ export default function TodayPage() {
 
   // Arrive `parkingBufferMinutes` before your first class, then work backwards by the drive.
   // (Andres's routing will replace this with real traffic later.)
-  const arriveBy = minusMinutes(events[0].start, profile.parkingBufferMinutes);
-  const baseLeaveBy = minusMinutes(arriveBy, driveMinutes);
+  const first = events[0];
+  const arriveBy = first ? minusMinutes(first.start, profile.parkingBufferMinutes) : null;
+  const baseLeaveBy = arriveBy ? minusMinutes(arriveBy, driveMinutes) : null;
 
   if (!loaded || !onboarded) return null; // wait for the saved value (or redirect to /welcome)
 
   // With an alert active, leave earlier by the extra minutes.
-  const leaveBy = alert ? minusMinutes(baseLeaveBy, alert.extraMinutes) : baseLeaveBy;
+  const leaveBy = baseLeaveBy && alert ? minusMinutes(baseLeaveBy, alert.extraMinutes) : baseLeaveBy;
   const reason = alert ? "Leaving earlier because of a new report on your route" : day.leaveByReason;
 
   return (
@@ -79,16 +103,37 @@ export default function TodayPage() {
       </PageHeader>
       <div className="-mt-6 space-y-6 px-4 pb-4">
         <DayAlert alert={alert} onDismiss={() => saveAlert(null)} onReset={() => saveAlert(day.alert)} />
-        <CommuteCard
-          leaveBy={leaveBy}
-          driveMinutes={driveMinutes}
-          arriveBy={arriveBy}
-          reason={reason}
-          hasHome={Boolean(profile.homeAddress?.trim())}
+        {leaveBy && arriveBy ? (
+          <>
+            <CommuteCard
+              leaveBy={leaveBy}
+              driveMinutes={driveMinutes}
+              arriveBy={arriveBy}
+              reason={reason}
+              hasHome={Boolean(profile.homeAddress?.trim())}
+            />
+            <ParkingCard parking={day.parking} />
+          </>
+        ) : (
+          <section className="rounded-3xl bg-white p-5 text-center shadow-sm">
+            <p className="font-display text-xl font-bold">Nothing on your schedule</p>
+            <p className="mt-1 text-sm text-ink/70">Add a class or event and we&apos;ll plan your day.</p>
+            <Link href="/add" className="mt-4 inline-block rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-white">
+              Add something
+            </Link>
+          </section>
+        )}
+        <Timeline
+          events={events}
+          legs={day.legs}
+          homeTrip={{ walkMinutes: 2, driveMinutes }}
+          onEdit={setEditing}
+          onDelete={deleteEvent}
+          hiddenCount={hiddenCount}
+          onRestore={() => saveHidden([])}
         />
-        <ParkingCard parking={day.parking} />
-        <Timeline events={events} legs={day.legs} homeTrip={{ walkMinutes: 2, driveMinutes }} />
       </div>
+      {editing && <EventEditor event={editing} onSave={saveEdit} onClose={() => setEditing(null)} />}
     </>
   );
 }
