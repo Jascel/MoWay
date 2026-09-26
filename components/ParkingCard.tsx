@@ -1,5 +1,7 @@
-import { Footprints, SquareParking } from "lucide-react";
+import { SquareParking } from "lucide-react";
 import type { ParkingRecommendation } from "@/data/mock";
+import { campusTravelIcons } from "@/lib/options";
+import type { CampusMode } from "@/lib/profileMode";
 
 // How full is the garage? Picks a friendly label and bar color from "% of spots left".
 function fullness(spotsLeft: number) {
@@ -11,10 +13,17 @@ function fullness(spotsLeft: number) {
 // "Smart Park": best garage for the WHOLE day.
 // When Smart Park ran (totalWalkMinutes present) the card also lists the other garages'
 // totals so the choice is visible. The fullness bar is still mock data.
-export default function ParkingCard({ parking }: { parking: ParkingRecommendation }) {
+export default function ParkingCard({
+  parking,
+  campusMode = "walking",
+}: {
+  parking: ParkingRecommendation;
+  campusMode?: CampusMode;
+}) {
   const status = fullness(parking.spotsLeftPercent);
   const verb = parking.modeVerb ?? "walking";
   const alternatives = parking.alternatives ?? [];
+  const TravelIcon = campusTravelIcons[campusMode];
   return (
     <section className="rounded-3xl border border-ink/10 bg-white p-5">
       <p className="text-xs font-bold uppercase tracking-wider text-leaf">Smart Park</p>
@@ -23,7 +32,7 @@ export default function ParkingCard({ parking }: { parking: ParkingRecommendatio
         {parking.garage}
       </p>
       <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-mint px-3 py-1.5 text-sm font-semibold">
-        <Footprints className="size-4 text-leaf" />
+        <TravelIcon className="size-4 text-leaf" />
         {parking.totalWalkMinutes !== undefined
           ? `${parking.totalWalkMinutes} min of ${verb} today`
           : `Saves you ${parking.savesWalkMinutes} min of ${verb} today`}

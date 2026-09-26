@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Car, Footprints, House, MapPin, Pencil, Trash2 } from "lucide-react";
+import { Car, House, MapPin, Pencil, Trash2 } from "lucide-react";
 import type { ClassEvent, Leg } from "@/data/mock";
+import { campusTravelIcons } from "@/lib/options";
+import type { CampusMode } from "@/lib/profileMode";
 import { formatTime, minusMinutes, plusMinutes } from "@/lib/time";
 import { categoryStyles } from "@/lib/categories";
 import RouteChips from "@/components/RouteChips";
@@ -84,20 +86,25 @@ function EventCard({
   );
 }
 
-function StepIcon({ mode }: { mode?: "walk" | "drive" }) {
-  const Icon = mode === "drive" ? Car : Footprints;
+function LegStepIcon({ legMode, campusMode }: { legMode?: "walk" | "drive"; campusMode: CampusMode }) {
+  if (legMode === "drive") {
+    return <Car className="size-4 shrink-0 text-leaf" />;
+  }
+  const Icon = campusTravelIcons[campusMode];
   return <Icon className="size-4 shrink-0 text-leaf" />;
 }
 
-// "walk" for people who walk; "trip" for wheelchair, scooter, bike, so we never say "walk" to someone who rolls.
-type TravelWord = "walk" | "trip";
+function travelWordFor(campusMode: CampusMode): "walk" | "trip" {
+  return campusMode === "walking" ? "walk" : "trip";
+}
 
 // The leg between two stops: "8 min walk, leave by 9:52" plus route chips.
-function WalkConnector({ leg, arriveBy, travelWord }: { leg: Leg; arriveBy: string; travelWord: TravelWord }) {
+function WalkConnector({ leg, arriveBy, campusMode }: { leg: Leg; arriveBy: string; campusMode: CampusMode }) {
+  const travelWord = travelWordFor(campusMode);
   return (
     <div className="ml-6 border-l-2 border-dashed border-leaf/50 py-3 pl-4">
       <p className="flex items-center gap-2 text-sm font-medium">
-        <StepIcon mode={leg.mode} />
+        <LegStepIcon legMode={leg.mode} campusMode={campusMode} />
         {leg.minutes} min {leg.steps ? "total" : leg.mode === "drive" ? "drive" : travelWord}, leave by{" "}
         {formatTime(minusMinutes(arriveBy, leg.minutes))}
       </p>
@@ -105,7 +112,7 @@ function WalkConnector({ leg, arriveBy, travelWord }: { leg: Leg; arriveBy: stri
         <ul className="mt-1.5 space-y-1 text-xs text-ink/70">
           {leg.steps.map((step) => (
             <li key={step.label} className="flex items-center gap-2">
-              <StepIcon mode={step.mode} />
+              <LegStepIcon legMode={step.mode} campusMode={campusMode} />
               {step.label} ({step.minutes} min)
             </li>
           ))}
@@ -123,15 +130,17 @@ function HomeTrip({
   last,
   walkMinutes,
   driveMinutes,
-  travelWord,
+  campusMode,
 }: {
   last: ClassEvent;
   walkMinutes: number;
   driveMinutes: number;
-  travelWord: TravelWord;
+  campusMode: CampusMode;
 }) {
   const total = walkMinutes + driveMinutes;
+  const travelWord = travelWordFor(campusMode);
   const toCar = travelWord === "walk" ? "Walk to your car" : "Trip to your car";
+  const ToCarIcon = campusTravelIcons[campusMode];
   return (
     <div className="mb-3">
       <div className="ml-6 border-l-2 border-dashed border-leaf/50 py-3 pl-4">
@@ -141,7 +150,7 @@ function HomeTrip({
         </p>
         <ul className="mt-1.5 space-y-1 text-xs text-ink/70">
           <li className="flex items-center gap-2">
-            <Footprints className="size-4 shrink-0 text-leaf" />
+            <ToCarIcon className="size-4 shrink-0 text-leaf" />
             {toCar} ({walkMinutes} min)
           </li>
           <li className="flex items-center gap-2">
@@ -172,7 +181,7 @@ export default function Timeline({
   onDelete,
   hiddenCount = 0,
   onRestore,
-  travelWord = "walk",
+  campusMode = "walking",
 }: {
   events: ClassEvent[];
   legs: Leg[];
@@ -181,7 +190,8 @@ export default function Timeline({
   onDelete?: (event: ClassEvent) => void;
   hiddenCount?: number;
   onRestore?: () => void;
-  travelWord?: TravelWord;
+  /** On-campus mobility for legs (same as Profile icons / leg time estimates). */
+  campusMode?: CampusMode;
 }) {
   return (
     <section>
@@ -195,7 +205,7 @@ export default function Timeline({
         );
         return (
           <div key={event.id} className="mb-3">
-            {leg && <WalkConnector leg={leg} arriveBy={event.start} travelWord={travelWord} />}
+            {leg && <WalkConnector leg={leg} arriveBy={event.start} campusMode={campusMode} />}
             <EventCard event={event} onEdit={onEdit} onDelete={onDelete} />
           </div>
         );
@@ -205,7 +215,7 @@ export default function Timeline({
           last={events[events.length - 1]}
           walkMinutes={homeTrip.walkMinutes}
           driveMinutes={homeTrip.driveMinutes}
-          travelWord={travelWord}
+          campusMode={campusMode}
         />
       )}
       {hiddenCount > 0 && onRestore && (

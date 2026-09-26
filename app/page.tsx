@@ -283,7 +283,7 @@ export default function TodayPage() {
               hasHome={Boolean(profile.homeAddress?.trim())}
             />
 
-            <ParkingCard parking={parking} />
+            <ParkingCard parking={parking} campusMode={mode} />
           </>
         ) : (
           <section className="rounded-3xl bg-white p-5 text-center shadow-sm">
@@ -304,7 +304,7 @@ export default function TodayPage() {
           events={events}
           legs={legs}
           homeTrip={{ walkMinutes: walkToCarMinutes, driveMinutes }}
-          travelWord={mode === "walking" ? "walk" : "trip"}
+          campusMode={mode}
           onEdit={setEditing}
           onDelete={deleteEvent}
           hiddenCount={hiddenCount}
