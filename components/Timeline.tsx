@@ -90,14 +90,27 @@ function StepIcon({ mode }: { mode?: "walk" | "drive" }) {
 }
 
 // The walk between two stops: "8 min walk, leave by 9:52" plus route chips.
-function WalkConnector({ leg, arriveBy }: { leg: Leg; arriveBy: string }) {
+function WalkConnector({ leg, arriveBy, extraMinutes = 0 }: { leg: Leg; arriveBy: string; extraMinutes?: number }) {
+  const minutes = leg.minutes + extraMinutes;
+  const changed = extraMinutes > 0;
   return (
-    <div className="ml-6 border-l-2 border-dashed border-leaf/50 py-3 pl-4">
+    <div
+      key={changed ? "changed" : "normal"}
+      className={
+        changed
+          ? "animate-flash my-2 ml-3 rounded-2xl border-l-4 border-dashed border-sun bg-sun/30 py-3 pl-4 pr-3"
+          : "ml-6 border-l-2 border-dashed border-leaf/50 py-3 pl-4"
+      }
+    >
       <p className="flex items-center gap-2 text-sm font-medium">
         <StepIcon mode={leg.mode} />
-        {leg.minutes} min {leg.steps ? "total" : leg.mode === "drive" ? "drive" : "walk"}, leave by{" "}
-        {formatTime(minusMinutes(arriveBy, leg.minutes))}
+        {minutes} min {leg.steps ? "total" : leg.mode === "drive" ? "drive" : "walk"}, leave by{" "}
+        {formatTime(minusMinutes(arriveBy, minutes))}
+        {changed && <span className="text-xs font-semibold text-ink/60">(was {leg.minutes} min)</span>}
       </p>
+      {changed && (
+        <p className="mt-1 text-xs font-medium text-ink/70">A new report is affecting this walk.</p>
+      )}
       {leg.steps && (
         <ul className="mt-1.5 space-y-1 text-xs text-ink/70">
           {leg.steps.map((step) => (
@@ -109,7 +122,7 @@ function WalkConnector({ leg, arriveBy }: { leg: Leg; arriveBy: string }) {
         </ul>
       )}
       <div className="mt-2">
-        <RouteChips tags={leg.tags} />
+        <RouteChips tags={changed ? [`+${extraMinutes} min`, ...leg.tags] : leg.tags} />
       </div>
     </div>
   );
@@ -158,6 +171,7 @@ export default function Timeline({
   onDelete,
   hiddenCount = 0,
   onRestore,
+  affected,
 }: {
   events: ClassEvent[];
   legs: Leg[];
@@ -166,6 +180,7 @@ export default function Timeline({
   onDelete?: (event: ClassEvent) => void;
   hiddenCount?: number;
   onRestore?: () => void;
+  affected?: { toEventId: string; extraMinutes: number } | null;
 }) {
   return (
     <section>
@@ -179,7 +194,13 @@ export default function Timeline({
         );
         return (
           <div key={event.id} className="mb-3">
-            {leg && <WalkConnector leg={leg} arriveBy={event.start} />}
+            {leg && (
+              <WalkConnector
+                leg={leg}
+                arriveBy={event.start}
+                extraMinutes={affected?.toEventId === event.id ? affected.extraMinutes : 0}
+              />
+            )}
             <EventCard event={event} onEdit={onEdit} onDelete={onDelete} />
           </div>
         );

@@ -187,7 +187,7 @@ export const mockDay: DayPlan = {
   legs: [
     { fromEventId: "parking", toEventId: "e1", minutes: 4, distanceMeters: 300, tags: ["Paved", "Step-free"] },
     { fromEventId: "e1", toEventId: "e2", minutes: 1, distanceMeters: 40, tags: ["Same building"] },
-    { fromEventId: "e2", toEventId: "e3", minutes: 8, distanceMeters: 560, tags: ["+3 min", "Avoids construction"] },
+    { fromEventId: "e2", toEventId: "e3", minutes: 8, distanceMeters: 820, tags: ["Avoids construction"] },
     { fromEventId: "e3", toEventId: "e4", minutes: 7, distanceMeters: 480, tags: ["More shaded"] },
     { fromEventId: "e4", toEventId: "e5", minutes: 10, distanceMeters: 750, tags: ["Step-free"] },
     {

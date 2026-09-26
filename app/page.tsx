@@ -12,6 +12,8 @@ import ParkingCard from "@/components/ParkingCard";
 import Timeline from "@/components/Timeline";
 import EventEditor from "@/components/EventEditor";
 import DayAlert from "@/components/DayAlert";
+import LiveDot from "@/components/LiveDot";
+import { pickAffectedLeg } from "@/lib/routeImpact";
 
 import {
   mockDay,
@@ -197,6 +199,7 @@ export default function TodayPage() {
     drive.minutes ?? day.driveMinutes;
 
   const first = events[0];
+  const affectedId = pickAffectedLeg(events, day.legs);
 
   const arriveBy = first
     ? minusMinutes(first.start, profile.parkingBufferMinutes)
@@ -240,6 +243,12 @@ export default function TodayPage() {
       </PageHeader>
 
       <div className="-mt-6 space-y-6 px-4 pb-4">
+        {process.env.NEXT_PUBLIC_SUPABASE_URL && (
+          <div className="-mb-3 flex justify-end">
+            <LiveDot />
+          </div>
+        )}
+
         <DayAlert
           alert={alert}
           onDismiss={() => saveAlert(null)}
@@ -254,6 +263,7 @@ export default function TodayPage() {
               arriveBy={arriveBy}
               reason={reason}
               hasHome={Boolean(profile.homeAddress?.trim())}
+              changedFrom={alert && baseLeaveBy ? baseLeaveBy : undefined}
             />
 
             <ParkingCard parking={day.parking} />
@@ -281,6 +291,7 @@ export default function TodayPage() {
           onDelete={deleteEvent}
           hiddenCount={hiddenCount}
           onRestore={() => saveHidden([])}
+          affected={affectedId && alert ? { toEventId: affectedId, extraMinutes: alert.extraMinutes } : null}
         />
       </div>
 

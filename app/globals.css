@@ -26,3 +26,26 @@ body {
   background: #eef1e8;
   color: var(--color-ink);
 }
+
+/* "Live moment" motion: the alert slides in, the changed walk glows, the new leave-by pops. */
+@keyframes moway-slide-in {
+  from { opacity: 0; transform: translateY(-14px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes moway-flash {
+  0% { box-shadow: 0 0 0 0 rgba(252, 227, 138, 0); }
+  25% { box-shadow: 0 0 0 8px rgba(252, 227, 138, 0.9); }
+  100% { box-shadow: 0 0 0 0 rgba(252, 227, 138, 0); }
+}
+@keyframes moway-pop {
+  0% { transform: scale(1.14); }
+  100% { transform: scale(1); }
+}
+.animate-slide-in { animation: moway-slide-in 0.45s ease-out both; }
+.animate-flash { animation: moway-flash 1.8s ease-out 1; }
+.animate-pop { animation: moway-pop 0.5s ease-out both; }
+
+/* People who ask their device for less motion get none of it. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-slide-in, .animate-flash, .animate-pop, .animate-ping { animation: none; }
+}
