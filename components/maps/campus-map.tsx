@@ -49,13 +49,13 @@ export function CampusMap({ apiKey, mapId, buildings }: CampusMapProps) {
   if (apiKey.length === 0) {
     return (
       <section
-        className="rounded-3xl border border-[#d9c997] bg-[#fffaf0] p-6 shadow-sm"
+        className="rounded-3xl bg-sun/40 p-6"
         role="alert"
       >
-        <h2 className="text-lg font-semibold text-[#513f19]">
+        <h2 className="text-lg font-bold text-ink">
           Google Maps needs local setup
         </h2>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-[#765b25]">
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-ink/70">
           Add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY to .env.local, then restart the
           development server. Keep the real key out of Git.
         </p>

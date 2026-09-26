@@ -7,7 +7,7 @@ const tones = {
   aqua: "bg-aqua",
   sun: "bg-sun",
   blush: "bg-blush",
-  lilac: "bg-lilac",
+  ice: "bg-ice",
 };
 
 export default function PageHeader({

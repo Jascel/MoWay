@@ -14,7 +14,7 @@ type RouteControlsProps = {
 };
 
 const SELECT_CLASSES =
-  "mt-2 min-h-12 w-full rounded-xl border border-[#b9cfbd] bg-white px-3 py-2.5 text-base text-[#173b2b] shadow-sm outline-none transition focus:border-[#28613d] focus:ring-4 focus:ring-[#dcebdd] disabled:cursor-not-allowed disabled:bg-[#edf3ed]";
+  "mt-2 min-h-12 w-full rounded-2xl border border-ink/15 bg-cream px-3 py-2.5 text-base text-ink outline-none transition focus:border-ink focus:ring-4 focus:ring-aqua disabled:cursor-not-allowed disabled:opacity-60";
 
 export function RouteControls({
   buildings,
@@ -30,14 +30,14 @@ export function RouteControls({
 
   return (
     <form
-      className="rounded-3xl border border-[#c9ddcc] bg-white p-5 shadow-sm sm:p-6"
+      className="rounded-3xl bg-white p-5 shadow-sm sm:p-6"
       onSubmit={(event) => {
         event.preventDefault();
         onSubmit();
       }}
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-        <label className="block text-sm font-semibold text-[#244b35]">
+        <label className="block text-sm font-bold text-ink">
           From
           <select
             className={SELECT_CLASSES}
@@ -52,7 +52,7 @@ export function RouteControls({
           </select>
         </label>
 
-        <label className="block text-sm font-semibold text-[#244b35]">
+        <label className="block text-sm font-bold text-ink">
           To
           <select
             className={SELECT_CLASSES}
@@ -71,7 +71,7 @@ export function RouteControls({
       <button
         type="submit"
         disabled={sameBuilding || isLoading}
-        className="mt-5 min-h-12 w-full rounded-xl bg-[#28613d] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1f5032] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a8cdb0] disabled:cursor-not-allowed disabled:bg-[#9bb5a1]"
+        className="mt-5 min-h-12 w-full rounded-full bg-ink px-4 py-3 text-sm font-semibold text-white transition hover:bg-ink/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-aqua disabled:cursor-not-allowed disabled:bg-ink/30"
       >
         {isLoading
           ? "Finding walking route…"
@@ -81,7 +81,7 @@ export function RouteControls({
       </button>
 
       {sameBuilding ? (
-        <p className="mt-3 text-sm leading-6 text-[#765b25]" role="status">
+        <p className="mt-3 text-sm leading-6 text-ink/70" role="status">
           Choose two different buildings to get a walking route.
         </p>
       ) : null}
