@@ -19,6 +19,7 @@ type MapRuntime = {
   readonly map: google.maps.Map;
   readonly LatLngBounds: typeof google.maps.LatLngBounds;
   readonly Polyline: typeof google.maps.Polyline;
+  readonly TrafficLayer: typeof google.maps.TrafficLayer;
 };
 
 type MarkerRecord = {
@@ -67,85 +68,153 @@ export function GoogleMapCanvas({
   routeState,
 }: GoogleMapCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const markerRecords = useRef<readonly MarkerRecord[]>([]);
-  const selectedIds = useRef({ originId, destinationId });
-  const [runtime, setRuntime] = useState<MapRuntime | null>(null);
-  const [loadState, setLoadState] = useState<"loading" | "ready" | "error">(
-    "loading",
-  );
 
+  const markerRecords =
+    useRef<readonly MarkerRecord[]>([]);
+
+  const selectedIds = useRef({
+    originId,
+    destinationId,
+  });
+
+  const [runtime, setRuntime] =
+    useState<MapRuntime | null>(null);
+
+  const [trafficEnabled, setTrafficEnabled] =
+    useState(false);
+
+  const [loadState, setLoadState] =
+    useState<"loading" | "ready" | "error">(
+      "loading",
+    );
+
+  // Keep selected marker IDs current.
   useEffect(() => {
-    selectedIds.current = { originId, destinationId };
+    selectedIds.current = {
+      originId,
+      destinationId,
+    };
   }, [destinationId, originId]);
+
+  // --------------------
+  // INITIALIZE MAP
+  // --------------------
 
   useEffect(() => {
     let isActive = true;
     let didAuthFail = false;
-    const previousAuthFailure = window.gm_authFailure;
+
+    const previousAuthFailure =
+      window.gm_authFailure;
+
     const handleAuthFailure = (): void => {
       didAuthFail = true;
+
       if (isActive) {
         setLoadState("error");
       }
     };
-    window.gm_authFailure = handleAuthFailure;
+
+    window.gm_authFailure =
+      handleAuthFailure;
 
     async function initializeMap(): Promise<void> {
-      const container = containerRef.current;
+      const container =
+        containerRef.current;
+
       if (container === null) {
         return;
       }
 
       try {
-        const { core, maps, marker } = await loadMapLibraries(apiKey);
+        const {
+          core,
+          maps,
+          marker,
+        } = await loadMapLibraries(apiKey);
+
         if (!isActive || didAuthFail) {
           return;
         }
 
-        const map = new maps.Map(container, {
-          center: buildings[0]?.position,
-          zoom: 16,
-          mapId,
-          clickableIcons: false,
-          fullscreenControl: true,
-          mapTypeControl: false,
-          streetViewControl: false,
-        });
-        const bounds = new core.LatLngBounds();
-        const records = buildings.map((building, index) => {
-          bounds.extend(building.position);
-          const pin = new marker.PinElement({ scale: 1.05 });
-          const record: MarkerRecord = {
-            buildingId: building.id,
-            defaultGlyph: String(index + 1),
-            pin,
-            marker: new marker.AdvancedMarkerElement({
-              map,
-              position: building.position,
-              title: building.name,
-              content: pin,
-            }),
-          };
-          stylePin(
-            record,
-            selectedIds.current.originId,
-            selectedIds.current.destinationId,
-          );
-          return record;
-        });
+        const map = new maps.Map(
+          container,
+          {
+            center:
+              buildings[0]?.position,
+            zoom: 16,
+            mapId,
+            clickableIcons: false,
+            fullscreenControl: true,
+            mapTypeControl: false,
+            streetViewControl: false,
+          },
+        );
+
+        const bounds =
+          new core.LatLngBounds();
+
+        const records = buildings.map(
+          (building, index) => {
+            bounds.extend(
+              building.position,
+            );
+
+            const pin =
+              new marker.PinElement({
+                scale: 1.05,
+              });
+
+            const record: MarkerRecord = {
+              buildingId: building.id,
+              defaultGlyph: String(
+                index + 1,
+              ),
+              pin,
+              marker:
+                new marker.AdvancedMarkerElement(
+                  {
+                    map,
+                    position:
+                      building.position,
+                    title: building.name,
+                    content: pin,
+                  },
+                ),
+            };
+
+            stylePin(
+              record,
+              selectedIds.current
+                .originId,
+              selectedIds.current
+                .destinationId,
+            );
+
+            return record;
+          },
+        );
 
         map.fitBounds(bounds, 52);
-        markerRecords.current = records;
+
+        markerRecords.current =
+          records;
+
         setRuntime({
           map,
-          LatLngBounds: core.LatLngBounds,
+          LatLngBounds:
+            core.LatLngBounds,
           Polyline: maps.Polyline,
+          TrafficLayer:
+            maps.TrafficLayer,
         });
+
         setLoadState("ready");
       } catch {
         if (!isActive) {
           return;
         }
+
         setLoadState("error");
       }
     }
@@ -154,43 +223,106 @@ export function GoogleMapCanvas({
 
     return () => {
       isActive = false;
-      markerRecords.current.forEach(({ marker }) => {
-        marker.map = null;
-      });
+
+      markerRecords.current.forEach(
+        ({ marker }) => {
+          marker.map = null;
+        },
+      );
+
       markerRecords.current = [];
-      if (window.gm_authFailure === handleAuthFailure) {
-        window.gm_authFailure = previousAuthFailure;
+
+      if (
+        window.gm_authFailure ===
+        handleAuthFailure
+      ) {
+        window.gm_authFailure =
+          previousAuthFailure;
       }
     };
   }, [apiKey, buildings, mapId]);
 
-  useEffect(() => {
-    markerRecords.current.forEach((record) => {
-      stylePin(record, originId, destinationId);
-    });
-  }, [destinationId, originId]);
+  // --------------------
+  // UPDATE MARKERS
+  // --------------------
 
   useEffect(() => {
-    if (runtime === null || routeState.kind !== "success") {
+    markerRecords.current.forEach(
+      (record) => {
+        stylePin(
+          record,
+          originId,
+          destinationId,
+        );
+      },
+    );
+  }, [destinationId, originId]);
+
+  // --------------------
+  // DRAW WALKING ROUTE
+  // --------------------
+
+  useEffect(() => {
+    if (
+      runtime === null ||
+      routeState.kind !== "success"
+    ) {
       return;
     }
 
-    const line = new runtime.Polyline({
-      map: runtime.map,
-      path: [...routeState.route.path],
-      geodesic: true,
-      strokeColor: "#006747",
-      strokeOpacity: 0.92,
-      strokeWeight: 6,
-    });
-    const bounds = new runtime.LatLngBounds();
-    routeState.route.path.forEach((position) => bounds.extend(position));
-    runtime.map.fitBounds(bounds, 52);
+    const line =
+      new runtime.Polyline({
+        map: runtime.map,
+        path: [
+          ...routeState.route.path,
+        ],
+        geodesic: true,
+        strokeColor: "#006747",
+        strokeOpacity: 0.92,
+        strokeWeight: 6,
+      });
+
+    const bounds =
+      new runtime.LatLngBounds();
+
+    routeState.route.path.forEach(
+      (position) =>
+        bounds.extend(position),
+    );
+
+    runtime.map.fitBounds(
+      bounds,
+      52,
+    );
 
     return () => {
       line.setMap(null);
     };
   }, [routeState, runtime]);
+
+  // --------------------
+  // TRAFFIC LAYER
+  // --------------------
+
+  useEffect(() => {
+    if (
+      runtime === null ||
+      !trafficEnabled
+    ) {
+      return;
+    }
+
+    const trafficLayer =
+      new runtime.TrafficLayer();
+
+    trafficLayer.setMap(
+      runtime.map,
+    );
+
+    return () => {
+      trafficLayer.setMap(null);
+    };
+  }, [runtime, trafficEnabled]);
 
   return (
     <div className="relative min-h-[28rem] overflow-hidden rounded-3xl border border-usf-green bg-mint-soft lg:min-h-[38rem]">
@@ -200,14 +332,36 @@ export function GoogleMapCanvas({
         role="region"
         aria-label="USF Tampa campus map"
       />
+
+      {/* TRAFFIC TOGGLE */}
+      {loadState === "ready" && (
+        <button
+          type="button"
+          onClick={() =>
+            setTrafficEnabled(
+              (current) => !current,
+            )
+          }
+          className="absolute right-4 top-4 z-10 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink shadow-md"
+          aria-pressed={trafficEnabled}
+        >
+          {trafficEnabled
+            ? "Traffic: On"
+            : "Traffic: Off"}
+        </button>
+      )}
+
+      {/* LOADING */}
       {loadState === "loading" ? (
         <div
           className="absolute inset-0 grid place-items-center bg-cream px-6 text-center text-sm font-medium text-ink/70"
           role="status"
         >
-          Loading the USF Tampa map…
+          Loading the USF Tampa map...
         </div>
       ) : null}
+
+      {/* ERROR */}
       {loadState === "error" ? (
         <div
           className="absolute inset-0 grid place-items-center bg-cream px-6 text-center"
@@ -217,13 +371,17 @@ export function GoogleMapCanvas({
             <p className="text-base font-bold text-ink">
               Map unavailable
             </p>
+
             <p className="mt-2 text-sm leading-6 text-ink/70">
               {MAP_ERROR_MESSAGE}
             </p>
+
             <button
               type="button"
               className="mt-5 min-h-11 rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-aqua"
-              onClick={() => window.location.reload()}
+              onClick={() =>
+                window.location.reload()
+              }
             >
               Reload map
             </button>
