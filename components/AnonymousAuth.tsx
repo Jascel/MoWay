@@ -9,10 +9,12 @@ export default function AnonymousAuth() {
       try {
         const supabase = getSupabaseClient();
 
+        // getSession() reads the saved session from this browser. (getUser() returns the error
+        // "Auth session missing!" for a brand-new visitor, which used to stop the sign-in below.)
         const {
-          data: { user },
+          data: { session },
           error,
-        } = await supabase.auth.getUser();
+        } = await supabase.auth.getSession();
 
         if (error) {
           console.error("Could not check auth:", error);
@@ -20,7 +22,7 @@ export default function AnonymousAuth() {
         }
 
         // Already signed in, so nothing else is needed.
-        if (user) {
+        if (session) {
           return;
         }
 
