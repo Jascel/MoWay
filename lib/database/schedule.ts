@@ -68,7 +68,9 @@ export async function createScheduleEvent(
 // GET SCHEDULE FOR DATE
 // --------------------
 
-export async function getScheduleForDate(date: string) {
+export async function getScheduleForDate(
+  date: string
+) {
   const supabase = getSupabaseClient();
 
   const {
@@ -91,7 +93,9 @@ export async function getScheduleForDate(date: string) {
     .select("*")
     .eq("user_id", user.id)
     .eq("event_date", date)
-    .order("start_time", { ascending: true });
+    .order("start_time", {
+      ascending: true,
+    });
 
   if (error) {
     throw error;
@@ -124,13 +128,22 @@ export async function deleteScheduleEvent(
     );
   }
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("schedule_events")
     .delete()
     .eq("id", eventId)
-    .eq("user_id", user.id);
+    .eq("user_id", user.id)
+    .select();
 
   if (error) {
     throw error;
   }
+
+  if (!data || data.length === 0) {
+    throw new Error(
+      "The event was not deleted from Supabase."
+    );
+  }
+
+  return data[0];
 }

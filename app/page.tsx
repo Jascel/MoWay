@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import PageHeader from "@/components/PageHeader";
 import Avatar from "@/components/Avatar";
 import WeatherCard from "@/components/WeatherCard";
@@ -12,6 +13,7 @@ import { ALERT_KEY } from "@/lib/alerts";
 import { minusMinutes } from "@/lib/time";
 import { PROFILE_KEY } from "@/lib/options";
 import { useStoredState } from "@/lib/useStoredState";
+import { getScheduleForDate } from "@/lib/database/schedule";
 
 // The Today screen arranges the components and hands each its slice of mock data.
 // The alert is stored in localStorage, so the Report screen can turn it on or off.
@@ -21,11 +23,40 @@ export default function TodayPage() {
   const [alert, saveAlert] = useStoredState<RouteAlert | null>(ALERT_KEY, day.alert);
 
   // Events added on the Add screen for this day get mixed in with the mock ones, sorted by start time.
-  const [added] = useStoredState<SavedEvent[]>("moway.events", []);
-  const events = [...day.events, ...added.filter((e) => e.date === day.date)].sort((a, b) =>
-    a.start.localeCompare(b.start)
-  );
+// Load saved events for the demo day from Supabase.
+const [added, setAdded] = useState<SavedEvent[]>([]);
 
+useEffect(() => {
+  async function loadSchedule() {
+    try {
+      const savedEvents = await getScheduleForDate(day.date);
+
+      const formattedEvents: SavedEvent[] = savedEvents.map((event) => ({
+        id: event.id,
+        category: event.category,
+        title: event.title,
+        building: event.building,
+        room: event.room ?? undefined,
+        date: event.event_date,
+        start: event.start_time,
+        end: event.end_time,
+      }));
+
+      setAdded(formattedEvents);
+    } catch (error) {
+      console.error("Could not load schedule:", error);
+    }
+  }
+
+  void loadSchedule();
+}, [day.date]);
+
+const events = [
+  ...day.events,
+  ...added,
+].sort((a, b) =>
+  a.start.localeCompare(b.start)
+);
   // Your Profile settings (name, parking buffer) are saved by the Profile screen.
   const [profile] = useStoredState<Profile>(PROFILE_KEY, mockProfile);
 
