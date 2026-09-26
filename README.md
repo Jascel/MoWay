@@ -62,6 +62,14 @@ NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID=your_map_id
 ```ts
 type CampusBuilding = {
   readonly id: string;
+  readonly code: string; // schedule code, e.g. "CIS"
+  readonly name: string;
+  readonly aliases?: readonly string[];
+  readonly position: { readonly lat: number; readonly lng: number };
+};
+
+type CampusGarage = {
+  readonly id: string;
   readonly name: string;
   readonly position: { readonly lat: number; readonly lng: number };
 };
@@ -76,7 +84,7 @@ type WalkingRouteResult = {
 };
 ```
 
-The bundled `CAMPUS_BUILDINGS` fixture uses approximate outdoor pedestrian approach points selected from mapped walkways. They are not survey-grade doors or verified accessible/public entrances. A future database integration can map its building records into `CampusBuilding[]` without adopting this fixture as a schema.
+The bundled `CAMPUS_BUILDINGS` (`lib/maps/campus-buildings.ts`) and `CAMPUS_GARAGES` (`lib/maps/campus-parking.ts`) fixtures hold static coordinates that were resolved once with the Google Maps Geocoder (or OpenStreetMap where Google could not resolve the name) and committed; the app never geocodes at runtime. They are approximate outdoor points, not verified accessible entrances, and each entry notes its source so it can be hand-adjusted. `findBuildingByLabel("CIS")` resolves schedule labels by code, name, or alias. A future database integration can map its records into these types without adopting the fixtures as a schema.
 
 Use short-lived branches such as `andres/maps`, `connie/ui`, and `adriana/backend`. Keep commits focused, open pull requests into `main`, and pull the latest `main` before starting work.
 
