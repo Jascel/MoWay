@@ -1,28 +1,44 @@
 // MoWay data contract (MOCK). Shapes here = what the real APIs should return.
 // Times are "HH:MM" 24h strings, durations are minutes.
 
-export type Mode = "walk" | "wheelchair" | "scooter" | "bike" | "drive_walk";
+// Names match the Supabase backend (lib/database/mobility.ts on adriana/backend).
+export type Mode = "walking" | "scooter" | "wheelchair" | "bike" | "driving" | "transit";
 
+// Each one is a yes/no preference. All but "well_lit" map to a field in the backend profile.
 export type AccessPref =
-  | "avoid_stairs"
-  | "minimize_walking"
-  | "paved_paths"
-  | "well_lit"
-  | "shaded";
+  | "step_free"
+  | "paved_surface"
+  | "accessible_entrances"
+  | "willing_extra_distance"
+  | "prefer_shade"
+  | "prefer_covered"
+  | "avoid_crowds"
+  | "well_lit";
 
+// Names match lib/database/reports.ts on adriana/backend.
 export type ReportCategory =
   | "construction"
-  | "sidewalk_closed"
-  | "accessibility_barrier"
+  | "sidewalk_ends"
+  | "blocked_sidewalk"
   | "flooding"
-  | "poor_lighting"
-  | "event_reroute"
+  | "accessible_entrance_closed"
   | "other";
+
+export type ReportImpact =
+  | "inconvenience"
+  | "blocks_walking"
+  | "blocks_scooter"
+  | "blocks_wheelchair"
+  | "blocks_all";
+
+// "temporary" reports expire after 24h unless confirmed; "infrastructure" stays until resolved.
+export type ConditionClass = "temporary" | "infrastructure";
 
 // A user can pick several modes (e.g. drives in, then wheelchair on campus).
 export interface Profile {
   name: string;
-  modes: Mode[];
+  modes: Mode[]; // all the ways you get around
+  activeMode: Mode; // the one you're using today (must be one of modes)
   prefs: AccessPref[];
   parkingBufferMinutes: number; // arrive this many min before first class so parking isn't stressful
 }
@@ -83,7 +99,11 @@ export interface Weather {
 export interface Report {
   id: string;
   category: ReportCategory;
-  location: string;
+  impact: ReportImpact;
+  conditionClass: ConditionClass;
+  latitude: number;
+  longitude: number;
+  location: string; // friendly place name, for display only (the backend doesn't store one yet)
   note?: string;
   minutesAgo: number;
   confirmations: number; // how many people said "still there"
@@ -112,14 +132,19 @@ export interface DayPlan {
 
 export const mockProfile: Profile = {
   name: "Connie",
-  modes: ["drive_walk", "wheelchair"],
-  prefs: ["avoid_stairs", "paved_paths"],
+  modes: ["driving", "wheelchair"],
+  activeMode: "driving",
+  prefs: ["step_free", "paved_surface"],
   parkingBufferMinutes: 24,
 };
 
 export const mockReport: Report = {
   id: "r1",
-  category: "accessibility_barrier",
+  category: "blocked_sidewalk",
+  impact: "blocks_wheelchair",
+  conditionClass: "temporary",
+  latitude: 28.063634,
+  longitude: -82.413211,
   location: "Ramp by the Marshall Student Center",
   note: "Ramp blocked by construction fencing",
   minutesAgo: 12,

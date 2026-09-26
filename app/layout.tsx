@@ -1,10 +1,16 @@
 import type { Metadata, Viewport } from "next";
-import { Geist } from "next/font/google";
+import { Geist, Fraunces } from "next/font/google";
 import "./globals.css";
 import BottomNav from "@/components/BottomNav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+// Chunky serif, used ONLY for the important things (page titles, leave-by time) via the class.
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
   subsets: ["latin"],
 });
 
@@ -25,9 +31,9 @@ export const viewport: Viewport = {
 // so the bottom nav stays put while pages swap in above it.
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
+    <html lang="en" className={`${geistSans.variable} ${fraunces.variable} h-full antialiased`}>
       <body className="font-sans">
-        <main className="mx-auto min-h-screen max-w-md bg-gray-50 pb-24 shadow-sm md:my-0">
+        <main className="mx-auto min-h-screen max-w-md bg-cream pb-28 shadow-sm">
           {children}
         </main>
         <BottomNav />

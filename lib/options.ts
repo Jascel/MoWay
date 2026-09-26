@@ -1,18 +1,30 @@
+import type { LucideIcon } from "lucide-react";
+import {
+  Accessibility, Bike, Bus, Car, DoorOpen, Footprints, Layers, Lightbulb,
+  Route, Scooter, Timer, TreePine, Umbrella, Users,
+} from "lucide-react";
 import type { AccessPref, Mode } from "@/data/mock";
 
-// Labels shown on the Profile screen. `value` matches the types in data/mock.ts.
-export const modeOptions: { value: Mode; label: string; icon: string }[] = [
-  { value: "walk", label: "Walking", icon: "🚶" },
-  { value: "wheelchair", label: "Wheelchair", icon: "♿" },
-  { value: "scooter", label: "Scooter", icon: "🛴" },
-  { value: "bike", label: "Bike", icon: "🚲" },
-  { value: "drive_walk", label: "Drive + walk", icon: "🚗" },
+// Bump the number if the saved profile shape changes, so old saved data is ignored.
+export const PROFILE_KEY = "moway.profile.v2";
+
+// Labels + icons shown on the Profile screen. `value` matches the types in data/mock.ts.
+export const modeOptions: { value: Mode; label: string; icon: LucideIcon }[] = [
+  { value: "walking", label: "Walking", icon: Footprints },
+  { value: "wheelchair", label: "Wheelchair", icon: Accessibility },
+  { value: "scooter", label: "Scooter", icon: Scooter },
+  { value: "bike", label: "Bike", icon: Bike },
+  { value: "driving", label: "Driving", icon: Car },
+  { value: "transit", label: "Transit", icon: Bus },
 ];
 
-export const prefOptions: { value: AccessPref; label: string; icon: string }[] = [
-  { value: "avoid_stairs", label: "Avoid stairs", icon: "🪜" },
-  { value: "minimize_walking", label: "Minimize walking", icon: "🦶" },
-  { value: "paved_paths", label: "Paved paths", icon: "🛣️" },
-  { value: "well_lit", label: "Well-lit routes", icon: "💡" },
-  { value: "shaded", label: "Shaded routes", icon: "🌳" },
+export const prefOptions: { value: AccessPref; label: string; icon: LucideIcon }[] = [
+  { value: "step_free", label: "Step-free routes", icon: Layers },
+  { value: "paved_surface", label: "Paved surfaces", icon: Route },
+  { value: "accessible_entrances", label: "Accessible entrances", icon: DoorOpen },
+  { value: "willing_extra_distance", label: "OK with a longer route", icon: Timer },
+  { value: "prefer_shade", label: "Prefer shade", icon: TreePine },
+  { value: "prefer_covered", label: "Prefer covered walkways", icon: Umbrella },
+  { value: "avoid_crowds", label: "Avoid crowds", icon: Users },
+  { value: "well_lit", label: "Well-lit routes", icon: Lightbulb },
 ];

@@ -1,12 +1,14 @@
+import type { LucideIcon } from "lucide-react";
+import { Briefcase, CalendarDays, Dumbbell, GraduationCap, Heart, Users } from "lucide-react";
 import type { EventCategory } from "@/data/mock";
 
-// Color + label for each kind of event. Full class names are written out
+// Color, label and icon for each kind of event. Full class names are written out
 // (not built with string tricks) so Tailwind can find them.
-export const categoryStyles: Record<EventCategory, { label: string; bg: string }> = {
-  class: { label: "Class", bg: "bg-teal-600" },
-  meeting: { label: "Meeting", bg: "bg-orange-500" },
-  club: { label: "Club", bg: "bg-pink-500" },
-  fitness: { label: "Fitness", bg: "bg-emerald-500" },
-  event: { label: "Event", bg: "bg-red-600" },
-  work: { label: "Work", bg: "bg-purple-400" },
+export const categoryStyles: Record<EventCategory, { label: string; bg: string; icon: LucideIcon }> = {
+  class: { label: "Class", bg: "bg-aqua", icon: GraduationCap },
+  meeting: { label: "Meeting", bg: "bg-sun", icon: Users },
+  club: { label: "Club", bg: "bg-blush", icon: Heart },
+  fitness: { label: "Fitness", bg: "bg-mint", icon: Dumbbell },
+  event: { label: "Event", bg: "bg-coral", icon: CalendarDays },
+  work: { label: "Work", bg: "bg-lilac", icon: Briefcase },
 };

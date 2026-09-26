@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Car, Footprints } from "lucide-react";
 import type { DayPlan } from "@/data/mock";
 import RouteChips from "@/components/RouteChips";
 import { formatTime, minusMinutes } from "@/lib/time";
@@ -25,16 +26,16 @@ export default function RoutePanel({ day }: { day: DayPlan }) {
   const verb = leg.steps ? "total" : leg.mode === "drive" ? "drive" : "walk";
 
   return (
-    <section className="rounded-2xl bg-white p-4 shadow-sm">
+    <section className="rounded-3xl bg-white p-4 shadow-sm">
       <div className="-mx-1 mb-3 flex gap-2 overflow-x-auto px-1 pb-1">
         {day.legs.map((l, i) => (
           <button
             key={l.toEventId}
             onClick={() => setIndex(i)}
-            className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${
+            className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold ${
               i === index
-                ? "border-usf-green bg-usf-green text-white"
-                : "border-gray-300 bg-white text-gray-600"
+                ? "border-ink bg-ink text-white"
+                : "border-ink/15 bg-white text-ink/70"
             }`}
           >
             To {placeName(l.toEventId)}
@@ -42,35 +43,39 @@ export default function RoutePanel({ day }: { day: DayPlan }) {
         ))}
       </div>
 
-      <p className="text-sm text-gray-600">
-        {placeName(leg.fromEventId)} → {placeName(leg.toEventId)}
+      <p className="text-sm text-ink/70">
+        {placeName(leg.fromEventId)} to {placeName(leg.toEventId)}
         {destination && ` (${destination.building}${destination.room ? ` ${destination.room}` : ""})`}
       </p>
 
       <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-        <div className="rounded-xl bg-gray-50 p-3">
+        <div className="rounded-2xl bg-mint-soft p-3">
           <p className="text-xl font-bold">{leg.minutes} min</p>
-          <p className="text-xs text-gray-500">{verb}</p>
+          <p className="text-xs text-ink/60">{verb}</p>
         </div>
-        <div className="rounded-xl bg-gray-50 p-3">
+        <div className="rounded-2xl bg-aqua-soft p-3">
           <p className="text-xl font-bold">{miles} mi</p>
-          <p className="text-xs text-gray-500">distance</p>
+          <p className="text-xs text-ink/60">distance</p>
         </div>
-        <div className="rounded-xl bg-gray-50 p-3">
+        <div className="rounded-2xl bg-sun/50 p-3">
           <p className="text-xl font-bold">
             {destination ? formatTime(minusMinutes(destination.start, leg.minutes)).replace(" ", "") : "-"}
           </p>
-          <p className="text-xs text-gray-500">leave by</p>
+          <p className="text-xs text-ink/60">leave by</p>
         </div>
       </div>
 
       {leg.steps && (
-        <ul className="mt-3 space-y-1 text-sm text-gray-700">
-          {leg.steps.map((step) => (
-            <li key={step.label}>
-              {step.mode === "drive" ? "🚗" : "🚶"} {step.label} ({step.minutes} min)
-            </li>
-          ))}
+        <ul className="mt-3 space-y-1.5 text-sm">
+          {leg.steps.map((step) => {
+            const Icon = step.mode === "drive" ? Car : Footprints;
+            return (
+              <li key={step.label} className="flex items-center gap-2">
+                <Icon className="size-4 shrink-0 text-leaf" />
+                {step.label} ({step.minutes} min)
+              </li>
+            );
+          })}
         </ul>
       )}
 

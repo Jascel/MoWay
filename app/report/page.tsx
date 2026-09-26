@@ -1,320 +1,215 @@
 "use client";
 
 import { useState } from "react";
+import { Check, LocateFixed } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
+import ChipGroup from "@/components/ChipGroup";
 import StillThereCard from "@/components/StillThereCard";
-import { reportCategories, categoryInfo } from "@/lib/reportCategories";
+import {
+  categoryInfo, durationOptions, impactOptions, reportCategories, REPORTS_KEY,
+} from "@/lib/reportCategories";
 import { useStoredState } from "@/lib/useStoredState";
 import {
-  mockReport,
-  type Report,
-  type ReportCategory,
-  type RouteAlert,
+  mockReport, type ConditionClass, type Report, type ReportCategory, type ReportImpact, type RouteAlert,
 } from "@/data/mock";
 import { ALERT_KEY, alertFromReport } from "@/lib/alerts";
-import {
-  createReport,
-  type ReportType,
-  type ReportImpact,
-  type ConditionClass,
-} from "@/lib/database/reports";
+
+type Coords = { latitude: number; longitude: number };
+
+// Marshall Student Center, for testing when you're not on campus.
+const DEMO_COORDS: Coords = { latitude: 28.063634, longitude: -82.413211 };
 
 export default function ReportPage() {
-  const [myReports, saveMyReports] = useStoredState<Report[]>(
-    "moway.reports",
-    []
-  );
-
-  const [, saveAlert] = useStoredState<RouteAlert | null>(
-    ALERT_KEY,
-    null
-  );
-
-  const [category, setCategory] =
-    useState<ReportCategory | null>(null);
-
-  const [location, setLocation] = useState("");
+  // Reports you submit are saved on this device for now (later: Adriana's Supabase).
+  const [myReports, saveMyReports] = useStoredState<Report[]>(REPORTS_KEY, []);
+  const [, saveAlert] = useStoredState<RouteAlert | null>(ALERT_KEY, null);
+  const [category, setCategory] = useState<ReportCategory | null>(null);
+  const [impact, setImpact] = useState<ReportImpact | null>(null);
+  const [duration, setDuration] = useState<ConditionClass>("temporary");
+  const [coords, setCoords] = useState<Coords | null>(null);
+  const [locStatus, setLocStatus] = useState("");
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
 
-  function getCurrentPosition(): Promise<GeolocationPosition> {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(
-          new Error(
-            "Location services are not supported by this browser."
-          )
-        );
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(
-        resolve,
-        reject,
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0,
-        }
-      );
-    });
-  }
-
-  function convertCategory(
-    selectedCategory: ReportCategory
-  ): ReportType {
-    switch (selectedCategory) {
-      case "construction":
-        return "construction";
-
-      case "blocked":
-        return "blocked_sidewalk";
-
-      case "flooding":
-        return "flooding";
-
-      case "entrance":
-        return "accessible_entrance_closed";
-
-      default:
-        return "other";
-    }
-  }
-
-  function getConditionClass(
-    reportType: ReportType
-  ): ConditionClass {
-    if (reportType === "sidewalk_ends") {
-      return "infrastructure";
-    }
-
-    return "temporary";
-  }
-
-  function getImpact(
-    selectedCategory: ReportCategory
-  ): ReportImpact {
-    switch (selectedCategory) {
-      case "blocked":
-      case "entrance":
-        return "blocks_wheelchair";
-
-      case "construction":
-      case "flooding":
-        return "blocks_walking";
-
-      default:
-        return "inconvenience";
-    }
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-
-    if (!category || !location.trim()) {
-      setError("Pick what happened and where.");
+  // The report is placed where you are standing, so we ask the browser for your location.
+  function findMyLocation() {
+    setLocStatus("Finding you...");
+    if (!navigator.geolocation) {
+      setLocStatus("Location isn't available on this device.");
       return;
     }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setCoords({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+        setLocStatus(`Location found (within about ${Math.round(pos.coords.accuracy)} m)`);
+      },
+      () => setLocStatus("Couldn't get your location. Allow location access, or use the demo spot."),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
 
-    setError("");
-    setSent(false);
-    setSubmitting(true);
-
-    try {
-      const position = await getCurrentPosition();
-
-      const latitude = position.coords.latitude;
-      const longitude = position.coords.longitude;
-
-      const reportType = convertCategory(category);
-
-      await createReport({
-        reportType,
-        impact: getImpact(category),
-        conditionClass: getConditionClass(reportType),
-
-        // For the MVP, the user's current GPS position
-        // is also the reported issue location.
-        latitude,
-        longitude,
-
-        userLatitude: latitude,
-        userLongitude: longitude,
-      });
-
-      // Keep Connie's local report behavior so the UI
-      // and Today alert continue working.
-      const localReport: Report = {
-        id: crypto.randomUUID(),
-        category,
-        location: location.trim(),
-        note: note.trim() || undefined,
-        minutesAgo: 0,
-        confirmations: 1,
-        affectsRoute: false,
-      };
-
-      saveMyReports([localReport, ...myReports]);
-      saveAlert(alertFromReport(localReport));
-
-      setCategory(null);
-      setLocation("");
-      setNote("");
-      setSent(true);
-    } catch (err) {
-      console.error(err);
-
-      if (err instanceof GeolocationPositionError) {
-        if (err.code === err.PERMISSION_DENIED) {
-          setError(
-            "Location permission is required to submit a report."
-          );
-        } else {
-          setError(
-            "We couldn't get your location. Please try again."
-          );
-        }
-      } else if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Something went wrong while submitting.");
-      }
-    } finally {
-      setSubmitting(false);
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!category || !impact) {
+      setError("Pick what happened and how it affects people.");
+      return;
     }
+    if (!coords) {
+      setError("Add your location so we know where it is.");
+      return;
+    }
+    setError("");
+    const report: Report = {
+      id: crypto.randomUUID(),
+      category,
+      impact,
+      conditionClass: duration,
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+      location: "Your location",
+      note: note.trim() || undefined,
+      minutesAgo: 0,
+      confirmations: 1,
+      affectsRoute: false,
+    };
+    saveMyReports([report, ...myReports]);
+    saveAlert(alertFromReport(report));
+    setCategory(null);
+    setImpact(null);
+    setCoords(null);
+    setLocStatus("");
+    setNote("");
+    setSent(true);
   }
 
   return (
     <>
-      <PageHeader
-        title="Report an issue"
-        subtitle="Help others around campus"
-      />
-
-      <div className="space-y-6 p-4">
+      <PageHeader title="Report an issue" subtitle="Help others around campus" tone="blush" />
+      <div className="-mt-6 space-y-6 px-4">
         {sent && (
-          <p className="rounded-2xl bg-usf-green-light p-4 text-sm font-medium text-usf-green-dark">
-            Thanks for reporting! Other people&apos;s routes
-            will update. 🙌
+          <p className="flex items-center gap-2 rounded-3xl bg-mint p-4 text-sm font-semibold">
+            <Check className="size-5 shrink-0 text-leaf" />
+            Thanks for reporting! Other people&apos;s routes will update.
           </p>
         )}
 
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-4"
-        >
-          <h2 className="text-lg font-bold">
-            What&apos;s going on?
-          </h2>
-
-          <div className="grid grid-cols-2 gap-3">
-            {reportCategories.map((c) => (
-              <button
-                key={c.value}
-                type="button"
-                onClick={() => {
-                  setCategory(c.value);
-                  setSent(false);
-                }}
-                className={`flex flex-col items-center gap-1 rounded-2xl border p-4 text-sm font-medium ${
-                  category === c.value
-                    ? "border-usf-green bg-usf-green text-white"
-                    : "border-gray-200 bg-white text-gray-700"
-                }`}
-              >
-                <span className="text-3xl">
-                  {c.icon}
-                </span>
-
-                {c.label}
-              </button>
-            ))}
+        <form onSubmit={handleSubmit} className="space-y-5 rounded-3xl bg-white p-5 shadow-sm">
+          <div>
+            <h2 className="mb-3 text-xl font-bold">What&apos;s going on?</h2>
+            <div className="grid grid-cols-2 gap-3">
+              {reportCategories.map(({ value, label, icon: Icon }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => {
+                    setCategory(value);
+                    setSent(false);
+                  }}
+                  className={`flex flex-col items-center gap-2 rounded-2xl border p-4 text-center text-sm font-semibold ${
+                    category === value
+                      ? "border-ink bg-ink text-white"
+                      : "border-ink/10 bg-cream text-ink"
+                  }`}
+                >
+                  <Icon className="size-7" strokeWidth={1.75} />
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div>
-            <label
-              htmlFor="location"
-              className="mb-1 block text-sm font-bold"
-            >
-              Where?
-            </label>
-
-            <input
-              id="location"
-              value={location}
-              onChange={(e) =>
-                setLocation(e.target.value)
-              }
-              placeholder="Ramp by the Marshall Student Center"
-              className="w-full rounded-xl border border-gray-300 bg-white p-3"
+            <h3 className="mb-2 text-sm font-bold">Who does it affect?</h3>
+            <ChipGroup
+              options={impactOptions}
+              selected={impact ? [impact] : []}
+              onToggle={(v) => setImpact(v as ReportImpact)}
             />
           </div>
 
           <div>
-            <label
-              htmlFor="note"
-              className="mb-1 block text-sm font-bold"
-            >
-              Details (optional)
-            </label>
+            <h3 className="mb-2 text-sm font-bold">How long will it last?</h3>
+            <ChipGroup
+              options={durationOptions}
+              selected={[duration]}
+              onToggle={(v) => setDuration(v as ConditionClass)}
+            />
+          </div>
 
+          <div>
+            <h3 className="mb-1 text-sm font-bold">Where is it?</h3>
+            <p className="mb-2 text-xs text-ink/60">
+              Reports are placed where you&apos;re standing, so you need to be close to it.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={findMyLocation}
+                className="flex items-center gap-1.5 rounded-full bg-aqua px-4 py-2 text-sm font-semibold"
+              >
+                <LocateFixed className="size-4" /> Use my location
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setCoords(DEMO_COORDS);
+                  setLocStatus("Using the demo spot (Marshall Student Center)");
+                }}
+                className="rounded-full border border-ink/15 px-4 py-2 text-sm font-semibold text-ink/70"
+              >
+                Use demo spot
+              </button>
+            </div>
+            {locStatus && <p className="mt-2 text-xs text-ink/70">{locStatus}</p>}
+          </div>
+
+          <div>
+            <label htmlFor="note" className="mb-1 block text-sm font-bold">Details (optional)</label>
             <textarea
               id="note"
               value={note}
               onChange={(e) => setNote(e.target.value)}
               rows={2}
-              className="w-full rounded-xl border border-gray-300 bg-white p-3"
+              placeholder="Ramp blocked by construction fencing"
+              className="w-full rounded-2xl border border-ink/15 bg-cream p-3"
             />
           </div>
 
-          {error && (
-            <p className="text-sm text-red-600">
-              {error}
-            </p>
-          )}
+          {error && <p className="text-sm font-medium text-red-600">{error}</p>}
 
           <button
             type="submit"
-            disabled={submitting}
-            className="w-full rounded-xl bg-usf-green py-3 font-semibold text-white active:bg-usf-green-dark disabled:opacity-50"
+            className="w-full rounded-full bg-ink py-3.5 font-semibold text-white active:bg-ink/80"
           >
-            {submitting
-              ? "Submitting..."
-              : "Submit report"}
+            Submit report
           </button>
         </form>
 
         <section className="space-y-3">
-          <h2 className="text-lg font-bold">
-            Near you
-          </h2>
-
+          <h2 className="text-xl font-bold">Near you</h2>
           <StillThereCard report={mockReport} />
         </section>
 
         {myReports.length > 0 && (
           <section className="space-y-2">
-            <h2 className="text-lg font-bold">
-              Your reports
-            </h2>
-
-            {myReports.map((r) => (
-              <div
-                key={r.id}
-                className="rounded-2xl bg-white p-3 shadow-sm"
-              >
-                <p className="font-semibold">
-                  {categoryInfo(r.category).icon}{" "}
-                  {categoryInfo(r.category).label}
-                </p>
-
-                <p className="text-sm text-gray-600">
-                  {r.location}
-                </p>
-              </div>
-            ))}
+            <h2 className="text-xl font-bold">Your reports</h2>
+            {myReports.map((r) => {
+              const info = categoryInfo(r.category);
+              const Icon = info.icon;
+              return (
+                <div key={r.id} className="rounded-3xl bg-white p-4 shadow-sm">
+                  <p className="flex items-center gap-2 font-semibold">
+                    <Icon className="size-4 text-leaf" />
+                    {info.label}
+                  </p>
+                  <p className="text-sm text-ink/70">
+                    {impactOptions.find((i) => i.value === r.impact)?.label}
+                    {r.note && ` · ${r.note}`}
+                  </p>
+                </div>
+              );
+            })}
           </section>
         )}
       </div>

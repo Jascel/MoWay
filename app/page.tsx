@@ -1,6 +1,7 @@
 "use client";
 
 import PageHeader from "@/components/PageHeader";
+import Avatar from "@/components/Avatar";
 import WeatherCard from "@/components/WeatherCard";
 import CommuteCard from "@/components/CommuteCard";
 import ParkingCard from "@/components/ParkingCard";
@@ -9,6 +10,7 @@ import DayAlert from "@/components/DayAlert";
 import { mockDay, mockProfile, type Profile, type RouteAlert, type SavedEvent } from "@/data/mock";
 import { ALERT_KEY } from "@/lib/alerts";
 import { minusMinutes } from "@/lib/time";
+import { PROFILE_KEY } from "@/lib/options";
 import { useStoredState } from "@/lib/useStoredState";
 
 // The Today screen arranges the components and hands each its slice of mock data.
@@ -25,7 +27,7 @@ export default function TodayPage() {
   );
 
   // Your Profile settings (name, parking buffer) are saved by the Profile screen.
-  const [profile] = useStoredState<Profile>("moway.profile", mockProfile);
+  const [profile] = useStoredState<Profile>(PROFILE_KEY, mockProfile);
 
   // Arrive `parkingBufferMinutes` before your first class, then work backwards by the drive.
   // (Andres's routing will replace this with real traffic later.)
@@ -38,9 +40,16 @@ export default function TodayPage() {
 
   return (
     <>
-      <PageHeader title={`Hi ${profile.name || "there"} 👋`} subtitle="Here's your day" />
-      <WeatherCard weather={day.weather} date={day.date} />
-      <div className="space-y-4 p-4">
+      <PageHeader
+        title={`Hi ${profile.name || "there"}`}
+        subtitle="Here's your day"
+        right={<Avatar name={profile.name} />}
+        large
+        brand
+      >
+        <WeatherCard weather={day.weather} date={day.date} />
+      </PageHeader>
+      <div className="-mt-6 space-y-6 px-4 pb-4">
         <DayAlert alert={alert} onDismiss={() => saveAlert(null)} onReset={() => saveAlert(day.alert)} />
         <CommuteCard
           leaveBy={leaveBy}

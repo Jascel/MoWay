@@ -1,18 +1,26 @@
 @import "tailwindcss";
 
-/* Our own color palette. Tailwind turns each --color-* into classes,
-   e.g. --color-usf-green -> bg-usf-green, text-usf-green, border-usf-green */
+/* MoWay palette. Each --color-* becomes Tailwind classes: bg-mint, text-ink, border-usf-green, ... */
 @theme inline {
   --color-usf-green: #006747;
   --color-usf-green-dark: #004d35;
-  --color-usf-green-light: #e6f2ed;
   --color-usf-gold: #cfc493;
-  --color-warn: #b45309;
-  --color-warn-light: #fef3c7;
+  --color-mint: #c7eabb;
+  --color-mint-soft: #e6f5df;
+  --color-aqua: #aee2ff;
+  --color-aqua-soft: #ddf2ff;
+  --color-sun: #fce38a;
+  --color-blush: #fee2ad;
+  --color-coral: #ffb9a3;
+  --color-lilac: #d9ccf5;
+  --color-cream: #f7f8f1;
+  --color-ink: #1f2a44;
+  --color-leaf: #2e9e6b;
   --font-sans: var(--font-geist-sans);
+  --font-display: var(--font-fraunces);
 }
 
 body {
-  background: #f4f5f4;
-  color: #1f2937;
+  background: #eef1e8;
+  color: var(--color-ink);
 }
