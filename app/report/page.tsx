@@ -96,7 +96,7 @@ export default function ReportPage() {
 
         <form onSubmit={handleSubmit} className="space-y-5 rounded-3xl bg-white p-5 shadow-sm">
           <div>
-            <h2 className="mb-3 text-xl font-bold">What&apos;s going on?</h2>
+            <h2 className="font-display mb-3 text-xl font-bold">What&apos;s going on?</h2>
             <div className="grid grid-cols-2 gap-3">
               {reportCategories.map(({ value, label, icon: Icon }) => (
                 <button
@@ -187,13 +187,13 @@ export default function ReportPage() {
         </form>
 
         <section className="space-y-3">
-          <h2 className="text-xl font-bold">Near you</h2>
+          <h2 className="font-display text-xl font-bold">Near you</h2>
           <StillThereCard report={mockReport} />
         </section>
 
         {myReports.length > 0 && (
           <section className="space-y-2">
-            <h2 className="text-xl font-bold">Your reports</h2>
+            <h2 className="font-display text-xl font-bold">Your reports</h2>
             {myReports.map((r) => {
               const info = categoryInfo(r.category);
               const Icon = info.icon;

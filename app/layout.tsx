@@ -1,10 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Fraunces, Lilita_One } from "next/font/google";
+import { Bricolage_Grotesque, Fraunces, Lilita_One } from "next/font/google";
 import "./globals.css";
 import BottomNav from "@/components/BottomNav";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Main font for all normal text.
+const bricolage = Bricolage_Grotesque({
+  variable: "--font-bricolage",
   subsets: ["latin"],
 });
 
@@ -38,7 +39,7 @@ export const viewport: Viewport = {
 // so the bottom nav stays put while pages swap in above it.
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${fraunces.variable} ${lilita.variable} h-full antialiased`}>
+    <html lang="en" className={`${bricolage.variable} ${fraunces.variable} ${lilita.variable} h-full antialiased`}>
       <body className="font-sans">
         <main className="mx-auto min-h-screen max-w-md bg-cream pb-28 shadow-sm">
           {children}

@@ -64,7 +64,7 @@ function WalkConnector({ leg, arriveBy }: { leg: Leg; arriveBy: string }) {
 export default function Timeline({ events, legs }: { events: ClassEvent[]; legs: Leg[] }) {
   return (
     <section>
-      <h2 className="mb-3 text-2xl font-bold">Your day</h2>
+      <h2 className="font-display mb-3 text-2xl font-bold">Your day</h2>
       {events.map((event) => {
         const leg = legs.find((l) => l.toEventId === event.id);
         return (
