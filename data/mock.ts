@@ -38,6 +38,7 @@ export type ConditionClass = "temporary" | "infrastructure";
 // A user can pick several modes (e.g. drives in, then wheelchair on campus).
 export interface Profile {
   name: string;
+  photo?: string; // small profile picture (data URL), kept only in the browser
   homeAddress?: string; // typed by the user, kept only in their browser. Never put a real address in the code.
   modes: Mode[]; // all the ways you get around
   activeMode: Mode; // the one you're using today (must be one of modes)

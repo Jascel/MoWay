@@ -38,24 +38,24 @@ function stylePin(
 ): void {
   if (record.buildingId === originId) {
     record.pin.glyphText = "A";
-    record.pin.background = "#28613d";
-    record.pin.borderColor = "#173b2b";
+    record.pin.background = "#006747";
+    record.pin.borderColor = "#004d35";
     record.pin.glyphColor = "#ffffff";
     return;
   }
 
   if (record.buildingId === destinationId) {
     record.pin.glyphText = "B";
-    record.pin.background = "#f2c94c";
-    record.pin.borderColor = "#765b25";
-    record.pin.glyphColor = "#173b2b";
+    record.pin.background = "#fce38a";
+    record.pin.borderColor = "#1f2a44";
+    record.pin.glyphColor = "#1f2a44";
     return;
   }
 
   record.pin.glyphText = record.defaultGlyph;
   record.pin.background = "#ffffff";
-  record.pin.borderColor = "#28613d";
-  record.pin.glyphColor = "#28613d";
+  record.pin.borderColor = "#006747";
+  record.pin.glyphColor = "#006747";
 }
 
 export function GoogleMapCanvas({
@@ -179,7 +179,7 @@ export function GoogleMapCanvas({
       map: runtime.map,
       path: [...routeState.route.path],
       geodesic: true,
-      strokeColor: "#28613d",
+      strokeColor: "#006747",
       strokeOpacity: 0.92,
       strokeWeight: 6,
     });
@@ -193,7 +193,7 @@ export function GoogleMapCanvas({
   }, [routeState, runtime]);
 
   return (
-    <div className="relative min-h-[28rem] overflow-hidden rounded-3xl border border-[#c9ddcc] bg-[#dcebdd] shadow-sm lg:min-h-[38rem]">
+    <div className="relative min-h-[28rem] overflow-hidden rounded-3xl border border-usf-green bg-mint-soft lg:min-h-[38rem]">
       <div
         ref={containerRef}
         className="absolute inset-0"
@@ -202,7 +202,7 @@ export function GoogleMapCanvas({
       />
       {loadState === "loading" ? (
         <div
-          className="absolute inset-0 grid place-items-center bg-[#edf3ed] px-6 text-center text-sm font-medium text-[#4d795c]"
+          className="absolute inset-0 grid place-items-center bg-cream px-6 text-center text-sm font-medium text-ink/70"
           role="status"
         >
           Loading the USF Tampa map…
@@ -210,19 +210,19 @@ export function GoogleMapCanvas({
       ) : null}
       {loadState === "error" ? (
         <div
-          className="absolute inset-0 grid place-items-center bg-[#edf3ed] px-6 text-center"
+          className="absolute inset-0 grid place-items-center bg-cream px-6 text-center"
           role="alert"
         >
           <div className="max-w-md rounded-2xl bg-white p-6 shadow-sm">
-            <p className="text-base font-semibold text-[#173b2b]">
+            <p className="text-base font-bold text-ink">
               Map unavailable
             </p>
-            <p className="mt-2 text-sm leading-6 text-[#59705f]">
+            <p className="mt-2 text-sm leading-6 text-ink/70">
               {MAP_ERROR_MESSAGE}
             </p>
             <button
               type="button"
-              className="mt-5 min-h-11 rounded-xl bg-[#28613d] px-4 py-2 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a8cdb0]"
+              className="mt-5 min-h-11 rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-aqua"
               onClick={() => window.location.reload()}
             >
               Reload map

@@ -71,7 +71,7 @@ export default function TodayPage() {
       <PageHeader
         title={`Hi ${profile.name || "there"}`}
         subtitle="Here's your day"
-        right={<Avatar name={profile.name} />}
+        right={<Avatar name={profile.name} photo={profile.photo} />}
         large
         brand
       >
