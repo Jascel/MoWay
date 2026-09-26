@@ -132,7 +132,7 @@ export async function createReport(
     input.longitude
   );
 
-  // Construction can be reported from farther away
+  // Construction can be reported from farther away.
   const allowedDistance =
     input.reportType === "construction"
       ? 300
@@ -157,32 +157,29 @@ export async function createReport(
       expiration.getHours() + 24
     );
 
-    expiresAt =
-      expiration.toISOString();
+    expiresAt = expiration.toISOString();
   }
 
-  const { data, error } =
-    await supabase
-      .from("reports")
-      .insert({
-        reporter_id: user.id,
-        report_type:
-          input.reportType,
-        impact: input.impact,
-        condition_class:
-          input.conditionClass,
-        latitude: input.latitude,
-        longitude: input.longitude,
-        location_name:
-          input.locationName?.trim() ||
-          null,
-        note:
-          input.note?.trim() || null,
-        status: "unconfirmed",
-        expires_at: expiresAt,
-      })
-      .select()
-      .single();
+  const { data, error } = await supabase
+    .from("reports")
+    .insert({
+      reporter_id: user.id,
+      report_type: input.reportType,
+      impact: input.impact,
+      condition_class:
+        input.conditionClass,
+      latitude: input.latitude,
+      longitude: input.longitude,
+      location_name:
+        input.locationName?.trim() || null,
+      note:
+        input.note?.trim() || null,
+      status: "unconfirmed",
+      expires_at: expiresAt,
+      confidence_score: 50,
+    })
+    .select()
+    .single();
 
   if (error) {
     throw error;
@@ -216,7 +213,8 @@ export async function confirmReport(
     );
   }
 
-  // Store this user's confirmation
+  // Store this user's confirmation.
+  // The database trigger handles confidence scoring.
   const {
     data: confirmation,
     error: confirmationError,
@@ -231,7 +229,8 @@ export async function confirmReport(
     .single();
 
   if (confirmationError) {
-    // PostgreSQL unique-constraint error
+    // PostgreSQL unique-constraint error:
+    // this user already confirmed this report.
     if (
       confirmationError.code === "23505"
     ) {
@@ -243,8 +242,8 @@ export async function confirmReport(
     throw confirmationError;
   }
 
-  // If the user says the problem is still there,
-  // confirm the report.
+  // A YES confirmation refreshes temporary reports
+  // for another 24 hours.
   if (stillThere) {
     const {
       data: report,
@@ -259,48 +258,28 @@ export async function confirmReport(
       throw reportError;
     }
 
-    let newExpiration:
-      | string
-      | null = null;
-
-    // A confirmation refreshes temporary reports
-    // for another 24 hours.
     if (
       report.condition_class ===
       "temporary"
     ) {
-      const expiration =
-        new Date();
+      const expiration = new Date();
 
       expiration.setHours(
         expiration.getHours() + 24
       );
 
-      newExpiration =
-        expiration.toISOString();
-    }
+      const { error: updateError } =
+        await supabase
+          .from("reports")
+          .update({
+            expires_at:
+              expiration.toISOString(),
+          })
+          .eq("id", reportId);
 
-    const updateData: {
-      status: string;
-      expires_at?: string;
-    } = {
-      status: "confirmed",
-    };
-
-    // Infrastructure reports keep expires_at = NULL.
-    if (newExpiration) {
-      updateData.expires_at =
-        newExpiration;
-    }
-
-    const { error: updateError } =
-      await supabase
-        .from("reports")
-        .update(updateData)
-        .eq("id", reportId);
-
-    if (updateError) {
-      throw updateError;
+      if (updateError) {
+        throw updateError;
+      }
     }
   }
 
@@ -312,30 +291,19 @@ export async function confirmReport(
 // --------------------
 
 export async function getActiveReports() {
-  const supabase =
-    getSupabaseClient();
-
-  const now =
-    new Date().toISOString();
+  const supabase = getSupabaseClient();
 
   const {
     data: reports,
     error,
   } = await supabase
-    .from("reports")
+    .from("active_reports")
     .select(`
       *,
       report_confirmations (
         still_there
       )
     `)
-    .or(
-      `expires_at.is.null,expires_at.gt.${now}`
-    )
-    .in("status", [
-      "unconfirmed",
-      "confirmed",
-    ])
     .order("created_at", {
       ascending: false,
     });
@@ -348,8 +316,7 @@ export async function getActiveReports() {
   return (reports ?? []).map(
     (report) => {
       const confirmations =
-        report.report_confirmations ??
-        [];
+        report.report_confirmations ?? [];
 
       const confirmationCount =
         confirmations.filter(
@@ -364,8 +331,7 @@ export async function getActiveReports() {
         ...report,
 
         location_name:
-          report.location_name ??
-          null,
+          report.location_name ?? null,
 
         note:
           report.note ?? null,
@@ -373,10 +339,73 @@ export async function getActiveReports() {
         confirmation_count:
           confirmationCount,
 
-        // Hide the nested rows from the UI.
+        // Hide nested confirmation rows
+        // from the frontend result.
         report_confirmations:
           undefined,
       };
     }
   );
+}
+
+// --------------------
+// GET NEARBY REPORTS
+// --------------------
+
+export async function getNearbyReports(
+  latitude: number,
+  longitude: number,
+  radiusMeters = 500
+) {
+  // Validate the requested location.
+  if (
+    latitude < -90 ||
+    latitude > 90 ||
+    longitude < -180 ||
+    longitude > 180
+  ) {
+    throw new Error(
+      "Invalid location."
+    );
+  }
+
+  if (radiusMeters <= 0) {
+    throw new Error(
+      "Radius must be greater than zero."
+    );
+  }
+
+  // getActiveReports already removes:
+  // - expired reports
+  // - resolved reports
+  // - reports with low effective confidence
+  const reports =
+    await getActiveReports();
+
+  return reports
+    .map((report) => {
+      const distance =
+        distanceInMeters(
+          latitude,
+          longitude,
+          report.latitude,
+          report.longitude
+        );
+
+      return {
+        ...report,
+        distance_meters:
+          Math.round(distance),
+      };
+    })
+    .filter(
+      (report) =>
+        report.distance_meters <=
+        radiusMeters
+    )
+    .sort(
+      (a, b) =>
+        a.distance_meters -
+        b.distance_meters
+    );
 }
