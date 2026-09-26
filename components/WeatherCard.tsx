@@ -4,8 +4,8 @@ import { formatTime, weekdayShort } from "@/lib/time";
 
 const icons = { sunny: Sun, cloudy: Cloud, rain: CloudRain, storm: CloudLightning };
 
-// Yellow weather card: "Thu, 91°F, storms at 2:30 PM".
-// It receives ONE weather object as a prop and only displays it (no state needed).
+// Compact yellow weather card with squared corners, shown inside the Today header:
+// "Thu, 91°F, storms at 2:30 PM". It receives ONE weather object as a prop (no state needed).
 export default function WeatherCard({ weather, date }: { weather: Weather; date: string }) {
   const Icon = icons[weather.condition];
   return (
