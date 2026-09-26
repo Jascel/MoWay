@@ -45,11 +45,19 @@ export interface SavedEvent extends ClassEvent {
   date: string; // "YYYY-MM-DD"
 }
 
+// One part of a multi-part trip.
+export interface LegStep {
+  mode: "walk" | "drive";
+  minutes: number;
+  label: string; // "Walk to your car"
+}
+
 // Walking/rolling leg between two consecutive events.
 export interface Leg {
   fromEventId: string | "parking" | "home";
   toEventId: string;
   mode?: "walk" | "drive"; // defaults to walk
+  steps?: LegStep[]; // for multi-part trips (walk to car, drive, walk); minutes = total
   minutes: number;
   distanceMeters: number;
   tags: string[]; // route explanation chips: "More shaded", "+3 min", ...
@@ -134,7 +142,7 @@ export const mockDay: DayPlan = {
   },
   parking: {
     garage: "Zimmerman (outside CIS)",
-    reason: "Right next to CIS, where your first three stops are. Move your car to ENB before your lab.",
+    reason: "Right next to CIS, where your first three stops are. Before your lab, you move your car to the Fishbowl.",
     savesWalkMinutes: 19,
     spotsLeftPercent: 34,
     walkMinutesToFirstClass: 4,
@@ -154,7 +162,18 @@ export const mockDay: DayPlan = {
     { fromEventId: "e2", toEventId: "e3", minutes: 8, distanceMeters: 560, tags: ["+3 min", "Avoids construction"] },
     { fromEventId: "e3", toEventId: "e4", minutes: 7, distanceMeters: 480, tags: ["More shaded"] },
     { fromEventId: "e4", toEventId: "e5", minutes: 10, distanceMeters: 750, tags: ["Step-free"] },
-    { fromEventId: "e5", toEventId: "e6", mode: "drive", minutes: 20, distanceMeters: 2500, tags: ["Move your car to ENB"] },
+    {
+      fromEventId: "e5",
+      toEventId: "e6",
+      minutes: 15,
+      distanceMeters: 2200,
+      tags: ["Park at the Fishbowl"],
+      steps: [
+        { mode: "walk", minutes: 8, label: "Walk to your car" },
+        { mode: "drive", minutes: 5, label: "Drive to the Fishbowl (about 1 mi)" },
+        { mode: "walk", minutes: 2, label: "Walk into ENB" },
+      ],
+    },
   ],
   alert: {
     reportId: "r1",

@@ -6,7 +6,7 @@ import CommuteCard from "@/components/CommuteCard";
 import ParkingCard from "@/components/ParkingCard";
 import Timeline from "@/components/Timeline";
 import DayAlert from "@/components/DayAlert";
-import { mockDay, type RouteAlert } from "@/data/mock";
+import { mockDay, mockProfile, type Profile, type RouteAlert } from "@/data/mock";
 import { ALERT_KEY } from "@/lib/alerts";
 import { minusMinutes } from "@/lib/time";
 import { useStoredState } from "@/lib/useStoredState";
@@ -18,20 +18,28 @@ export default function TodayPage() {
   const day = mockDay;
   const [alert, saveAlert] = useStoredState<RouteAlert | null>(ALERT_KEY, day.alert);
 
+  // Your Profile settings (name, parking buffer) are saved by the Profile screen.
+  const [profile] = useStoredState<Profile>("moway.profile", mockProfile);
+
+  // Arrive `parkingBufferMinutes` before your first class, then work backwards by the drive.
+  // (Andres's routing will replace this with real traffic later.)
+  const arriveBy = minusMinutes(day.events[0].start, profile.parkingBufferMinutes);
+  const baseLeaveBy = minusMinutes(arriveBy, day.driveMinutes);
+
   // With an alert active, leave earlier by the extra minutes.
-  const leaveBy = alert ? minusMinutes(day.leaveBy, alert.extraMinutes) : day.leaveBy;
+  const leaveBy = alert ? minusMinutes(baseLeaveBy, alert.extraMinutes) : baseLeaveBy;
   const reason = alert ? "Leaving earlier because of a new report on your route" : day.leaveByReason;
 
   return (
     <>
-      <PageHeader title="Here's Your Day" />
+      <PageHeader title={`Hi ${profile.name || "there"} 👋`} subtitle="Here's your day" />
       <WeatherCard weather={day.weather} date={day.date} />
       <div className="space-y-4 p-4">
         <DayAlert alert={alert} onDismiss={() => saveAlert(null)} onReset={() => saveAlert(day.alert)} />
         <CommuteCard
           leaveBy={leaveBy}
           driveMinutes={day.driveMinutes}
-          arriveBy={day.arriveBy}
+          arriveBy={arriveBy}
           reason={reason}
         />
         <ParkingCard parking={day.parking} />

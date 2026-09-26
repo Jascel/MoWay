@@ -1,6 +1,7 @@
 import type { ClassEvent, Leg } from "@/data/mock";
 import { formatTime, minusMinutes } from "@/lib/time";
 import { categoryStyles } from "@/lib/categories";
+import RouteChips from "@/components/RouteChips";
 
 // One class/stop card, colored by category (like a calendar app).
 function EventCard({ event }: { event: ClassEvent }) {
@@ -27,14 +28,21 @@ function WalkConnector({ leg, arriveBy }: { leg: Leg; arriveBy: string }) {
   return (
     <div className="ml-4 border-l-2 border-dashed border-gray-300 py-3 pl-4">
       <p className="text-sm text-gray-700">
-        {leg.mode === "drive" ? "🚗" : "🚶"} {leg.minutes} min {leg.mode === "drive" ? "drive" : "walk"}, leave by {formatTime(minusMinutes(arriveBy, leg.minutes))}
+        {leg.steps ? "🚶🚗🚶" : leg.mode === "drive" ? "🚗" : "🚶"} {leg.minutes} min{" "}
+        {leg.steps ? "total" : leg.mode === "drive" ? "drive" : "walk"}, leave by{" "}
+        {formatTime(minusMinutes(arriveBy, leg.minutes))}
       </p>
-      <div className="mt-1 flex flex-wrap gap-1">
-        {leg.tags.map((tag) => (
-          <span key={tag} className="rounded-full bg-usf-green-light px-2 py-0.5 text-xs text-usf-green-dark">
-            {tag}
-          </span>
-        ))}
+      {leg.steps && (
+        <ul className="mt-1 space-y-0.5 text-xs text-gray-600">
+          {leg.steps.map((step) => (
+            <li key={step.label}>
+              {step.mode === "drive" ? "🚗" : "🚶"} {step.label} ({step.minutes} min)
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="mt-1">
+        <RouteChips tags={leg.tags} />
       </div>
     </div>
   );
