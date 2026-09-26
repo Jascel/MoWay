@@ -32,13 +32,12 @@ import {
 
 import {
   createReport,
-  getActiveReports,
   resolveMyReports,
 } from "@/lib/database/reports";
 
 import { toReportInput } from "@/lib/backendMapping";
 import { rowToReport } from "@/lib/database/mapReport";
-import { subscribeToReports } from "@/lib/database/realtime";
+import { useActiveReports } from "@/lib/database/useActiveReports";
 
 type Coords = {
   latitude: number;
@@ -94,30 +93,22 @@ export default function ReportPage() {
     const [clearing, setClearing] =
   useState(false);
 
-  const [nearbyReport, setNearbyReport] =
-    useState<Report | null>(null);
-
   // --------------------
   // LOAD ACTIVE REPORTS
   // --------------------
+// --------------------
+// ACTIVE REPORTS
+// --------------------
 
-  async function loadReports() {
-    try {
-      const reports = await getActiveReports();
-      setNearbyReport(reports.length > 0 ? rowToReport(reports[0]) : null);
-    } catch (err) {
-      console.error("Could not load active reports:", err);
-    }
-  }
+const {
+  reports: activeReports,
+  refresh: refreshReports,
+} = useActiveReports();
 
-  useEffect(() => {
-    // Run after the first render, so the state updates inside loadReports happen in a callback.
-    const timer = setTimeout(loadReports, 0);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Update "Near you" live when anyone reports something or answers "Is it still there?".
-  useEffect(() => subscribeToReports(loadReports), []);
+const nearbyReport =
+  activeReports.length > 0
+    ? rowToReport(activeReports[0])
+    : null;
 
   // --------------------
   // GET USER LOCATION
@@ -243,7 +234,7 @@ export default function ReportPage() {
 
       // Reload active reports from
       // Supabase so Near You updates.
-      await loadReports();
+      await refreshReports();
 
       // Reset the form.
       setCategory(null);
@@ -283,7 +274,7 @@ async function handleClearReports() {
     saveMyReports([]);
 
     // Reload active reports from Supabase.
-    await loadReports();
+    await refreshReports();
 
     setSent(false);
   } catch (err) {

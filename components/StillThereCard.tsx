@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, X } from "lucide-react";
 
 import type { Report, RouteAlert } from "@/data/mock";
@@ -22,6 +22,11 @@ export default function StillThereCard({
 
   const [error, setError] =
     useState("");
+  useEffect(() => {
+  setAnswer(null);
+  setError("");
+  setSubmitting(false);
+}, [report.id]);
 
   const [, saveAlert] =
     useStoredState<RouteAlert | null>(
@@ -36,8 +41,7 @@ export default function StillThereCard({
   const Icon = info.icon;
 
   const confirmations =
-    report.confirmations +
-    (answer === "yes" ? 1 : 0);
+    report.confirmations;
 
   async function handleAnswer(
     stillThere: boolean
