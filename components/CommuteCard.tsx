@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Car } from "lucide-react";
 import { formatTime } from "@/lib/time";
 
@@ -7,11 +8,13 @@ export default function CommuteCard({
   driveMinutes,
   arriveBy,
   reason,
+  hasHome,
 }: {
   leaveBy: string;
   driveMinutes: number;
   arriveBy: string;
   reason: string;
+  hasHome: boolean;
 }) {
   // "8:40 AM" -> big "8:40" plus small "AM"
   const [time, suffix] = formatTime(leaveBy).split(" ");
@@ -28,6 +31,13 @@ export default function CommuteCard({
         {driveMinutes} min drive, arrive by {formatTime(arriveBy)}
       </p>
       <p className="mt-2 text-xs text-ink/70">{reason}</p>
+      <p className="mt-1 text-xs text-ink/70">
+        {hasHome ? (
+          "Driving from your home address."
+        ) : (
+          <Link href="/profile" className="underline">Add your home address</Link>
+        )}
+      </p>
     </section>
   );
 }

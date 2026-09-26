@@ -1,15 +1,19 @@
 "use client";
 
+import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
 import Avatar from "@/components/Avatar";
 import ChipGroup from "@/components/ChipGroup";
 import { useStoredState } from "@/lib/useStoredState";
 import { modeOptions, prefOptions, PROFILE_KEY } from "@/lib/options";
+import { Car } from "lucide-react";
 import { mockProfile, type Mode, type Profile } from "@/data/mock";
+import { useDriveEstimate } from "@/lib/driveTime";
 
 // Every change is saved right away (no Save button), in the browser under PROFILE_KEY.
 export default function ProfilePage() {
   const [profile, saveProfile] = useStoredState<Profile>(PROFILE_KEY, mockProfile);
+  const drive = useDriveEstimate(profile.homeAddress ?? "");
 
   // Add the value if it's missing, remove it if it's there.
   function toggle<K extends "modes" | "prefs">(field: K, value: string) {
@@ -46,6 +50,33 @@ export default function ProfilePage() {
             onChange={(e) => saveProfile({ ...profile, name: e.target.value })}
             className="w-full rounded-2xl border border-ink/15 bg-cream p-3"
           />
+        </section>
+
+        <section className="rounded-3xl bg-white p-5 shadow-sm">
+          <label className="mb-1 block font-display text-lg font-bold" htmlFor="home">
+            Where do you live?
+          </label>
+          <p className="mb-3 text-xs text-ink/70">
+            We use it to work out your drive to campus. It&apos;s saved only on this device.
+          </p>
+          <input
+            id="home"
+            value={profile.homeAddress ?? ""}
+            onChange={(e) => saveProfile({ ...profile, homeAddress: e.target.value })}
+            placeholder="Street address, city"
+            autoComplete="street-address"
+            className="w-full rounded-2xl border border-ink/15 bg-cream p-3"
+          />
+          {drive.status === "loading" && <p className="mt-3 text-sm text-ink/60">Working out your drive...</p>}
+          {drive.status === "error" && (
+            <p className="mt-3 text-sm text-red-600">Couldn&apos;t find that address. Try adding the street and city.</p>
+          )}
+          {drive.minutes !== null && (
+            <p className="mt-3 flex items-center gap-2 text-sm font-medium">
+              <Car className="size-4 text-leaf" />
+              About {drive.minutes} min to campus ({drive.miles?.toFixed(1)} mi, without traffic)
+            </p>
+          )}
         </section>
 
         <section className="rounded-3xl bg-mint p-5">
@@ -98,7 +129,10 @@ export default function ProfilePage() {
           </div>
         </section>
 
-        <p className="pb-2 text-center text-xs text-ink/40">Saved automatically on this device.</p>
+        <p className="text-center text-xs text-ink/40">Saved automatically on this device.</p>
+        <p className="pb-2 text-center text-xs">
+          <Link href="/welcome" className="text-ink/50 underline">Replay the welcome screens</Link>
+        </p>
       </div>
     </>
   );
