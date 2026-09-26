@@ -22,7 +22,7 @@ export default function DayAlert({
   return (
     <div className="rounded-3xl bg-blush p-4">
       <div className="flex items-start justify-between gap-2">
-        <p className="flex items-center gap-2 font-display text-lg font-extrabold">
+        <p className="flex items-center gap-2 text-lg font-bold">
           <TriangleAlert className="size-5" />
           Your day changed
         </p>

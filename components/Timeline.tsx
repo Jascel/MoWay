@@ -19,7 +19,7 @@ function EventCard({ event }: { event: ClassEvent }) {
           {style.label}
         </span>
       </div>
-      <p className="mt-1 font-display text-xl font-extrabold leading-tight">{event.title}</p>
+      <p className="mt-1 text-xl font-bold leading-tight">{event.title}</p>
       <p className="mt-0.5 flex items-center gap-1 text-sm text-ink/80">
         <MapPin className="size-3.5" />
         {event.building}
@@ -64,7 +64,7 @@ function WalkConnector({ leg, arriveBy }: { leg: Leg; arriveBy: string }) {
 export default function Timeline({ events, legs }: { events: ClassEvent[]; legs: Leg[] }) {
   return (
     <section>
-      <h2 className="mb-3 font-display text-2xl font-extrabold">Your day</h2>
+      <h2 className="mb-3 text-2xl font-bold">Your day</h2>
       {events.map((event) => {
         const leg = legs.find((l) => l.toEventId === event.id);
         return (

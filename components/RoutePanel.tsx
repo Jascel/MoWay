@@ -50,15 +50,15 @@ export default function RoutePanel({ day }: { day: DayPlan }) {
 
       <div className="mt-3 grid grid-cols-3 gap-2 text-center">
         <div className="rounded-2xl bg-mint-soft p-3">
-          <p className="font-display text-xl font-extrabold">{leg.minutes} min</p>
+          <p className="text-xl font-bold">{leg.minutes} min</p>
           <p className="text-xs text-ink/60">{verb}</p>
         </div>
         <div className="rounded-2xl bg-aqua-soft p-3">
-          <p className="font-display text-xl font-extrabold">{miles} mi</p>
+          <p className="text-xl font-bold">{miles} mi</p>
           <p className="text-xs text-ink/60">distance</p>
         </div>
         <div className="rounded-2xl bg-sun/50 p-3">
-          <p className="font-display text-xl font-extrabold">
+          <p className="text-xl font-bold">
             {destination ? formatTime(minusMinutes(destination.start, leg.minutes)).replace(" ", "") : "-"}
           </p>
           <p className="text-xs text-ink/60">leave by</p>

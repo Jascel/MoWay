@@ -4,6 +4,7 @@
 @theme inline {
   --color-usf-green: #006747;
   --color-usf-green-dark: #004d35;
+  --color-usf-gold: #cfc493;
   --color-mint: #c7eabb;
   --color-mint-soft: #e6f5df;
   --color-aqua: #aee2ff;
@@ -16,7 +17,7 @@
   --color-ink: #1f2a44;
   --color-leaf: #2e9e6b;
   --font-sans: var(--font-geist-sans);
-  --font-display: var(--font-geist-sans);
+  --font-display: var(--font-fraunces);
 }
 
 body {

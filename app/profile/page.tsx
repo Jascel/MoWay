@@ -28,7 +28,7 @@ export default function ProfilePage() {
       />
       <div className="-mt-6 space-y-6 px-4">
         <section className="rounded-3xl bg-white p-5 shadow-sm">
-          <label className="mb-2 block font-display text-lg font-extrabold" htmlFor="name">
+          <label className="mb-2 block text-lg font-bold" htmlFor="name">
             Your name
           </label>
           <input
@@ -40,7 +40,7 @@ export default function ProfilePage() {
         </section>
 
         <section className="rounded-3xl bg-mint p-5">
-          <h2 className="font-display text-lg font-extrabold">How do you get around?</h2>
+          <h2 className="text-lg font-bold">How do you get around?</h2>
           <p className="mb-3 text-xs text-ink/70">Pick all that apply.</p>
           <ChipGroup
             options={modeOptions}
@@ -50,7 +50,7 @@ export default function ProfilePage() {
         </section>
 
         <section className="rounded-3xl bg-aqua p-5">
-          <h2 className="font-display text-lg font-extrabold">Accessibility & comfort</h2>
+          <h2 className="text-lg font-bold">Accessibility & comfort</h2>
           <p className="mb-3 text-xs text-ink/70">We&apos;ll plan routes around these.</p>
           <ChipGroup
             options={prefOptions}
@@ -60,7 +60,7 @@ export default function ProfilePage() {
         </section>
 
         <section className="rounded-3xl bg-sun p-5">
-          <h2 className="font-display text-lg font-extrabold">Parking buffer</h2>
+          <h2 className="text-lg font-bold">Parking buffer</h2>
           <p className="mb-3 text-xs text-ink/70">
             Arrive this early before your first class so parking isn&apos;t stressful.
           </p>

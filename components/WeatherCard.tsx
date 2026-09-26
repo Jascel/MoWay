@@ -9,12 +9,12 @@ const icons = { sunny: Sun, cloudy: Cloud, rain: CloudRain, storm: CloudLightnin
 export default function WeatherCard({ weather, date }: { weather: Weather; date: string }) {
   const Icon = icons[weather.condition];
   return (
-    <section className="flex items-center gap-3 rounded-lg bg-sun p-3 shadow-sm">
+    <section className="flex w-fit max-w-full items-center gap-3 rounded-lg bg-sun p-3">
       <div className="flex size-12 shrink-0 items-center justify-center rounded-md bg-white/70">
         <Icon className="size-7 text-leaf" strokeWidth={1.75} />
       </div>
       <div>
-        <p className="font-display text-2xl font-extrabold leading-tight">
+        <p className="text-lg font-semibold leading-tight">
           {weekdayShort(date)}, {weather.tempF}°F
           {weather.stormAt && `, storms at ${formatTime(weather.stormAt)}`}
         </p>

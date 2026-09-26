@@ -20,7 +20,7 @@ export default function StillThereCard({ report }: { report: Report }) {
   return (
     <section className="rounded-3xl border border-blush bg-blush/25 p-5">
       <p className="text-xs font-bold uppercase tracking-wider text-leaf">Is it still there?</p>
-      <p className="mt-1 flex items-center gap-2 font-display text-xl font-extrabold">
+      <p className="mt-1 flex items-center gap-2 text-xl font-bold">
         <Icon className="size-5" />
         {info.label}
       </p>

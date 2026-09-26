@@ -43,9 +43,12 @@ export default function TodayPage() {
         title={`Hi ${profile.name || "there"}`}
         subtitle="Here's your day"
         right={<Avatar name={profile.name} />}
-      />
-      <div className="-mt-6 space-y-6 px-4 pb-4">
+        large
+        brand
+      >
         <WeatherCard weather={day.weather} date={day.date} />
+      </PageHeader>
+      <div className="-mt-6 space-y-6 px-4 pb-4">
         <DayAlert alert={alert} onDismiss={() => saveAlert(null)} onReset={() => saveAlert(day.alert)} />
         <CommuteCard
           leaveBy={leaveBy}

@@ -12,18 +12,18 @@ function fullness(spotsLeft: number) {
 export default function ParkingCard({ parking }: { parking: ParkingRecommendation }) {
   const status = fullness(parking.spotsLeftPercent);
   return (
-    <section className="rounded-3xl bg-mint p-6">
+    <section className="rounded-3xl border border-ink/10 bg-white p-5">
       <p className="text-xs font-bold uppercase tracking-wider text-leaf">Smart Park</p>
-      <p className="mt-2 flex items-center gap-2 font-display text-xl font-extrabold leading-tight">
+      <p className="mt-2 flex items-center gap-2 text-xl font-bold leading-tight">
         <SquareParking className="size-6 shrink-0 text-leaf" />
         {parking.garage}
       </p>
-      <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1.5 text-sm font-semibold">
+      <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-mint px-3 py-1.5 text-sm font-semibold">
         <Footprints className="size-4 text-leaf" />
         Saves you {parking.savesWalkMinutes} min of walking today
       </p>
       <p className="mt-3 text-xs text-ink/70">{parking.reason}</p>
-      <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white/70">
+      <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-mint">
         <div
           className={`h-full rounded-full ${status.bar}`}
           style={{ width: `${100 - parking.spotsLeftPercent}%` }}

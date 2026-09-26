@@ -4,7 +4,7 @@ export default function Avatar({ name, size = "md" }: { name: string; size?: "md
   const dims = size === "lg" ? "size-20 text-3xl" : "size-11 text-lg";
   return (
     <div
-      className={`${dims} flex shrink-0 items-center justify-center rounded-full border border-usf-green bg-white font-display font-extrabold text-leaf`}
+      className={`${dims} flex shrink-0 items-center justify-center rounded-full border border-usf-green bg-white font-bold text-leaf`}
     >
       {(name.trim()[0] ?? "?").toUpperCase()}
     </div>
