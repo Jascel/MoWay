@@ -18,6 +18,7 @@ export type MobilityProfileInput = {
   preferShade: boolean;
   preferCovered: boolean;
   avoidCrowds: boolean;
+  wellLit: boolean;
 };
 
 export async function saveMobilityProfile(
@@ -49,6 +50,7 @@ export async function saveMobilityProfile(
       prefer_shade: input.preferShade,
       prefer_covered: input.preferCovered,
       avoid_crowds: input.avoidCrowds,
+      well_lit: input.wellLit,
     })
     .select()
     .single();

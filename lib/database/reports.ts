@@ -10,6 +10,7 @@ export type ReportType =
   | "blocked_sidewalk"
   | "flooding"
   | "accessible_entrance_closed"
+  | "poor_lighting"
   | "other";
 
 export type ReportImpact =
@@ -35,6 +36,10 @@ export type ReportInput = {
   // User's current location
   userLatitude: number;
   userLongitude: number;
+
+  // Optional information shown in the UI
+  locationName?: string;
+  note?: string;
 };
 
 // --------------------
@@ -131,7 +136,10 @@ export async function createReport(input: ReportInput) {
 
   if (input.conditionClass === "temporary") {
     const expiration = new Date();
-    expiration.setHours(expiration.getHours() + 24);
+
+    expiration.setHours(
+      expiration.getHours() + 24
+    );
 
     expiresAt = expiration.toISOString();
   }
@@ -145,6 +153,10 @@ export async function createReport(input: ReportInput) {
       condition_class: input.conditionClass,
       latitude: input.latitude,
       longitude: input.longitude,
+      location_name:
+        input.locationName?.trim() || null,
+      note:
+        input.note?.trim() || null,
       status: "unconfirmed",
       expires_at: expiresAt,
     })
@@ -177,7 +189,6 @@ export async function confirmReport(
     );
   }
 
-  // Store this user's confirmation
   const { data: confirmation, error: confirmationError } =
     await supabase
       .from("report_confirmations")
@@ -190,7 +201,6 @@ export async function confirmReport(
       .single();
 
   if (confirmationError) {
-    // PostgreSQL unique-constraint error
     if (confirmationError.code === "23505") {
       throw new Error(
         "You have already confirmed this report."
@@ -200,10 +210,9 @@ export async function confirmReport(
     throw confirmationError;
   }
 
-  // If the user says the problem is still there,
-  // confirm the report.
+  // If the user confirms the issue is still there,
+  // mark the report as confirmed.
   if (stillThere) {
-    // Get the report so we know whether it is temporary.
     const { data: report, error: reportError } =
       await supabase
         .from("reports")
@@ -217,8 +226,7 @@ export async function confirmReport(
 
     let newExpiration: string | null = null;
 
-    // A confirmation refreshes temporary reports
-    // for another 24 hours.
+    // Refresh temporary reports for another 24 hours.
     if (report.condition_class === "temporary") {
       const expiration = new Date();
 
@@ -236,8 +244,6 @@ export async function confirmReport(
       status: "confirmed",
     };
 
-    // Infrastructure reports should keep expires_at = NULL.
-    // Only update expiration for temporary reports.
     if (newExpiration) {
       updateData.expires_at = newExpiration;
     }
@@ -262,9 +268,14 @@ export async function confirmReport(
 export async function getActiveReports() {
   const now = new Date().toISOString();
 
-  const { data, error } = await supabase
+  const { data: reports, error } = await supabase
     .from("reports")
-    .select("*")
+    .select(`
+      *,
+      report_confirmations (
+        still_there
+      )
+    `)
     .or(`expires_at.is.null,expires_at.gt.${now}`)
     .in("status", ["unconfirmed", "confirmed"])
     .order("created_at", { ascending: false });
@@ -273,5 +284,27 @@ export async function getActiveReports() {
     throw error;
   }
 
-  return data;
+  // Add confirmation counts for Connie's UI.
+  return (reports ?? []).map((report) => {
+    const confirmations =
+      report.report_confirmations ?? [];
+
+    const confirmationCount =
+      confirmations.filter(
+        (confirmation: { still_there: boolean }) =>
+          confirmation.still_there === true
+      ).length;
+
+    return {
+      ...report,
+
+      // Connie can use these directly.
+      location_name: report.location_name ?? null,
+      note: report.note ?? null,
+      confirmation_count: confirmationCount,
+
+      // Don't make the UI deal with the nested rows.
+      report_confirmations: undefined,
+    };
+  });
 }

@@ -22,6 +22,7 @@ export type ReportCategory =
   | "blocked_sidewalk"
   | "flooding"
   | "accessible_entrance_closed"
+  | "poor_lighting"
   | "other";
 
 export type ReportImpact =
