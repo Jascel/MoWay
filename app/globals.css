@@ -1,26 +1,18 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* Our own color palette. Tailwind turns each --color-* into classes,
+   e.g. --color-usf-green -> bg-usf-green, text-usf-green, border-usf-green */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: Arial, Helvetica, sans-serif;
-  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-usf-green: #006747;
+  --color-usf-green-dark: #004d35;
+  --color-usf-green-light: #e6f2ed;
+  --color-usf-gold: #cfc493;
+  --color-warn: #b45309;
+  --color-warn-light: #fef3c7;
+  --font-sans: var(--font-geist-sans);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #f4f5f4;
+  color: #1f2937;
 }
