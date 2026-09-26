@@ -76,7 +76,7 @@ export default function TodayPage() {
           hasHome={Boolean(profile.homeAddress?.trim())}
         />
         <ParkingCard parking={day.parking} />
-        <Timeline events={events} legs={day.legs} />
+        <Timeline events={events} legs={day.legs} homeTrip={{ walkMinutes: 2, driveMinutes }} />
       </div>
     </>
   );
