@@ -5,11 +5,13 @@ import PageHeader from "@/components/PageHeader";
 import StillThereCard from "@/components/StillThereCard";
 import { reportCategories, categoryInfo } from "@/lib/reportCategories";
 import { useStoredState } from "@/lib/useStoredState";
-import { mockReport, type Report, type ReportCategory } from "@/data/mock";
+import { mockReport, type Report, type ReportCategory, type RouteAlert } from "@/data/mock";
+import { ALERT_KEY, alertFromReport } from "@/lib/alerts";
 
 export default function ReportPage() {
   // Reports you submit are saved on this device for now (later: Adriana's Supabase).
   const [myReports, saveMyReports] = useStoredState<Report[]>("moway.reports", []);
+  const [, saveAlert] = useStoredState<RouteAlert | null>(ALERT_KEY, null);
   const [category, setCategory] = useState<ReportCategory | null>(null);
   const [location, setLocation] = useState("");
   const [note, setNote] = useState("");
@@ -33,6 +35,7 @@ export default function ReportPage() {
       affectsRoute: false,
     };
     saveMyReports([report, ...myReports]);
+    saveAlert(alertFromReport(report));
     setCategory(null);
     setLocation("");
     setNote("");

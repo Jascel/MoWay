@@ -82,6 +82,13 @@ export interface Report {
   affectsRoute: boolean;
 }
 
+// "Your day changed" banner: something reported that slows the user down.
+export interface RouteAlert {
+  reportId: string;
+  message: string;
+  extraMinutes: number;
+}
+
 export interface DayPlan {
   date: string;
   leaveBy: string;
@@ -92,7 +99,7 @@ export interface DayPlan {
   parking: ParkingRecommendation;
   events: ClassEvent[];
   legs: Leg[];
-  alert: { reportId: string; message: string; extraMinutes: number } | null;
+  alert: RouteAlert | null;
 }
 
 export const mockProfile: Profile = {
