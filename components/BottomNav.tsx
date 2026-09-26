@@ -15,7 +15,8 @@ const tabs = [
 export default function BottomNav() {
   const pathname = usePathname(); // current URL path, e.g. "/map"
 
-  if (pathname.startsWith("/welcome")) return null; // no tab bar on the welcome screens
+  // no tab bar on the welcome and login screens
+  if (pathname.startsWith("/welcome") || pathname.startsWith("/login")) return null;
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 pb-[env(safe-area-inset-bottom)]">
