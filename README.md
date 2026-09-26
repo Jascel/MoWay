@@ -4,13 +4,79 @@ MoWay is a USF Tampa day planner that combines a student's schedule, mobility pr
 
 ## Team setup
 
+Use Node.js 22.x and npm. The repository records these expectations in
+`package.json` and `.nvmrc`.
+
 ```bash
 npm install
 cp .env.example .env.local
 npm run dev
 ```
 
-The real `.env.local` file is ignored by Git. Add variable names and placeholders to `.env.example`, never API keys.
+The real `.env.local` file is ignored by Git. Add variable names and placeholders to `.env.example`, never API keys. Restart the development server after changing public environment variables because Next.js includes `NEXT_PUBLIC_` values in the browser bundle.
+
+| Variable | Required for | Notes |
+| --- | --- | --- |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Google Maps features | Browser-visible key; restrict it to the required APIs and allowed origins. |
+| `NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID` | Optional Google cloud map styling | Leave empty to use the app's default map ID behavior. |
+| `NEXT_PUBLIC_SUPABASE_URL` | Calling the dormant Supabase database helpers | Project URL from Supabase. |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Calling the dormant Supabase database helpers | Browser-safe publishable key; this is not a service-role secret. |
+
+Supabase is initialized lazily. Pages can run without Supabase credentials because the current Profile and Report experiences use `localStorage`; calling a database helper without both Supabase variables throws a configuration error. When configured, authentication and database errors are thrown to the caller rather than reported as successful saves.
+
+## Integration status
+
+| Area | Baseline status |
+| --- | --- |
+| Profile and Report UI persistence | Local-only via `localStorage`; no Supabase reads or writes are wired. |
+| Supabase client | SDK dependency and lazy client factory are present; no live project connection is claimed. |
+| Database helpers | Adriana's helper contracts are preserved but are not called by the UI. |
+| `supabase/config.toml` | Local Supabase CLI configuration only; it is not a migration and does not establish a hosted schema. |
+| Migrations and live schema | Unverified and deferred. No migration files are present in this baseline. |
+| Row Level Security (RLS) | Unverified and deferred. |
+| Authentication | Unverified, deferred, and not wired into the UI. |
+| Realtime | Deferred and not wired. |
+| Hosted project settings | Unverified and deferred. |
+
+This baseline intentionally does not add auth, database writes from UI, schema changes, realtime subscriptions, or hosted Supabase settings.
+
+## USF walking map
+
+The `/map` page displays three USF Tampa destinations and requests a real Google walking route only after you press **Get walking route**. It shows the returned path, estimated minutes, and distance. These are ordinary Google walking directions, not an accessible-route guarantee.
+
+Enable both **Maps JavaScript API** and **Routes API** in the same Google Cloud project, with billing active. Then add local values to `.env.local`:
+
+```bash
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_restricted_browser_key
+NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID=your_map_id
+```
+
+`NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID` is optional for local development; the app uses Google's `DEMO_MAP_ID` when it is absent. Use your own JavaScript map ID before a production release. Restart `npm run dev` after changing an environment file, then open [http://localhost:3000/map](http://localhost:3000/map).
+
+`NEXT_PUBLIC_` values are intentionally included in the browser bundle. Protect the Maps key with website referrer restrictions and API restrictions for Maps JavaScript API and Routes API. If the map is dark, watermarked, or unavailable, check that billing is active, both APIs are enabled, and the allowed referrer includes the exact local or deployed origin. Keep the real key in `.env.local`; never commit it.
+
+### Map integration
+
+`CampusMap` is exported from `components/maps/campus-map.tsx` and accepts `apiKey`, `mapId`, and `buildings: readonly CampusBuilding[]`. The plain application types live in `lib/maps/types.ts`:
+
+```ts
+type CampusBuilding = {
+  readonly id: string;
+  readonly name: string;
+  readonly position: { readonly lat: number; readonly lng: number };
+};
+
+type WalkingRouteResult = {
+  readonly originId: string;
+  readonly destinationId: string;
+  readonly durationMillis: number;
+  readonly distanceMeters: number;
+  readonly path: readonly { readonly lat: number; readonly lng: number }[];
+  readonly warnings: readonly string[];
+};
+```
+
+The bundled `CAMPUS_BUILDINGS` fixture uses approximate outdoor pedestrian approach points selected from mapped walkways. They are not survey-grade doors or verified accessible/public entrances. A future database integration can map its building records into `CampusBuilding[]` without adopting this fixture as a schema.
 
 Use short-lived branches such as `andres/maps`, `connie/ui`, and `adriana/backend`. Keep commits focused, open pull requests into `main`, and pull the latest `main` before starting work.
 
@@ -19,22 +85,11 @@ Use short-lived branches such as `andres/maps`, `connie/ui`, and `adriana/backen
 - `npm run dev` starts the development server.
 - `npm run lint` checks the code with ESLint.
 - `npm run build` creates a production build.
+- `npx tsc --noEmit` type-checks the project.
 
 ## Getting Started
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result. The canonical campus map route is `/map`; `/route-preview` is temporary and is not the canonical map URL.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
