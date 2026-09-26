@@ -19,7 +19,7 @@ export default function TodayPage() {
         <CommuteCard
           leaveBy={day.leaveBy}
           driveMinutes={day.driveMinutes}
-          fasterThan={day.fasterThan}
+          arriveBy={day.arriveBy}
           reason={day.leaveByReason}
         />
         <ParkingCard parking={day.parking} />

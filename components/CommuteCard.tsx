@@ -4,12 +4,12 @@ import { formatTime } from "@/lib/time";
 export default function CommuteCard({
   leaveBy,
   driveMinutes,
-  fasterThan,
+  arriveBy,
   reason,
 }: {
   leaveBy: string;
   driveMinutes: number;
-  fasterThan: { time: string; minutes: number };
+  arriveBy: string;
   reason: string;
 }) {
   return (
@@ -17,7 +17,7 @@ export default function CommuteCard({
       <p className="text-xs font-semibold uppercase tracking-wide text-usf-green">Smart Commute</p>
       <p className="mt-1 text-2xl font-bold">Leave home at {formatTime(leaveBy)}</p>
       <p className="mt-1 text-sm text-gray-600">
-        {driveMinutes} min drive, {fasterThan.minutes} min faster than {formatTime(fasterThan.time)}
+        {driveMinutes} min drive, arrive by {formatTime(arriveBy)}
       </p>
       <p className="mt-2 text-xs text-gray-500">{reason}</p>
     </section>

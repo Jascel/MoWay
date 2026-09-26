@@ -26,8 +26,12 @@ export interface Profile {
   prefs: AccessPref[];
 }
 
+// Drives the card color (see lib/categories.ts).
+export type EventCategory = "class" | "meeting" | "club" | "fitness" | "event" | "work";
+
 export interface ClassEvent {
   id: string;
+  category: EventCategory;
   title: string; // "COP 3514 Intro to Program Design"
   building: string; // "ENB"
   room?: string;
@@ -39,6 +43,7 @@ export interface ClassEvent {
 export interface Leg {
   fromEventId: string | "parking" | "home";
   toEventId: string;
+  mode?: "walk" | "drive"; // defaults to walk
   minutes: number;
   distanceMeters: number;
   tags: string[]; // route explanation chips: "More shaded", "+3 min", ...
@@ -76,7 +81,7 @@ export interface DayPlan {
   leaveBy: string;
   leaveByReason: string; // "Traffic on I-275 adds 8 min"
   driveMinutes: number;
-  fasterThan: { time: string; minutes: number }; // "10 min faster than leaving at 08:00"
+  arriveBy: string; // when you get to campus, e.g. 9:06 (before parking gets hard)
   weather: Weather;
   parking: ParkingRecommendation;
   events: ClassEvent[];
@@ -101,11 +106,11 @@ export const mockReport: Report = {
 };
 
 export const mockDay: DayPlan = {
-  date: "2026-09-25",
-  leaveBy: "08:05",
-  leaveByReason: "Traffic on I-275 adds 8 min",
-  driveMinutes: 20,
-  fasterThan: { time: "08:00", minutes: 10 },
+  date: "2026-10-01",
+  leaveBy: "08:40",
+  leaveByReason: "Leaving by 8:40 gets you a spot before the lot fills up",
+  driveMinutes: 26,
+  arriveBy: "09:06",
   weather: {
     tempF: 91,
     condition: "storm",
@@ -114,28 +119,32 @@ export const mockDay: DayPlan = {
     summary: "Storms this afternoon. Bring an umbrella.",
   },
   parking: {
-    garage: "Collins Garage",
-    reason: "Closest to both your 9:30 and 2:15 classes",
+    garage: "Zimmerman (outside CIS)",
+    reason: "Right next to CIS, where your first three stops are. Move your car to ENB before your lab.",
     savesWalkMinutes: 19,
     spotsLeftPercent: 34,
-    walkMinutesToFirstClass: 6,
+    walkMinutesToFirstClass: 4,
     walkMinutesFromLastClass: 4,
   },
   events: [
-    { id: "e1", title: "COP 3514 Program Design", building: "ENB", room: "118", start: "09:30", end: "10:45" },
-    { id: "e2", title: "MAC 2311 Calculus I", building: "CMC", room: "130", start: "11:00", end: "12:15" },
-    { id: "e3", title: "Study group", building: "Library", start: "13:00", end: "14:00" },
-    { id: "e4", title: "PHY 2048 Physics", building: "CHE", room: "100", start: "14:15", end: "15:30" },
+    { id: "e1", category: "class", title: "MAC 2312", building: "CIS", room: "1045", start: "09:30", end: "10:45" },
+    { id: "e2", category: "meeting", title: "Logistics meeting", building: "CIS", start: "11:00", end: "11:15" },
+    { id: "e3", category: "class", title: "CDA 3201", building: "CWY", room: "107", start: "12:30", end: "13:45" },
+    { id: "e4", category: "club", title: "MentorSHPE Meeting", building: "USF Library", start: "14:00", end: "15:00" },
+    { id: "e5", category: "fitness", title: "Pilates", building: "USF Recreation Center", start: "16:30", end: "17:30" },
+    { id: "e6", category: "class", title: "CDA 3201L", building: "ENB", room: "214", start: "18:00", end: "19:45" },
   ],
   legs: [
-    { fromEventId: "parking", toEventId: "e1", minutes: 6, distanceMeters: 420, tags: ["Paved", "Step-free"] },
-    { fromEventId: "e1", toEventId: "e2", minutes: 8, distanceMeters: 560, tags: ["+3 min", "Avoids construction"] },
-    { fromEventId: "e2", toEventId: "e3", minutes: 5, distanceMeters: 340, tags: ["More shaded"] },
-    { fromEventId: "e3", toEventId: "e4", minutes: 7, distanceMeters: 480, tags: ["Step-free"] },
+    { fromEventId: "parking", toEventId: "e1", minutes: 4, distanceMeters: 300, tags: ["Paved", "Step-free"] },
+    { fromEventId: "e1", toEventId: "e2", minutes: 1, distanceMeters: 40, tags: ["Same building"] },
+    { fromEventId: "e2", toEventId: "e3", minutes: 8, distanceMeters: 560, tags: ["+3 min", "Avoids construction"] },
+    { fromEventId: "e3", toEventId: "e4", minutes: 7, distanceMeters: 480, tags: ["More shaded"] },
+    { fromEventId: "e4", toEventId: "e5", minutes: 10, distanceMeters: 750, tags: ["Step-free"] },
+    { fromEventId: "e5", toEventId: "e6", mode: "drive", minutes: 20, distanceMeters: 2500, tags: ["Move your car to ENB"] },
   ],
   alert: {
     reportId: "r1",
-    message: "Ramp near the Student Center is blocked. Your route to Calculus now takes 3 min longer.",
+    message: "Ramp near the Marshall Student Center is blocked. Your walk to CDA 3201 now takes 3 min longer.",
     extraMinutes: 3,
   },
 };

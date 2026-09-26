@@ -1,15 +1,20 @@
 import type { ClassEvent, Leg } from "@/data/mock";
 import { formatTime, minusMinutes } from "@/lib/time";
+import { categoryStyles } from "@/lib/categories";
 
-// One class/stop card.
+// One class/stop card, colored by category (like a calendar app).
 function EventCard({ event }: { event: ClassEvent }) {
+  const style = categoryStyles[event.category];
   return (
-    <div className="rounded-2xl border-l-4 border-usf-green bg-white p-4 shadow-sm">
-      <p className="text-sm font-semibold text-usf-green">
-        {formatTime(event.start)} - {formatTime(event.end)}
-      </p>
+    <div className={`rounded-2xl p-4 text-white shadow-sm ${style.bg}`}>
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold">
+          {formatTime(event.start)} - {formatTime(event.end)}
+        </p>
+        <span className="rounded-full bg-white/25 px-2 py-0.5 text-xs">{style.label}</span>
+      </div>
       <p className="mt-0.5 font-semibold">{event.title}</p>
-      <p className="text-sm text-gray-600">
+      <p className="text-sm text-white/90">
         {event.building}
         {event.room && ` ${event.room}`}
       </p>
@@ -22,7 +27,7 @@ function WalkConnector({ leg, arriveBy }: { leg: Leg; arriveBy: string }) {
   return (
     <div className="ml-4 border-l-2 border-dashed border-gray-300 py-3 pl-4">
       <p className="text-sm text-gray-700">
-        🚶 {leg.minutes} min walk, leave by {formatTime(minusMinutes(arriveBy, leg.minutes))}
+        {leg.mode === "drive" ? "🚗" : "🚶"} {leg.minutes} min {leg.mode === "drive" ? "drive" : "walk"}, leave by {formatTime(minusMinutes(arriveBy, leg.minutes))}
       </p>
       <div className="mt-1 flex flex-wrap gap-1">
         {leg.tags.map((tag) => (
