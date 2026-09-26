@@ -1,41 +1,44 @@
 "use client";
 
 import { useEffect } from "react";
-import { supabase } from "@/lib/supabase/client";
+import { getSupabaseClient } from "@/lib/supabase/client";
 
 export default function AnonymousAuth() {
   useEffect(() => {
     async function ensureUser() {
-      console.log("1. AnonymousAuth is running");
+      try {
+        const supabase = getSupabaseClient();
 
-      const {
-        data: { session },
-        error: sessionError,
-      } = await supabase.auth.getSession();
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser();
 
-      console.log("2. Existing session:", session);
+        if (error) {
+          console.error("Could not check auth:", error);
+          return;
+        }
 
-      if (sessionError) {
-        console.error("Session error:", sessionError);
-        return;
+        // Already signed in, so nothing else is needed.
+        if (user) {
+          return;
+        }
+
+        const { error: signInError } =
+          await supabase.auth.signInAnonymously();
+
+        if (signInError) {
+          console.error(
+            "Anonymous sign-in failed:",
+            signInError
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Could not initialize Supabase:",
+          error
+        );
       }
-
-      if (session) {
-        console.log("3. User is already signed in");
-        return;
-      }
-
-      console.log("3. No user found. Creating anonymous user...");
-
-      const { data, error } =
-        await supabase.auth.signInAnonymously();
-
-      if (error) {
-        console.error("4. Anonymous sign-in failed:", error);
-        return;
-      }
-
-      console.log("4. Anonymous sign-in worked:", data.user);
     }
 
     ensureUser();

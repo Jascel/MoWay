@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase/client";
+import { getSupabaseClient } from "@/lib/supabase/client";
 
 export type MobilityMode =
   | "walking"
@@ -24,17 +24,27 @@ export type MobilityProfileInput = {
 export async function saveMobilityProfile(
   input: MobilityProfileInput
 ) {
+  const supabase = getSupabaseClient();
+
   const {
     data: { user },
     error: userError,
   } = await supabase.auth.getUser();
 
-  if (userError || !user) {
-    throw new Error("You must be logged in to save mobility preferences.");
+  if (userError) {
+    throw userError;
+  }
+
+  if (!user) {
+    throw new Error(
+      "You must be logged in to save mobility preferences."
+    );
   }
 
   if (!input.availableModes.includes(input.activeMode)) {
-    throw new Error("Active mode must be one of the available modes.");
+    throw new Error(
+      "Active mode must be one of the available modes."
+    );
   }
 
   const { data, error } = await supabase

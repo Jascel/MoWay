@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase/client";
+import { getSupabaseClient } from "@/lib/supabase/client";
 
 // --------------------
 // REPORT TYPES
@@ -80,13 +80,21 @@ function distanceInMeters(
 // CREATE REPORT
 // --------------------
 
-export async function createReport(input: ReportInput) {
+export async function createReport(
+  input: ReportInput
+) {
+  const supabase = getSupabaseClient();
+
   const {
     data: { user },
     error: userError,
   } = await supabase.auth.getUser();
 
-  if (userError || !user) {
+  if (userError) {
+    throw userError;
+  }
+
+  if (!user) {
     throw new Error(
       "You must be logged in to submit a report."
     );
@@ -99,7 +107,9 @@ export async function createReport(input: ReportInput) {
     input.longitude < -180 ||
     input.longitude > 180
   ) {
-    throw new Error("Invalid report location.");
+    throw new Error(
+      "Invalid report location."
+    );
   }
 
   // Validate user's current location
@@ -109,7 +119,9 @@ export async function createReport(input: ReportInput) {
     input.userLongitude < -180 ||
     input.userLongitude > 180
   ) {
-    throw new Error("Invalid user location.");
+    throw new Error(
+      "Invalid user location."
+    );
   }
 
   // Calculate distance from user to reported problem
@@ -122,7 +134,9 @@ export async function createReport(input: ReportInput) {
 
   // Construction can be reported from farther away
   const allowedDistance =
-    input.reportType === "construction" ? 300 : 50;
+    input.reportType === "construction"
+      ? 300
+      : 50;
 
   if (distance > allowedDistance) {
     throw new Error(
@@ -134,34 +148,41 @@ export async function createReport(input: ReportInput) {
   // Infrastructure conditions stay until resolved.
   let expiresAt: string | null = null;
 
-  if (input.conditionClass === "temporary") {
+  if (
+    input.conditionClass === "temporary"
+  ) {
     const expiration = new Date();
 
     expiration.setHours(
       expiration.getHours() + 24
     );
 
-    expiresAt = expiration.toISOString();
+    expiresAt =
+      expiration.toISOString();
   }
 
-  const { data, error } = await supabase
-    .from("reports")
-    .insert({
-      reporter_id: user.id,
-      report_type: input.reportType,
-      impact: input.impact,
-      condition_class: input.conditionClass,
-      latitude: input.latitude,
-      longitude: input.longitude,
-      location_name:
-        input.locationName?.trim() || null,
-      note:
-        input.note?.trim() || null,
-      status: "unconfirmed",
-      expires_at: expiresAt,
-    })
-    .select()
-    .single();
+  const { data, error } =
+    await supabase
+      .from("reports")
+      .insert({
+        reporter_id: user.id,
+        report_type:
+          input.reportType,
+        impact: input.impact,
+        condition_class:
+          input.conditionClass,
+        latitude: input.latitude,
+        longitude: input.longitude,
+        location_name:
+          input.locationName?.trim() ||
+          null,
+        note:
+          input.note?.trim() || null,
+        status: "unconfirmed",
+        expires_at: expiresAt,
+      })
+      .select()
+      .single();
 
   if (error) {
     throw error;
@@ -178,30 +199,42 @@ export async function confirmReport(
   reportId: string,
   stillThere: boolean
 ) {
+  const supabase = getSupabaseClient();
+
   const {
     data: { user },
     error: userError,
   } = await supabase.auth.getUser();
 
-  if (userError || !user) {
+  if (userError) {
+    throw userError;
+  }
+
+  if (!user) {
     throw new Error(
       "You must be logged in to confirm a report."
     );
   }
 
-  const { data: confirmation, error: confirmationError } =
-    await supabase
-      .from("report_confirmations")
-      .insert({
-        report_id: reportId,
-        user_id: user.id,
-        still_there: stillThere,
-      })
-      .select()
-      .single();
+  // Store this user's confirmation
+  const {
+    data: confirmation,
+    error: confirmationError,
+  } = await supabase
+    .from("report_confirmations")
+    .insert({
+      report_id: reportId,
+      user_id: user.id,
+      still_there: stillThere,
+    })
+    .select()
+    .single();
 
   if (confirmationError) {
-    if (confirmationError.code === "23505") {
+    // PostgreSQL unique-constraint error
+    if (
+      confirmationError.code === "23505"
+    ) {
       throw new Error(
         "You have already confirmed this report."
       );
@@ -210,31 +243,41 @@ export async function confirmReport(
     throw confirmationError;
   }
 
-  // If the user confirms the issue is still there,
-  // mark the report as confirmed.
+  // If the user says the problem is still there,
+  // confirm the report.
   if (stillThere) {
-    const { data: report, error: reportError } =
-      await supabase
-        .from("reports")
-        .select("condition_class")
-        .eq("id", reportId)
-        .single();
+    const {
+      data: report,
+      error: reportError,
+    } = await supabase
+      .from("reports")
+      .select("condition_class")
+      .eq("id", reportId)
+      .single();
 
     if (reportError) {
       throw reportError;
     }
 
-    let newExpiration: string | null = null;
+    let newExpiration:
+      | string
+      | null = null;
 
-    // Refresh temporary reports for another 24 hours.
-    if (report.condition_class === "temporary") {
-      const expiration = new Date();
+    // A confirmation refreshes temporary reports
+    // for another 24 hours.
+    if (
+      report.condition_class ===
+      "temporary"
+    ) {
+      const expiration =
+        new Date();
 
       expiration.setHours(
         expiration.getHours() + 24
       );
 
-      newExpiration = expiration.toISOString();
+      newExpiration =
+        expiration.toISOString();
     }
 
     const updateData: {
@@ -244,14 +287,17 @@ export async function confirmReport(
       status: "confirmed",
     };
 
+    // Infrastructure reports keep expires_at = NULL.
     if (newExpiration) {
-      updateData.expires_at = newExpiration;
+      updateData.expires_at =
+        newExpiration;
     }
 
-    const { error: updateError } = await supabase
-      .from("reports")
-      .update(updateData)
-      .eq("id", reportId);
+    const { error: updateError } =
+      await supabase
+        .from("reports")
+        .update(updateData)
+        .eq("id", reportId);
 
     if (updateError) {
       throw updateError;
@@ -266,9 +312,16 @@ export async function confirmReport(
 // --------------------
 
 export async function getActiveReports() {
-  const now = new Date().toISOString();
+  const supabase =
+    getSupabaseClient();
 
-  const { data: reports, error } = await supabase
+  const now =
+    new Date().toISOString();
+
+  const {
+    data: reports,
+    error,
+  } = await supabase
     .from("reports")
     .select(`
       *,
@@ -276,35 +329,54 @@ export async function getActiveReports() {
         still_there
       )
     `)
-    .or(`expires_at.is.null,expires_at.gt.${now}`)
-    .in("status", ["unconfirmed", "confirmed"])
-    .order("created_at", { ascending: false });
+    .or(
+      `expires_at.is.null,expires_at.gt.${now}`
+    )
+    .in("status", [
+      "unconfirmed",
+      "confirmed",
+    ])
+    .order("created_at", {
+      ascending: false,
+    });
 
   if (error) {
     throw error;
   }
 
-  // Add confirmation counts for Connie's UI.
-  return (reports ?? []).map((report) => {
-    const confirmations =
-      report.report_confirmations ?? [];
+  // Add confirmation count for the frontend.
+  return (reports ?? []).map(
+    (report) => {
+      const confirmations =
+        report.report_confirmations ??
+        [];
 
-    const confirmationCount =
-      confirmations.filter(
-        (confirmation: { still_there: boolean }) =>
-          confirmation.still_there === true
-      ).length;
+      const confirmationCount =
+        confirmations.filter(
+          (confirmation: {
+            still_there: boolean;
+          }) =>
+            confirmation.still_there ===
+            true
+        ).length;
 
-    return {
-      ...report,
+      return {
+        ...report,
 
-      // Connie can use these directly.
-      location_name: report.location_name ?? null,
-      note: report.note ?? null,
-      confirmation_count: confirmationCount,
+        location_name:
+          report.location_name ??
+          null,
 
-      // Don't make the UI deal with the nested rows.
-      report_confirmations: undefined,
-    };
-  });
+        note:
+          report.note ?? null,
+
+        confirmation_count:
+          confirmationCount,
+
+        // Hide the nested rows from the UI.
+        report_confirmations:
+          undefined,
+      };
+    }
+  );
 }

@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 
+import RoutePanel from "@/components/RoutePanel";
 import { GoogleMapCanvas } from "@/components/maps/google-map-canvas";
 import { RouteControls } from "@/components/maps/route-controls";
-import { RouteSummary } from "@/components/maps/route-summary";
 import { useWalkingRoute } from "@/components/maps/use-walking-route";
 import type { CampusBuilding } from "@/lib/maps/types";
 
@@ -46,7 +46,6 @@ export function CampusMap({ apiKey, mapId, buildings }: CampusMapProps) {
     requestRoute,
     resetRoute,
   } = useWalkingRoute(apiKey, origin, destination);
-
   if (apiKey.length === 0) {
     return (
       <section
@@ -60,53 +59,35 @@ export function CampusMap({ apiKey, mapId, buildings }: CampusMapProps) {
           Add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY to .env.local, then restart the
           development server. Keep the real key out of Git.
         </p>
+        <button
+          type="button"
+          className="mt-5 min-h-11 rounded-xl bg-usf-green px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-usf-green-dark focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-mint"
+          onClick={() => window.location.reload()}
+        >
+          Retry map
+        </button>
       </section>
     );
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)] lg:items-start">
-      <aside className="space-y-5">
-        <RouteControls
-          buildings={buildings}
-          originId={originId}
-          destinationId={destinationId}
-          isLoading={routeState.kind === "loading"}
-          isRetry={routeState.kind === "error"}
-          onOriginChange={(buildingId) => {
-            resetRoute();
-            setOriginId(buildingId);
-          }}
-          onDestinationChange={(buildingId) => {
-            resetRoute();
-            setDestinationId(buildingId);
-          }}
-          onSubmit={() => void requestRoute()}
-        />
-
-        <div aria-live="polite" aria-atomic="true">
-          {routeState.kind === "loading" ? (
-            <p className="rounded-2xl border border-[#c9ddcc] bg-[#f7faf6] px-4 py-3 text-sm text-[#4d795c]">
-              Asking Google for a walking route…
-            </p>
-          ) : null}
-          {routeState.kind === "error" ? (
-            <p
-              className="rounded-2xl border border-[#e6c3b8] bg-[#fff7f4] px-4 py-3 text-sm leading-6 text-[#7a3828]"
-              role="alert"
-            >
-              {routeState.message}
-            </p>
-          ) : null}
-          {routeState.kind === "success" ? (
-            <RouteSummary
-              route={routeState.route}
-              origin={origin}
-              destination={destination}
-            />
-          ) : null}
-        </div>
-      </aside>
+    <div className="space-y-5">
+      <RouteControls
+        buildings={buildings}
+        originId={originId}
+        destinationId={destinationId}
+        isLoading={routeState.kind === "loading"}
+        isRetry={routeState.kind === "error"}
+        onOriginChange={(buildingId) => {
+          resetRoute();
+          setOriginId(buildingId);
+        }}
+        onDestinationChange={(buildingId) => {
+          resetRoute();
+          setDestinationId(buildingId);
+        }}
+        onSubmit={() => void requestRoute()}
+      />
 
       <GoogleMapCanvas
         apiKey={apiKey}
@@ -116,6 +97,25 @@ export function CampusMap({ apiKey, mapId, buildings }: CampusMapProps) {
         destinationId={destinationId}
         routeState={routeState}
       />
+
+      <div aria-live="polite" aria-atomic="true">
+        {routeState.kind === "loading" ? (
+          <p className="rounded-2xl border border-ink/10 bg-white px-4 py-3 text-sm text-ink/70 shadow-sm">
+            Asking Google for a walking route…
+          </p>
+        ) : null}
+        {routeState.kind === "error" ? (
+          <p
+            className="rounded-2xl border border-coral bg-white px-4 py-3 text-sm leading-6 text-ink shadow-sm"
+            role="alert"
+          >
+            {routeState.message}
+          </p>
+        ) : null}
+        {routeState.kind === "success" ? (
+          <RoutePanel route={routeState.route} buildings={buildings} />
+        ) : null}
+      </div>
     </div>
   );
 }
