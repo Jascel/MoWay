@@ -409,3 +409,89 @@ export async function getNearbyReports(
         b.distance_meters
     );
 }
+
+// --------------------
+// RESOLVE REPORT
+// --------------------
+
+export async function resolveReport(
+  reportId: string
+) {
+  const supabase = getSupabaseClient();
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError) {
+    throw userError;
+  }
+
+  if (!user) {
+    throw new Error(
+      "You must be logged in to resolve a report."
+    );
+  }
+
+  const { data, error } = await supabase
+    .from("reports")
+    .update({
+      status: "resolved",
+    })
+.eq("id", reportId)
+.eq("reporter_id", user.id)
+.select();
+  if (error) {
+    throw error;
+  }
+
+  if (!data || data.length === 0) {
+    throw new Error(
+      "Report was not found or does not belong to this user."
+    );
+  }
+
+  return data[0];
+}
+
+// --------------------
+// RESOLVE MY REPORTS
+// --------------------
+
+export async function resolveMyReports() {
+  const supabase = getSupabaseClient();
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError) {
+    throw userError;
+  }
+
+  if (!user) {
+    throw new Error(
+      "You must be logged in to clear your reports."
+    );
+  }
+
+  const { data, error } = await supabase
+    .from("reports")
+    .update({
+      status: "resolved",
+    })
+.eq("reporter_id", user.id)
+.in("status", [
+  "unconfirmed",
+  "confirmed",
+])
+.select();
+
+  if (error) {
+    throw error;
+  }
+
+  return data ?? [];
+}

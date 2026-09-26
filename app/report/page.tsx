@@ -33,6 +33,7 @@ import {
 import {
   createReport,
   getActiveReports,
+  resolveMyReports,
 } from "@/lib/database/reports";
 
 import { toReportInput } from "@/lib/backendMapping";
@@ -89,6 +90,9 @@ export default function ReportPage() {
 
   const [submitting, setSubmitting] =
     useState(false);
+  
+    const [clearing, setClearing] =
+  useState(false);
 
   const [nearbyReport, setNearbyReport] =
     useState<Report | null>(null);
@@ -264,7 +268,41 @@ export default function ReportPage() {
       setSubmitting(false);
     }
   }
+  // --------------------
+// CLEAR MY REPORTS
+// --------------------
 
+async function handleClearReports() {
+  try {
+    setError("");
+    setClearing(true);
+
+    await resolveMyReports();
+
+    // Remove this device's saved report history.
+    saveMyReports([]);
+
+    // Reload active reports from Supabase.
+    await loadReports();
+
+    setSent(false);
+  } catch (err) {
+    console.error(
+      "Could not clear reports:",
+      err
+    );
+
+    if (err instanceof Error) {
+      setError(err.message);
+    } else {
+      setError(
+        "Something went wrong while clearing your reports."
+      );
+    }
+  } finally {
+    setClearing(false);
+  }
+}
   return (
     <>
       <PageHeader
@@ -515,9 +553,22 @@ export default function ReportPage() {
 
         {myReports.length > 0 && (
           <section className="space-y-2">
-            <h2 className="font-display text-xl font-bold">
-              Your reports
-            </h2>
+<div className="flex items-center justify-between gap-3">
+  <h2 className="font-display text-xl font-bold">
+    Your reports
+  </h2>
+
+  <button
+    type="button"
+    onClick={handleClearReports}
+    disabled={clearing}
+    className="text-xs font-semibold text-ink/60 underline underline-offset-4 disabled:opacity-50"
+  >
+    {clearing
+      ? "Clearing..."
+      : "Clear my reports"}
+  </button>
+</div>
 
             {myReports.map((r) => {
               const info =
