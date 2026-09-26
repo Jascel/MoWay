@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
 import Avatar from "@/components/Avatar";
 import WeatherCard from "@/components/WeatherCard";
@@ -8,9 +10,12 @@ import ParkingCard from "@/components/ParkingCard";
 import Timeline from "@/components/Timeline";
 import DayAlert from "@/components/DayAlert";
 import { mockDay, mockProfile, type Profile, type RouteAlert, type SavedEvent } from "@/data/mock";
-import { ALERT_KEY } from "@/lib/alerts";
+import { ALERT_KEY, alertFromReport } from "@/lib/alerts";
+import { useLiveReport } from "@/lib/database/useLiveReport";
 import { minusMinutes } from "@/lib/time";
 import { PROFILE_KEY } from "@/lib/options";
+import { ONBOARDED_KEY } from "@/lib/onboarding";
+import { useDriveEstimate } from "@/lib/driveTime";
 import { useStoredState } from "@/lib/useStoredState";
 
 // The Today screen arranges the components and hands each its slice of mock data.
@@ -18,7 +23,24 @@ import { useStoredState } from "@/lib/useStoredState";
 // Later, mockDay gets replaced by a real API call and the components stay the same.
 export default function TodayPage() {
   const day = mockDay;
+  const router = useRouter();
+
+  // New visitors go to the welcome screens first.
+  const [onboarded, , loaded] = useStoredState<boolean>(ONBOARDED_KEY, false);
+  useEffect(() => {
+    if (loaded && !onboarded) router.replace("/welcome");
+  }, [loaded, onboarded, router]);
   const [alert, saveAlert] = useStoredState<RouteAlert | null>(ALERT_KEY, day.alert);
+
+  // A new community report (from anyone, live) turns on the alert once. Dismissing it keeps it dismissed.
+  const liveReport = useLiveReport();
+  const [seenReportId, saveSeenReportId] = useStoredState<string | null>("moway.lastLiveReport", null);
+  useEffect(() => {
+    if (liveReport && liveReport.id !== seenReportId) {
+      saveSeenReportId(liveReport.id);
+      saveAlert(alertFromReport(liveReport));
+    }
+  }, [liveReport, seenReportId, saveSeenReportId, saveAlert]);
 
   // Events added on the Add screen for this day get mixed in with the mock ones, sorted by start time.
   const [added] = useStoredState<SavedEvent[]>("moway.events", []);
@@ -29,10 +51,16 @@ export default function TodayPage() {
   // Your Profile settings (name, parking buffer) are saved by the Profile screen.
   const [profile] = useStoredState<Profile>(PROFILE_KEY, mockProfile);
 
+  // Real drive time from the home address when we have one; otherwise the demo number.
+  const drive = useDriveEstimate(profile.homeAddress ?? "");
+  const driveMinutes = drive.minutes ?? day.driveMinutes;
+
   // Arrive `parkingBufferMinutes` before your first class, then work backwards by the drive.
   // (Andres's routing will replace this with real traffic later.)
   const arriveBy = minusMinutes(events[0].start, profile.parkingBufferMinutes);
-  const baseLeaveBy = minusMinutes(arriveBy, day.driveMinutes);
+  const baseLeaveBy = minusMinutes(arriveBy, driveMinutes);
+
+  if (!loaded || !onboarded) return null; // wait for the saved value (or redirect to /welcome)
 
   // With an alert active, leave earlier by the extra minutes.
   const leaveBy = alert ? minusMinutes(baseLeaveBy, alert.extraMinutes) : baseLeaveBy;
@@ -53,12 +81,13 @@ export default function TodayPage() {
         <DayAlert alert={alert} onDismiss={() => saveAlert(null)} onReset={() => saveAlert(day.alert)} />
         <CommuteCard
           leaveBy={leaveBy}
-          driveMinutes={day.driveMinutes}
+          driveMinutes={driveMinutes}
           arriveBy={arriveBy}
           reason={reason}
+          hasHome={Boolean(profile.homeAddress?.trim())}
         />
         <ParkingCard parking={day.parking} />
-        <Timeline events={events} legs={day.legs} />
+        <Timeline events={events} legs={day.legs} homeTrip={{ walkMinutes: 2, driveMinutes }} />
       </div>
     </>
   );

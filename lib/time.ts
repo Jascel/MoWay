@@ -19,6 +19,11 @@ export function minusMinutes(t: string, minutes: number): string {
   return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
 }
 
+// ("19:45", 20) -> "20:05"
+export function plusMinutes(t: string, minutes: number): string {
+  return minusMinutes(t, -minutes);
+}
+
 // "2026-09-25" -> "Fri"
 export function weekdayShort(date: string): string {
   return new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { weekday: "short" });

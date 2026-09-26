@@ -14,7 +14,7 @@ export default function ParkingCard({ parking }: { parking: ParkingRecommendatio
   return (
     <section className="rounded-3xl border border-ink/10 bg-white p-5">
       <p className="text-xs font-bold uppercase tracking-wider text-leaf">Smart Park</p>
-      <p className="mt-2 flex items-center gap-2 text-xl font-bold leading-tight">
+      <p className="mt-2 flex items-center gap-2 font-display text-xl font-bold leading-tight">
         <SquareParking className="size-6 shrink-0 text-leaf" />
         {parking.garage}
       </p>

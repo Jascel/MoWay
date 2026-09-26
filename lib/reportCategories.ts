@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  Accessibility, Ban, CircleHelp, Construction, DoorClosed, OctagonX, Waves,
+  Accessibility, Ban, CircleHelp, Construction, DoorClosed, LightbulbOff, OctagonX, Waves,
 } from "lucide-react";
 import type { ConditionClass, ReportCategory, ReportImpact } from "@/data/mock";
 
@@ -14,6 +14,7 @@ export const reportCategories: { value: ReportCategory; label: string; icon: Luc
   { value: "sidewalk_ends", label: "Sidewalk ends", icon: OctagonX },
   { value: "accessible_entrance_closed", label: "Accessible entrance closed", icon: DoorClosed },
   { value: "flooding", label: "Flooding", icon: Waves },
+  { value: "poor_lighting", label: "Poor lighting", icon: LightbulbOff },
   { value: "other", label: "Something else", icon: CircleHelp },
 ];
 

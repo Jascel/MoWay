@@ -9,6 +9,7 @@
   --color-mint-soft: #e6f5df;
   --color-aqua: #aee2ff;
   --color-aqua-soft: #ddf2ff;
+  --color-ice: #deecff;
   --color-sun: #fce38a;
   --color-blush: #fee2ad;
   --color-coral: #ffb9a3;
@@ -16,8 +17,9 @@
   --color-cream: #f7f8f1;
   --color-ink: #1f2a44;
   --color-leaf: #2e9e6b;
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-bricolage);
   --font-display: var(--font-fraunces);
+  --font-logo: var(--font-lilita);
 }
 
 body {
