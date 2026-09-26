@@ -235,6 +235,7 @@ export default function TodayPage() {
         }
         large
         brand
+        status={process.env.NEXT_PUBLIC_SUPABASE_URL ? <LiveDot /> : undefined}
       >
         <WeatherCard
           weather={day.weather}
@@ -243,12 +244,6 @@ export default function TodayPage() {
       </PageHeader>
 
       <div className="-mt-6 space-y-6 px-4 pb-4">
-        {process.env.NEXT_PUBLIC_SUPABASE_URL && (
-          <div className="-mb-3 flex justify-end">
-            <LiveDot />
-          </div>
-        )}
-
         <DayAlert
           alert={alert}
           onDismiss={() => saveAlert(null)}
