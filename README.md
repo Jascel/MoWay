@@ -4,13 +4,41 @@ MoWay is a USF Tampa day planner that combines a student's schedule, mobility pr
 
 ## Team setup
 
+Use Node.js 22.x and npm. The repository records these expectations in
+`package.json` and `.nvmrc`.
+
 ```bash
 npm install
 cp .env.example .env.local
 npm run dev
 ```
 
-The real `.env.local` file is ignored by Git. Add variable names and placeholders to `.env.example`, never API keys.
+The real `.env.local` file is ignored by Git. Add variable names and placeholders to `.env.example`, never API keys. Restart the development server after changing public environment variables because Next.js includes `NEXT_PUBLIC_` values in the browser bundle.
+
+| Variable | Required for | Notes |
+| --- | --- | --- |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Google Maps features | Browser-visible key; restrict it to the required APIs and allowed origins. |
+| `NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID` | Optional Google cloud map styling | Leave empty to use the app's default map ID behavior. |
+| `NEXT_PUBLIC_SUPABASE_URL` | Calling the dormant Supabase database helpers | Project URL from Supabase. |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Calling the dormant Supabase database helpers | Browser-safe publishable key; this is not a service-role secret. |
+
+Supabase is initialized lazily. Pages can run without Supabase credentials because the current Profile and Report experiences use `localStorage`; calling a database helper without both Supabase variables throws a configuration error. When configured, authentication and database errors are thrown to the caller rather than reported as successful saves.
+
+## Integration status
+
+| Area | Baseline status |
+| --- | --- |
+| Profile and Report UI persistence | Local-only via `localStorage`; no Supabase reads or writes are wired. |
+| Supabase client | SDK dependency and lazy client factory are present; no live project connection is claimed. |
+| Database helpers | Adriana's helper contracts are preserved but are not called by the UI. |
+| `supabase/config.toml` | Local Supabase CLI configuration only; it is not a migration and does not establish a hosted schema. |
+| Migrations and live schema | Unverified and deferred. No migration files are present in this baseline. |
+| Row Level Security (RLS) | Unverified and deferred. |
+| Authentication | Unverified, deferred, and not wired into the UI. |
+| Realtime | Deferred and not wired. |
+| Hosted project settings | Unverified and deferred. |
+
+This baseline intentionally does not add auth, database writes from UI, schema changes, realtime subscriptions, or hosted Supabase settings.
 
 Use short-lived branches such as `andres/maps`, `connie/ui`, and `adriana/backend`. Keep commits focused, open pull requests into `main`, and pull the latest `main` before starting work.
 
@@ -19,22 +47,11 @@ Use short-lived branches such as `andres/maps`, `connie/ui`, and `adriana/backen
 - `npm run dev` starts the development server.
 - `npm run lint` checks the code with ESLint.
 - `npm run build` creates a production build.
+- `npx tsc --noEmit` type-checks the project.
 
 ## Getting Started
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result. The canonical campus map route is `/map`; `/route-preview` is temporary and is not the canonical map URL.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
