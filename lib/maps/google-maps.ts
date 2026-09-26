@@ -37,6 +37,13 @@ export async function loadMapLibraries(apiKey: string): Promise<{
   return { core, maps, marker };
 }
 
+export async function loadGeocodingLibrary(
+  apiKey: string,
+): Promise<google.maps.GeocodingLibrary> {
+  configureGoogleMaps(apiKey);
+  return importLibrary("geocoding");
+}
+
 export async function loadRoutesLibrary(
   apiKey: string,
 ): Promise<google.maps.RoutesLibrary> {

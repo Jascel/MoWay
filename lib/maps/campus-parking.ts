@@ -1,13 +1,13 @@
+import campusLocations from "@/data/campus-locations.json";
 import type { CampusGarage } from "@/lib/maps/types";
 
 /**
- * Static garage coordinates. Resolved once with the Google Maps Geocoder
- * (ROOFTOP "parking" results, queried 2026-09-26) and committed here so the
- * app never geocodes at runtime. Crescent Hill also matches the OpenStreetMap
- * feature within ~10 m.
+ * Static garage coordinates, read from data/campus-locations.json.
  *
- * Points are the garage footprint, not a specific pedestrian exit. Adjust a
- * position here when the accessible exit toward campus is known.
+ * Resolved once at development time and committed, so the app never geocodes
+ * at runtime. Add or adjust entries with the dev tool at /dev/campus-locations.
+ * Points are the garage footprint unless the pin was dragged to a specific
+ * pedestrian exit; each entry's `source` says which.
  */
 export const CAMPUS_GARAGES = [
   {
