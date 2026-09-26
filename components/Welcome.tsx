@@ -8,6 +8,7 @@ import ChipGroup from "@/components/ChipGroup";
 import { modeOptions, prefOptions, PROFILE_KEY } from "@/lib/options";
 import { ONBOARDED_KEY } from "@/lib/onboarding";
 import { useStoredState } from "@/lib/useStoredState";
+import { syncProfile } from "@/lib/syncProfile";
 import { mockProfile, type Mode, type Profile } from "@/data/mock";
 
 // First-time welcome: 0 = splash, 1 = name + how you get around, 2 = comfort preferences.
@@ -35,14 +36,16 @@ export default function Welcome({ initialStep = 0 }: { initialStep?: number }) {
   }
 
   function finish() {
-    saveProfile({
+    const profile: Profile = {
       ...mockProfile,
       name: name.trim() || "Friend",
       homeAddress: home.trim(),
       modes,
       activeMode: modes[0],
       prefs,
-    });
+    };
+    saveProfile(profile);
+    void syncProfile(profile);
     saveOnboarded(true);
     router.push("/");
   }

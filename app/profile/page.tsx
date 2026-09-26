@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
 import Avatar from "@/components/Avatar";
@@ -9,11 +10,19 @@ import { modeOptions, prefOptions, PROFILE_KEY } from "@/lib/options";
 import { Car } from "lucide-react";
 import { mockProfile, type Mode, type Profile } from "@/data/mock";
 import { useDriveEstimate } from "@/lib/driveTime";
+import { syncProfile } from "@/lib/syncProfile";
 
 // Every change is saved right away (no Save button), in the browser under PROFILE_KEY.
 export default function ProfilePage() {
   const [profile, saveProfile] = useStoredState<Profile>(PROFILE_KEY, mockProfile);
   const drive = useDriveEstimate(profile.homeAddress ?? "");
+
+  // Save to Supabase a moment after you stop making changes.
+  const profileJson = JSON.stringify(profile);
+  useEffect(() => {
+    const timer = setTimeout(() => void syncProfile(JSON.parse(profileJson) as Profile), 1000);
+    return () => clearTimeout(timer);
+  }, [profileJson]);
 
   // Add the value if it's missing, remove it if it's there.
   function toggle<K extends "modes" | "prefs">(field: K, value: string) {

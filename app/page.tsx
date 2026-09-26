@@ -10,7 +10,8 @@ import ParkingCard from "@/components/ParkingCard";
 import Timeline from "@/components/Timeline";
 import DayAlert from "@/components/DayAlert";
 import { mockDay, mockProfile, type Profile, type RouteAlert, type SavedEvent } from "@/data/mock";
-import { ALERT_KEY } from "@/lib/alerts";
+import { ALERT_KEY, alertFromReport } from "@/lib/alerts";
+import { useLiveReport } from "@/lib/database/useLiveReport";
 import { minusMinutes } from "@/lib/time";
 import { PROFILE_KEY } from "@/lib/options";
 import { ONBOARDED_KEY } from "@/lib/onboarding";
@@ -30,6 +31,16 @@ export default function TodayPage() {
     if (loaded && !onboarded) router.replace("/welcome");
   }, [loaded, onboarded, router]);
   const [alert, saveAlert] = useStoredState<RouteAlert | null>(ALERT_KEY, day.alert);
+
+  // A new community report (from anyone, live) turns on the alert once. Dismissing it keeps it dismissed.
+  const liveReport = useLiveReport();
+  const [seenReportId, saveSeenReportId] = useStoredState<string | null>("moway.lastLiveReport", null);
+  useEffect(() => {
+    if (liveReport && liveReport.id !== seenReportId) {
+      saveSeenReportId(liveReport.id);
+      saveAlert(alertFromReport(liveReport));
+    }
+  }, [liveReport, seenReportId, saveSeenReportId, saveAlert]);
 
   // Events added on the Add screen for this day get mixed in with the mock ones, sorted by start time.
   const [added] = useStoredState<SavedEvent[]>("moway.events", []);

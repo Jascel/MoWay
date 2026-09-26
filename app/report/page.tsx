@@ -36,6 +36,8 @@ import {
 } from "@/lib/database/reports";
 
 import { toReportInput } from "@/lib/backendMapping";
+import { rowToReport } from "@/lib/database/mapReport";
+import { subscribeToReports } from "@/lib/database/realtime";
 
 type Coords = {
   latitude: number;
@@ -97,64 +99,10 @@ export default function ReportPage() {
 
   async function loadReports() {
     try {
-      const reports =
-        await getActiveReports();
-
-      if (reports.length === 0) {
-        setNearbyReport(null);
-        return;
-      }
-
-      const r = reports[0];
-
-      const createdAt =
-        new Date(r.created_at);
-
-      const minutesAgo = Math.max(
-        0,
-        Math.floor(
-          (Date.now() -
-            createdAt.getTime()) /
-            60000
-        )
-      );
-
-      const report: Report = {
-        id: r.id,
-
-        category:
-          r.report_type as ReportCategory,
-
-        impact:
-          r.impact as ReportImpact,
-
-        conditionClass:
-          r.condition_class as ConditionClass,
-
-        latitude: r.latitude,
-        longitude: r.longitude,
-
-        location:
-          r.location_name ||
-          "Reported location",
-
-        note:
-          r.note || undefined,
-
-        minutesAgo,
-
-        confirmations:
-          r.confirmation_count ?? 0,
-
-        affectsRoute: false,
-      };
-
-      setNearbyReport(report);
+      const reports = await getActiveReports();
+      setNearbyReport(reports.length > 0 ? rowToReport(reports[0]) : null);
     } catch (err) {
-      console.error(
-        "Could not load active reports:",
-        err
-      );
+      console.error("Could not load active reports:", err);
     }
   }
 
@@ -163,6 +111,9 @@ export default function ReportPage() {
     const timer = setTimeout(loadReports, 0);
     return () => clearTimeout(timer);
   }, []);
+
+  // Update "Near you" live when anyone reports something or answers "Is it still there?".
+  useEffect(() => subscribeToReports(loadReports), []);
 
   // --------------------
   // GET USER LOCATION
