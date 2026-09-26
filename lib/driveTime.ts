@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useStoredState } from "@/lib/useStoredState";
+import { CAMPUS_CENTER } from "@/lib/campus";
 
-// A stand-in for campus: the Marshall Student Center (coordinates from Andres's campus map data).
-// Andres's Google Routes work can replace this with real traffic and the exact parking lot later.
-const CAMPUS = { lat: 28.063634, lng: -82.413211 };
+// Campus stands in as the Marshall Student Center. Andres's Google Routes work can replace this
+// with real traffic and the exact parking lot later.
+const CAMPUS = CAMPUS_CENTER;
 
 export type DriveEstimate = { address: string; minutes: number; miles: number };
 

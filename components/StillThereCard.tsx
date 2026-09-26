@@ -36,8 +36,7 @@ export default function StillThereCard({
   const Icon = info.icon;
 
   const confirmations =
-    report.confirmations +
-    (answer === "yes" ? 1 : 0);
+    report.confirmations;
 
   async function handleAnswer(
     stillThere: boolean

@@ -1,0 +1,75 @@
+{
+  "buildings": [
+    {
+      "id": "msc",
+      "code": "MSC",
+      "name": "Marshall Student Center",
+      "position": { "lat": 28.063634, "lng": -82.413211 },
+      "source": "walkway approach point; Google ROOFTOP is 28.063945, -82.413396"
+    },
+    {
+      "id": "cwy",
+      "code": "CWY",
+      "name": "C.W. Bill Young Hall",
+      "position": { "lat": 28.06137, "lng": -82.408195 },
+      "source": "Google Geocoder, 2026-09-26"
+    },
+    {
+      "id": "cis",
+      "code": "CIS",
+      "name": "Communication and Information Sciences",
+      "position": { "lat": 28.058472, "lng": -82.411136 },
+      "source": "OpenStreetMap centroid (Google resolves CIS to the generic USF address)"
+    },
+    {
+      "id": "library",
+      "code": "LIB",
+      "name": "USF Tampa Library",
+      "aliases": ["USF Library", "Library"],
+      "position": { "lat": 28.059792, "lng": -82.412157 },
+      "source": "walkway approach point; Google ROOFTOP is 28.059579, -82.412251"
+    },
+    {
+      "id": "rec-center",
+      "code": "REC",
+      "name": "Campus Recreation Center",
+      "aliases": ["USF Recreation Center", "Recreation Center", "Rec Center"],
+      "position": { "lat": 28.060257, "lng": -82.407593 },
+      "source": "Google Geocoder, 2026-09-26 (12301 USF Genshaft Dr)"
+    },
+    {
+      "id": "enb",
+      "code": "ENB",
+      "name": "Engineering Building II",
+      "position": { "lat": 28.058549, "lng": -82.41561 },
+      "source": "Google Geocoder, 2026-09-26 (4220 E Fowler Ave)"
+    },
+    {
+      "id": "juniper-poplar",
+      "code": "JP",
+      "name": "Juniper-Poplar Hall",
+      "position": { "lat": 28.059913, "lng": -82.418602 },
+      "source": "walkway approach point"
+    }
+  ],
+  "garages": [
+    {
+      "id": "collins",
+      "name": "Collins Garage",
+      "position": { "lat": 28.06156, "lng": -82.411987 },
+      "source": "Google Geocoder, 2026-09-26 (12075 USF Mango Dr)"
+    },
+    {
+      "id": "crescent-hill",
+      "name": "Crescent Hill Garage",
+      "position": { "lat": 28.065117, "lng": -82.412076 },
+      "source": "Google Geocoder, 2026-09-26 (4119 USF Cedar Dr); matches OpenStreetMap within ~10 m"
+    },
+    {
+      "id": "beard",
+      "name": "Beard Garage",
+      "position": { "lat": 28.058279, "lng": -82.416952 },
+      "source": "Google Geocoder, 2026-09-26 (3800 USF Alumni Dr)"
+    }
+  ]
+}

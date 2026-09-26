@@ -11,12 +11,16 @@ import { Car } from "lucide-react";
 import { mockProfile, type Mode, type Profile } from "@/data/mock";
 import { useDriveEstimate } from "@/lib/driveTime";
 import { syncProfile } from "@/lib/syncProfile";
+import { logOut } from "@/lib/auth";
+import { useAuthUser } from "@/lib/useAuthUser";
 import { photoToDataUrl } from "@/lib/photo";
 
 // Every change is saved right away (no Save button), in the browser under PROFILE_KEY.
 export default function ProfilePage() {
   const [profile, saveProfile] = useStoredState<Profile>(PROFILE_KEY, mockProfile);
   const drive = useDriveEstimate(profile.homeAddress ?? "");
+  const { user } = useAuthUser();
+  const accountEmail = user && !user.is_anonymous ? user.email : null;
 
   // Save to Supabase a moment after you stop making changes.
   const profileJson = JSON.stringify(profile);
@@ -93,6 +97,34 @@ export default function ProfilePage() {
             </div>
             <p className="mt-2 text-xs text-ink/60">Saved only on this device.</p>
           </div>
+        </section>
+
+        <section className="rounded-3xl bg-white p-5 shadow-sm">
+          <h2 className="font-display text-lg font-bold">Account</h2>
+          {accountEmail ? (
+            <>
+              <p className="mt-1 break-all text-sm text-ink/70">Signed in as {accountEmail}</p>
+              <button
+                type="button"
+                onClick={() => void logOut()}
+                className="mt-3 rounded-full border border-ink/20 px-4 py-2 text-sm font-semibold"
+              >
+                Log out
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="mt-1 text-sm text-ink/70">
+                You&apos;re using MoWay as a guest. Create an account to keep your schedule and reports.
+              </p>
+              <Link
+                href="/login"
+                className="mt-3 inline-block rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white"
+              >
+                Create account or log in
+              </Link>
+            </>
+          )}
         </section>
 
         <section className="rounded-3xl bg-white p-5 shadow-sm">
