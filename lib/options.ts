@@ -4,6 +4,7 @@ import {
   Route, Scooter, Timer, TreePine, Umbrella, Users,
 } from "lucide-react";
 import type { AccessPref, Mode } from "@/data/mock";
+import type { CampusMode } from "@/lib/profileMode";
 
 // Bump the number if the saved profile shape changes, so old saved data is ignored.
 export const PROFILE_KEY = "moway.profile.v2";
@@ -17,6 +18,19 @@ export const modeOptions: { value: Mode; label: string; icon: LucideIcon }[] = [
   { value: "driving", label: "Driving", icon: Car },
   { value: "transit", label: "Transit", icon: Bus },
 ];
+
+/** Same icons as Profile → "Using today", for on-campus legs and Smart Park. */
+export const campusTravelIcons: Record<CampusMode, LucideIcon> = {
+  walking: Footprints,
+  wheelchair: Accessibility,
+  scooter: Scooter,
+  bike: Bike,
+};
+
+/** Same icon as Profile → "Using today". Falls back to footprints if unknown. */
+export function modeIcon(mode: Mode): LucideIcon {
+  return modeOptions.find((option) => option.value === mode)?.icon ?? Footprints;
+}
 
 export const prefOptions: { value: AccessPref; label: string; icon: LucideIcon }[] = [
   { value: "step_free", label: "Step-free routes", icon: Layers },

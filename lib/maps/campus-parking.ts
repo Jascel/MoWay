@@ -9,26 +9,7 @@ import type { CampusGarage } from "@/lib/maps/types";
  * Points are the garage footprint unless the pin was dragged to a specific
  * pedestrian exit; each entry's `source` says which.
  */
-export const CAMPUS_GARAGES = [
-  {
-    id: "collins",
-    name: "Collins Garage",
-    // 12075 USF Mango Dr
-    position: { lat: 28.06156, lng: -82.411987 },
-  },
-  {
-    id: "crescent-hill",
-    name: "Crescent Hill Garage",
-    // 4119 USF Cedar Dr
-    position: { lat: 28.065117, lng: -82.412076 },
-  },
-  {
-    id: "beard",
-    name: "Beard Garage",
-    // 3800 USF Alumni Dr
-    position: { lat: 28.058279, lng: -82.416952 },
-  },
-] as const satisfies readonly CampusGarage[];
+export const CAMPUS_GARAGES: readonly CampusGarage[] = campusLocations.garages;
 
 export function findGarageById(
   garageId: string,
