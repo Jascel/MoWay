@@ -89,13 +89,16 @@ function StepIcon({ mode }: { mode?: "walk" | "drive" }) {
   return <Icon className="size-4 shrink-0 text-leaf" />;
 }
 
-// The walk between two stops: "8 min walk, leave by 9:52" plus route chips.
-function WalkConnector({ leg, arriveBy }: { leg: Leg; arriveBy: string }) {
+// "walk" for people who walk; "trip" for wheelchair, scooter, bike, so we never say "walk" to someone who rolls.
+type TravelWord = "walk" | "trip";
+
+// The leg between two stops: "8 min walk, leave by 9:52" plus route chips.
+function WalkConnector({ leg, arriveBy, travelWord }: { leg: Leg; arriveBy: string; travelWord: TravelWord }) {
   return (
     <div className="ml-6 border-l-2 border-dashed border-leaf/50 py-3 pl-4">
       <p className="flex items-center gap-2 text-sm font-medium">
         <StepIcon mode={leg.mode} />
-        {leg.minutes} min {leg.steps ? "total" : leg.mode === "drive" ? "drive" : "walk"}, leave by{" "}
+        {leg.minutes} min {leg.steps ? "total" : leg.mode === "drive" ? "drive" : travelWord}, leave by{" "}
         {formatTime(minusMinutes(arriveBy, leg.minutes))}
       </p>
       {leg.steps && (
@@ -115,9 +118,20 @@ function WalkConnector({ leg, arriveBy }: { leg: Leg; arriveBy: string }) {
   );
 }
 
-// The trip home after your last stop: a short walk to the car, then the drive.
-function HomeTrip({ last, walkMinutes, driveMinutes }: { last: ClassEvent; walkMinutes: number; driveMinutes: number }) {
+// The trip home after your last stop: a short leg to the car, then the drive.
+function HomeTrip({
+  last,
+  walkMinutes,
+  driveMinutes,
+  travelWord,
+}: {
+  last: ClassEvent;
+  walkMinutes: number;
+  driveMinutes: number;
+  travelWord: TravelWord;
+}) {
   const total = walkMinutes + driveMinutes;
+  const toCar = travelWord === "walk" ? "Walk to your car" : "Trip to your car";
   return (
     <div className="mb-3">
       <div className="ml-6 border-l-2 border-dashed border-leaf/50 py-3 pl-4">
@@ -128,7 +142,7 @@ function HomeTrip({ last, walkMinutes, driveMinutes }: { last: ClassEvent; walkM
         <ul className="mt-1.5 space-y-1 text-xs text-ink/70">
           <li className="flex items-center gap-2">
             <Footprints className="size-4 shrink-0 text-leaf" />
-            Walk to your car ({walkMinutes} min)
+            {toCar} ({walkMinutes} min)
           </li>
           <li className="flex items-center gap-2">
             <Car className="size-4 shrink-0 text-leaf" />
@@ -158,6 +172,7 @@ export default function Timeline({
   onDelete,
   hiddenCount = 0,
   onRestore,
+  travelWord = "walk",
 }: {
   events: ClassEvent[];
   legs: Leg[];
@@ -166,6 +181,7 @@ export default function Timeline({
   onDelete?: (event: ClassEvent) => void;
   hiddenCount?: number;
   onRestore?: () => void;
+  travelWord?: TravelWord;
 }) {
   return (
     <section>
@@ -179,13 +195,18 @@ export default function Timeline({
         );
         return (
           <div key={event.id} className="mb-3">
-            {leg && <WalkConnector leg={leg} arriveBy={event.start} />}
+            {leg && <WalkConnector leg={leg} arriveBy={event.start} travelWord={travelWord} />}
             <EventCard event={event} onEdit={onEdit} onDelete={onDelete} />
           </div>
         );
       })}
       {homeTrip && events.length > 0 && (
-        <HomeTrip last={events[events.length - 1]} walkMinutes={homeTrip.walkMinutes} driveMinutes={homeTrip.driveMinutes} />
+        <HomeTrip
+          last={events[events.length - 1]}
+          walkMinutes={homeTrip.walkMinutes}
+          driveMinutes={homeTrip.driveMinutes}
+          travelWord={travelWord}
+        />
       )}
       {hiddenCount > 0 && onRestore && (
         <button onClick={onRestore} className="mb-3 text-sm text-ink/60 underline">

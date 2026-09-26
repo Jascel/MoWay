@@ -304,6 +304,7 @@ export default function TodayPage() {
           events={events}
           legs={legs}
           homeTrip={{ walkMinutes: walkToCarMinutes, driveMinutes }}
+          travelWord={mode === "walking" ? "walk" : "trip"}
           onEdit={setEditing}
           onDelete={deleteEvent}
           hiddenCount={hiddenCount}
