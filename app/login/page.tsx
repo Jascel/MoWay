@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
 import ChipGroup from "@/components/ChipGroup";
-import { createAccount, friendlyAuthError, logIn, logOut } from "@/lib/auth";
+import { createAccount, friendlyAuthError, logIn, logOut, signInWithGoogle } from "@/lib/auth";
 import { useAuthUser } from "@/lib/useAuthUser";
 
 const modes = [
@@ -49,6 +49,18 @@ export default function LoginPage() {
     } catch (err) {
       setError(friendlyAuthError(err));
     } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleGoogle() {
+    setError("");
+    setNotice("");
+    setBusy(true);
+    try {
+      await signInWithGoogle(); // leaves for Google, then comes back signed in
+    } catch (err) {
+      setError(friendlyAuthError(err));
       setBusy(false);
     }
   }
@@ -133,6 +145,21 @@ export default function LoginPage() {
               className="w-full rounded-full bg-ink py-3.5 font-semibold text-white active:bg-ink/80 disabled:opacity-50"
             >
               {busy ? "One moment..." : mode === "signup" ? "Create account" : "Log in"}
+            </button>
+
+            <div className="flex items-center gap-3 text-xs text-ink/50">
+              <span className="h-px flex-1 bg-ink/10" />
+              or
+              <span className="h-px flex-1 bg-ink/10" />
+            </div>
+
+            <button
+              type="button"
+              onClick={handleGoogle}
+              disabled={busy}
+              className="w-full rounded-full border border-ink/20 bg-white py-3.5 font-semibold disabled:opacity-50"
+            >
+              Continue with Google
             </button>
           </form>
         )}
