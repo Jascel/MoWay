@@ -4,18 +4,27 @@ import PageHeader from "@/components/PageHeader";
 import Avatar from "@/components/Avatar";
 import ChipGroup from "@/components/ChipGroup";
 import { useStoredState } from "@/lib/useStoredState";
-import { modeOptions, prefOptions } from "@/lib/options";
-import { mockProfile, type Profile } from "@/data/mock";
+import { modeOptions, prefOptions, PROFILE_KEY } from "@/lib/options";
+import { mockProfile, type Mode, type Profile } from "@/data/mock";
 
-// Every change is saved right away (no Save button), under the key "moway.profile".
+// Every change is saved right away (no Save button), in the browser under PROFILE_KEY.
 export default function ProfilePage() {
-  const [profile, saveProfile] = useStoredState<Profile>("moway.profile", mockProfile);
+  const [profile, saveProfile] = useStoredState<Profile>(PROFILE_KEY, mockProfile);
 
   // Add the value if it's missing, remove it if it's there.
   function toggle<K extends "modes" | "prefs">(field: K, value: string) {
     const list = profile[field] as string[];
     const next = list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
     saveProfile({ ...profile, [field]: next });
+  }
+
+  // Adding/removing a way of getting around. The "active" one must always be one of them.
+  function toggleMode(value: string) {
+    const list = profile.modes as string[];
+    const modes = (list.includes(value) ? list.filter((v) => v !== value) : [...list, value]) as Mode[];
+    if (modes.length === 0) return; // keep at least one
+    const activeMode = modes.includes(profile.activeMode) ? profile.activeMode : modes[0];
+    saveProfile({ ...profile, modes, activeMode });
   }
 
   return (
@@ -45,7 +54,17 @@ export default function ProfilePage() {
           <ChipGroup
             options={modeOptions}
             selected={profile.modes}
-            onToggle={(v) => toggle("modes", v)}
+            onToggle={toggleMode}
+          />
+        </section>
+
+        <section className="rounded-3xl bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-bold">Using today</h2>
+          <p className="mb-3 text-xs text-ink/70">Which one are you using right now?</p>
+          <ChipGroup
+            options={modeOptions.filter((o) => profile.modes.includes(o.value))}
+            selected={[profile.activeMode]}
+            onToggle={(v) => saveProfile({ ...profile, activeMode: v as Mode })}
           />
         </section>
 

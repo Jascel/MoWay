@@ -1,35 +1,73 @@
 "use client";
 
 import { useState } from "react";
-import { Check } from "lucide-react";
+import { Check, LocateFixed } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
+import ChipGroup from "@/components/ChipGroup";
 import StillThereCard from "@/components/StillThereCard";
-import { reportCategories, categoryInfo } from "@/lib/reportCategories";
+import {
+  categoryInfo, durationOptions, impactOptions, reportCategories, REPORTS_KEY,
+} from "@/lib/reportCategories";
 import { useStoredState } from "@/lib/useStoredState";
-import { mockReport, type Report, type ReportCategory, type RouteAlert } from "@/data/mock";
+import {
+  mockReport, type ConditionClass, type Report, type ReportCategory, type ReportImpact, type RouteAlert,
+} from "@/data/mock";
 import { ALERT_KEY, alertFromReport } from "@/lib/alerts";
+
+type Coords = { latitude: number; longitude: number };
+
+// Marshall Student Center, for testing when you're not on campus.
+const DEMO_COORDS: Coords = { latitude: 28.063634, longitude: -82.413211 };
 
 export default function ReportPage() {
   // Reports you submit are saved on this device for now (later: Adriana's Supabase).
-  const [myReports, saveMyReports] = useStoredState<Report[]>("moway.reports", []);
+  const [myReports, saveMyReports] = useStoredState<Report[]>(REPORTS_KEY, []);
   const [, saveAlert] = useStoredState<RouteAlert | null>(ALERT_KEY, null);
   const [category, setCategory] = useState<ReportCategory | null>(null);
-  const [location, setLocation] = useState("");
+  const [impact, setImpact] = useState<ReportImpact | null>(null);
+  const [duration, setDuration] = useState<ConditionClass>("temporary");
+  const [coords, setCoords] = useState<Coords | null>(null);
+  const [locStatus, setLocStatus] = useState("");
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
 
+  // The report is placed where you are standing, so we ask the browser for your location.
+  function findMyLocation() {
+    setLocStatus("Finding you...");
+    if (!navigator.geolocation) {
+      setLocStatus("Location isn't available on this device.");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setCoords({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+        setLocStatus(`Location found (within about ${Math.round(pos.coords.accuracy)} m)`);
+      },
+      () => setLocStatus("Couldn't get your location. Allow location access, or use the demo spot."),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!category || !location.trim()) {
-      setError("Pick what happened and where.");
+    if (!category || !impact) {
+      setError("Pick what happened and how it affects people.");
+      return;
+    }
+    if (!coords) {
+      setError("Add your location so we know where it is.");
       return;
     }
     setError("");
     const report: Report = {
       id: crypto.randomUUID(),
       category,
-      location: location.trim(),
+      impact,
+      conditionClass: duration,
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+      location: "Your location",
       note: note.trim() || undefined,
       minutesAgo: 0,
       confirmations: 1,
@@ -38,7 +76,9 @@ export default function ReportPage() {
     saveMyReports([report, ...myReports]);
     saveAlert(alertFromReport(report));
     setCategory(null);
-    setLocation("");
+    setImpact(null);
+    setCoords(null);
+    setLocStatus("");
     setNote("");
     setSent(true);
   }
@@ -54,38 +94,74 @@ export default function ReportPage() {
           </p>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4 rounded-3xl bg-white p-5 shadow-sm">
-          <h2 className="text-2xl font-bold">What&apos;s going on?</h2>
-          <div className="grid grid-cols-2 gap-3">
-            {reportCategories.map(({ value, label, icon: Icon }) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => {
-                  setCategory(value);
-                  setSent(false);
-                }}
-                className={`flex flex-col items-center gap-2 rounded-2xl border p-4 text-sm font-semibold ${
-                  category === value
-                    ? "border-ink bg-ink text-white"
-                    : "border-ink/10 bg-cream text-ink"
-                }`}
-              >
-                <Icon className="size-7" strokeWidth={1.75} />
-                {label}
-              </button>
-            ))}
+        <form onSubmit={handleSubmit} className="space-y-5 rounded-3xl bg-white p-5 shadow-sm">
+          <div>
+            <h2 className="mb-3 text-xl font-bold">What&apos;s going on?</h2>
+            <div className="grid grid-cols-2 gap-3">
+              {reportCategories.map(({ value, label, icon: Icon }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => {
+                    setCategory(value);
+                    setSent(false);
+                  }}
+                  className={`flex flex-col items-center gap-2 rounded-2xl border p-4 text-center text-sm font-semibold ${
+                    category === value
+                      ? "border-ink bg-ink text-white"
+                      : "border-ink/10 bg-cream text-ink"
+                  }`}
+                >
+                  <Icon className="size-7" strokeWidth={1.75} />
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div>
-            <label htmlFor="location" className="mb-1 block text-sm font-bold">Where?</label>
-            <input
-              id="location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="Ramp by the Marshall Student Center"
-              className="w-full rounded-2xl border border-ink/15 bg-cream p-3"
+            <h3 className="mb-2 text-sm font-bold">Who does it affect?</h3>
+            <ChipGroup
+              options={impactOptions}
+              selected={impact ? [impact] : []}
+              onToggle={(v) => setImpact(v as ReportImpact)}
             />
+          </div>
+
+          <div>
+            <h3 className="mb-2 text-sm font-bold">How long will it last?</h3>
+            <ChipGroup
+              options={durationOptions}
+              selected={[duration]}
+              onToggle={(v) => setDuration(v as ConditionClass)}
+            />
+          </div>
+
+          <div>
+            <h3 className="mb-1 text-sm font-bold">Where is it?</h3>
+            <p className="mb-2 text-xs text-ink/60">
+              Reports are placed where you&apos;re standing, so you need to be close to it.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={findMyLocation}
+                className="flex items-center gap-1.5 rounded-full bg-aqua px-4 py-2 text-sm font-semibold"
+              >
+                <LocateFixed className="size-4" /> Use my location
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setCoords(DEMO_COORDS);
+                  setLocStatus("Using the demo spot (Marshall Student Center)");
+                }}
+                className="rounded-full border border-ink/15 px-4 py-2 text-sm font-semibold text-ink/70"
+              >
+                Use demo spot
+              </button>
+            </div>
+            {locStatus && <p className="mt-2 text-xs text-ink/70">{locStatus}</p>}
           </div>
 
           <div>
@@ -95,6 +171,7 @@ export default function ReportPage() {
               value={note}
               onChange={(e) => setNote(e.target.value)}
               rows={2}
+              placeholder="Ramp blocked by construction fencing"
               className="w-full rounded-2xl border border-ink/15 bg-cream p-3"
             />
           </div>
@@ -110,13 +187,13 @@ export default function ReportPage() {
         </form>
 
         <section className="space-y-3">
-          <h2 className="text-2xl font-bold">Near you</h2>
+          <h2 className="text-xl font-bold">Near you</h2>
           <StillThereCard report={mockReport} />
         </section>
 
         {myReports.length > 0 && (
           <section className="space-y-2">
-            <h2 className="text-2xl font-bold">Your reports</h2>
+            <h2 className="text-xl font-bold">Your reports</h2>
             {myReports.map((r) => {
               const info = categoryInfo(r.category);
               const Icon = info.icon;
@@ -126,7 +203,10 @@ export default function ReportPage() {
                     <Icon className="size-4 text-leaf" />
                     {info.label}
                   </p>
-                  <p className="text-sm text-ink/70">{r.location}</p>
+                  <p className="text-sm text-ink/70">
+                    {impactOptions.find((i) => i.value === r.impact)?.label}
+                    {r.note && ` · ${r.note}`}
+                  </p>
                 </div>
               );
             })}

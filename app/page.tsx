@@ -10,6 +10,7 @@ import DayAlert from "@/components/DayAlert";
 import { mockDay, mockProfile, type Profile, type RouteAlert, type SavedEvent } from "@/data/mock";
 import { ALERT_KEY } from "@/lib/alerts";
 import { minusMinutes } from "@/lib/time";
+import { PROFILE_KEY } from "@/lib/options";
 import { useStoredState } from "@/lib/useStoredState";
 
 // The Today screen arranges the components and hands each its slice of mock data.
@@ -26,7 +27,7 @@ export default function TodayPage() {
   );
 
   // Your Profile settings (name, parking buffer) are saved by the Profile screen.
-  const [profile] = useStoredState<Profile>("moway.profile", mockProfile);
+  const [profile] = useStoredState<Profile>(PROFILE_KEY, mockProfile);
 
   // Arrive `parkingBufferMinutes` before your first class, then work backwards by the drive.
   // (Andres's routing will replace this with real traffic later.)
