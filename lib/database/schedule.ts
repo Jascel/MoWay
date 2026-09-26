@@ -147,3 +147,56 @@ export async function deleteScheduleEvent(
 
   return data[0];
 }
+
+// --------------------
+// UPDATE EVENT
+// --------------------
+
+export async function updateScheduleEvent(
+  eventId: string,
+  input: ScheduleEventInput
+) {
+  const supabase = getSupabaseClient();
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError) {
+    throw userError;
+  }
+
+  if (!user) {
+    throw new Error(
+      "You must be logged in to change a schedule event."
+    );
+  }
+
+  const { data, error } = await supabase
+    .from("schedule_events")
+    .update({
+      title: input.title,
+      category: input.category,
+      building: input.building,
+      room: input.room || null,
+      event_date: input.date,
+      start_time: input.start,
+      end_time: input.end,
+    })
+    .eq("id", eventId)
+    .eq("user_id", user.id)
+    .select();
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data || data.length === 0) {
+    throw new Error(
+      "The event was not updated in Supabase."
+    );
+  }
+
+  return data[0];
+}
