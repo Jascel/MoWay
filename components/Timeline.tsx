@@ -98,7 +98,7 @@ function WalkConnector({ leg, arriveBy, extraMinutes = 0 }: { leg: Leg; arriveBy
       key={changed ? "changed" : "normal"}
       className={
         changed
-          ? "animate-flash my-2 ml-3 rounded-2xl border-l-4 border-dashed border-sun bg-sun/30 py-3 pl-4 pr-3"
+          ? "animate-flash my-1 ml-4 rounded-xl border-l-4 border-dashed border-sun/70 bg-sun/15 py-2 pl-3 pr-2"
           : "ml-6 border-l-2 border-dashed border-leaf/50 py-3 pl-4"
       }
     >
@@ -108,9 +108,6 @@ function WalkConnector({ leg, arriveBy, extraMinutes = 0 }: { leg: Leg; arriveBy
         {formatTime(minusMinutes(arriveBy, minutes))}
         {changed && <span className="text-xs font-semibold text-ink/60">(was {leg.minutes} min)</span>}
       </p>
-      {changed && (
-        <p className="mt-1 text-xs font-medium text-ink/70">A new report is affecting this walk.</p>
-      )}
       {leg.steps && (
         <ul className="mt-1.5 space-y-1 text-xs text-ink/70">
           {leg.steps.map((step) => (
@@ -121,8 +118,8 @@ function WalkConnector({ leg, arriveBy, extraMinutes = 0 }: { leg: Leg; arriveBy
           ))}
         </ul>
       )}
-      <div className="mt-2">
-        <RouteChips tags={changed ? [`+${extraMinutes} min`, ...leg.tags] : leg.tags} />
+      <div className={changed ? "mt-1.5" : "mt-2"}>
+        <RouteChips tags={changed ? [`+${extraMinutes} min`, "Due to a report", ...leg.tags] : leg.tags} />
       </div>
     </div>
   );

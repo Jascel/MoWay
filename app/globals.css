@@ -34,7 +34,7 @@ body {
 }
 @keyframes moway-flash {
   0% { box-shadow: 0 0 0 0 rgba(252, 227, 138, 0); }
-  25% { box-shadow: 0 0 0 8px rgba(252, 227, 138, 0.9); }
+  25% { box-shadow: 0 0 0 8px rgba(252, 227, 138, 0.55); }
   100% { box-shadow: 0 0 0 0 rgba(252, 227, 138, 0); }
 }
 @keyframes moway-pop {
