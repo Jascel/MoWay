@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Fraunces } from "next/font/google";
+import { Geist, Fraunces, Lilita_One } from "next/font/google";
 import "./globals.css";
 import BottomNav from "@/components/BottomNav";
 
@@ -11,6 +11,13 @@ const geistSans = Geist({
 // Chunky serif, used ONLY for the important things (page titles, leave-by time) via the class.
 const fraunces = Fraunces({
   variable: "--font-fraunces",
+  subsets: ["latin"],
+});
+
+// Rounded font used only for the logo and the name "MoWay" (font-logo class).
+const lilita = Lilita_One({
+  weight: "400",
+  variable: "--font-lilita",
   subsets: ["latin"],
 });
 
@@ -31,7 +38,7 @@ export const viewport: Viewport = {
 // so the bottom nav stays put while pages swap in above it.
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${fraunces.variable} h-full antialiased`}>
+    <html lang="en" className={`${geistSans.variable} ${fraunces.variable} ${lilita.variable} h-full antialiased`}>
       <body className="font-sans">
         <main className="mx-auto min-h-screen max-w-md bg-cream pb-28 shadow-sm">
           {children}

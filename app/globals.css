@@ -18,6 +18,7 @@
   --color-leaf: #2e9e6b;
   --font-sans: var(--font-geist-sans);
   --font-display: var(--font-fraunces);
+  --font-logo: var(--font-lilita);
 }
 
 body {
