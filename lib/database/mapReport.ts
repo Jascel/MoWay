@@ -9,6 +9,7 @@ export function rowToReport(r: ReportRow): Report {
 
   return {
     id: r.id,
+    status: r.status,
     category: r.report_type as ReportCategory,
     impact: r.impact as ReportImpact,
     conditionClass: r.condition_class as ConditionClass,

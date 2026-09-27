@@ -145,6 +145,7 @@ const nearbyReport =
 
     const report: Report = {
       id: crypto.randomUUID(),
+      status: "unconfirmed",
 
       category,
       impact,

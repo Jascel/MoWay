@@ -1,6 +1,6 @@
 import { loadRoutesLibrary } from "@/lib/maps/google-maps";
 import type {
-  CampusBuilding,
+  CampusPlace,
   MapPosition,
   WalkingRouteResult,
 } from "@/lib/maps/types";
@@ -27,48 +27,51 @@ function isFinitePosition(position: MapPosition): boolean {
 
 export async function computeWalkingRoute(
   apiKey: string,
-  origin: CampusBuilding,
-  destination: CampusBuilding,
-): Promise<WalkingRouteResult> {
+  origin: CampusPlace,
+  destination: CampusPlace,
+): Promise<readonly WalkingRouteResult[]> {
   const { Route } = await loadRoutesLibrary(apiKey);
   const response = await Route.computeRoutes({
     origin: origin.position,
     destination: destination.position,
     travelMode: "WALKING",
+    computeAlternativeRoutes: true,
     fields: ["path", "durationMillis", "distanceMeters", "warnings"],
   });
-  const route = response.routes?.[0];
+  const routes = response.routes;
 
-  if (route === undefined) {
+  if (routes === undefined || routes.length === 0) {
     throw new NoWalkingRouteError();
   }
 
-  const path = route.path?.map(({ lat, lng }) => ({ lat, lng }));
-  const durationMillis = route.durationMillis;
-  const distanceMeters = route.distanceMeters;
-  const hasValidMetrics =
-    typeof durationMillis === "number" &&
-    Number.isFinite(durationMillis) &&
-    durationMillis >= 0 &&
-    typeof distanceMeters === "number" &&
-    Number.isFinite(distanceMeters) &&
-    distanceMeters >= 0;
+  return routes.map((route) => {
+    const path = route.path?.map(({ lat, lng }) => ({ lat, lng }));
+    const durationMillis = route.durationMillis;
+    const distanceMeters = route.distanceMeters;
+    const hasValidMetrics =
+      typeof durationMillis === "number" &&
+      Number.isFinite(durationMillis) &&
+      durationMillis >= 0 &&
+      typeof distanceMeters === "number" &&
+      Number.isFinite(distanceMeters) &&
+      distanceMeters >= 0;
 
-  if (
-    path === undefined ||
-    path.length < 2 ||
-    !path.every(isFinitePosition) ||
-    !hasValidMetrics
-  ) {
-    throw new InvalidWalkingRouteError();
-  }
+    if (
+      path === undefined ||
+      path.length < 2 ||
+      !path.every(isFinitePosition) ||
+      !hasValidMetrics
+    ) {
+      throw new InvalidWalkingRouteError();
+    }
 
-  return {
-    originId: origin.id,
-    destinationId: destination.id,
-    durationMillis,
-    distanceMeters,
-    path,
-    warnings: route.warnings ?? [],
-  };
+    return {
+      originId: origin.id,
+      destinationId: destination.id,
+      durationMillis,
+      distanceMeters,
+      path,
+      warnings: route.warnings ?? [],
+    };
+  });
 }

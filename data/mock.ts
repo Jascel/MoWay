@@ -105,6 +105,7 @@ export interface Weather {
 
 export interface Report {
   id: string;
+  status: "unconfirmed" | "confirmed";
   category: ReportCategory;
   impact: ReportImpact;
   conditionClass: ConditionClass;
@@ -147,6 +148,7 @@ export const mockProfile: Profile = {
 
 export const mockReport: Report = {
   id: "r1",
+  status: "confirmed",
   category: "blocked_sidewalk",
   impact: "blocks_wheelchair",
   conditionClass: "temporary",
