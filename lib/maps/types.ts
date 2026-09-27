@@ -22,6 +22,8 @@ export type CampusGarage = {
   readonly source?: string;
 };
 
+export type CampusPlace = CampusBuilding | CampusGarage;
+
 export type WalkingRouteResult = {
   readonly originId: string;
   readonly destinationId: string;

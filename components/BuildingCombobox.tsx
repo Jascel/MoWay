@@ -4,33 +4,35 @@ import { useId, useState } from "react";
 import { MapPin } from "lucide-react";
 
 import { searchBuildings } from "@/lib/maps/campus-buildings";
-import type { CampusBuilding } from "@/lib/maps/types";
+import type { CampusPlace } from "@/lib/maps/types";
 
 // A text box that suggests USF buildings as you type (by code like "CIS" or any part of
 // the name). Picking one calls onPick; typing anything else is still allowed.
-export default function BuildingCombobox({
+export default function BuildingCombobox<T extends CampusPlace>({
   id,
   value,
   onChange,
   onPick,
   onBlur,
+  places,
   placeholder,
   className,
 }: {
   id?: string;
   value: string;
   onChange: (text: string) => void;
-  onPick: (building: CampusBuilding) => void;
+  onPick: (place: T) => void;
   onBlur?: () => void;
+  places?: readonly T[];
   placeholder?: string;
   className: string;
 }) {
   const listId = useId();
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
-  const matches = open ? searchBuildings(value) : [];
+  const matches = open ? searchBuildings(value, places) : [];
 
-  function pick(building: CampusBuilding) {
+  function pick(building: T) {
     onPick(building);
     setOpen(false);
   }
@@ -101,7 +103,7 @@ export default function BuildingCombobox({
               <MapPin className="size-4 shrink-0 text-leaf" aria-hidden />
               <span className="min-w-0 flex-1 font-semibold">{building.name}</span>
               <span className="shrink-0 rounded-full bg-aqua-soft px-2 py-0.5 text-xs font-bold">
-                {building.code}
+                {"code" in building && building.code ? building.code : "P"}
               </span>
             </li>
           ))}

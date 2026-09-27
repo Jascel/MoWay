@@ -1,6 +1,6 @@
 import campusLocations from "@/data/campus-locations.json";
 import usfBuildings from "@/data/usf-buildings.json";
-import type { CampusBuilding } from "@/lib/maps/types";
+import type { CampusBuilding, CampusPlace } from "@/lib/maps/types";
 
 /**
  * Static campus building coordinates, read from data/campus-locations.json.
@@ -53,27 +53,35 @@ export function findBuildingByLabel(
   );
 }
 
-/** Buildings that match what someone typed (code, name, or alias), best matches first. */
-export function searchBuildings(
-  query: string,
-  buildings: readonly CampusBuilding[] = ALL_CAMPUS_BUILDINGS,
-  limit = 8,
-): CampusBuilding[] {
-  const wanted = normalizeLabel(query);
-  if (wanted === "") return buildings.slice(0, limit);
+function codeOf(place: CampusPlace): string {
+  return "code" in place && place.code ? place.code : "";
+}
 
-  const scored: { building: CampusBuilding; score: number }[] = [];
-  for (const building of buildings) {
-    const code = normalizeLabel(building.code);
-    const name = normalizeLabel(building.name);
-    const aliases = (building.aliases ?? []).map(normalizeLabel);
+function aliasesOf(place: CampusPlace): readonly string[] {
+  return "aliases" in place ? place.aliases ?? [] : [];
+}
+
+/** Places (buildings, and garages when given) that match what someone typed, best matches first. */
+export function searchBuildings<T extends CampusPlace>(
+  query: string,
+  places: readonly T[] = ALL_CAMPUS_BUILDINGS as readonly T[],
+  limit = 8,
+): T[] {
+  const wanted = normalizeLabel(query);
+  if (wanted === "") return places.slice(0, limit);
+
+  const scored: { place: T; score: number }[] = [];
+  for (const place of places) {
+    const code = normalizeLabel(codeOf(place));
+    const name = normalizeLabel(place.name);
+    const aliases = aliasesOf(place).map(normalizeLabel);
     let score = -1;
-    if (code === wanted) score = 0;
-    else if (code.startsWith(wanted)) score = 1;
+    if (code !== "" && code === wanted) score = 0;
+    else if (code !== "" && code.startsWith(wanted)) score = 1;
     else if (name.startsWith(wanted) || aliases.some((a) => a.startsWith(wanted))) score = 2;
     else if (name.split(/\s+/).some((word) => word.startsWith(wanted))) score = 3;
     else if (name.includes(wanted) || aliases.some((a) => a.includes(wanted))) score = 4;
-    if (score >= 0) scored.push({ building, score });
+    if (score >= 0) scored.push({ place, score });
   }
-  return scored.sort((a, b) => a.score - b.score).slice(0, limit).map(({ building }) => building);
+  return scored.sort((a, b) => a.score - b.score).slice(0, limit).map(({ place }) => place);
 }

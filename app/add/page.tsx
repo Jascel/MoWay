@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import BuildingCombobox from "@/components/BuildingCombobox";
+import type { CampusBuilding } from "@/lib/maps/types";
 import PageHeader from "@/components/PageHeader";
 import ChipGroup from "@/components/ChipGroup";
 import { categoryStyles } from "@/lib/categories";
@@ -33,7 +34,6 @@ export default function AddPage() {
   const [building, setBuilding] = useState("");
   const [room, setRoom] = useState("");
   const [error, setError] = useState("");
-
 async function handleSubmit(e: React.FormEvent) {    e.preventDefault(); // stop the browser from reloading the page
     if (!title.trim() || !date || !start || !end || !building.trim()) {
       setError("Please fill in the name, date, times, and building.");
@@ -134,7 +134,7 @@ async function handleSubmit(e: React.FormEvent) {    e.preventDefault(); // stop
         <div className="flex gap-3">
           <div className="flex-[2]">
             <label className="mb-1 block text-sm font-bold" htmlFor="building">Building</label>
-            <BuildingCombobox id="building" value={building} onChange={setBuilding}
+            <BuildingCombobox<CampusBuilding> id="building" value={building} onChange={setBuilding}
               onPick={(picked) => setBuilding(picked.code)} placeholder="Type CIS or a building name" className={inputClass} />
           </div>
           <div className="flex-1">

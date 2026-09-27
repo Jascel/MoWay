@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import BuildingCombobox from "@/components/BuildingCombobox";
-import type { CampusBuilding } from "@/lib/maps/types";
+import type { CampusBuilding, CampusGarage, CampusPlace } from "@/lib/maps/types";
 
 type RouteControlsProps = {
   readonly buildings: readonly CampusBuilding[];
+  readonly garages?: readonly CampusGarage[];
   readonly originId: string;
   readonly destinationId: string;
   readonly isLoading: boolean;
@@ -21,6 +22,7 @@ const INPUT_CLASSES =
 
 export function RouteControls({
   buildings,
+  garages = [],
   originId,
   destinationId,
   isLoading,
@@ -30,8 +32,10 @@ export function RouteControls({
   onSubmit,
 }: RouteControlsProps) {
   const sameBuilding = originId === destinationId;
-  const nameOf = (id: string) => buildings.find((b) => b.id === id)?.name ?? "";
-  // What's typed in each box while searching; it snaps back to the chosen building when you leave.
+  // Search covers parking garages too, since From often starts as your Smart Park pick.
+  const places = useMemo<readonly CampusPlace[]>(() => [...garages, ...buildings], [garages, buildings]);
+  const nameOf = (id: string) => places.find((p) => p.id === id)?.name ?? "";
+  // What's typed in each box while searching; it snaps back to the chosen place when you leave.
   const [originText, setOriginText] = useState(nameOf(originId));
   const [destinationText, setDestinationText] = useState(nameOf(destinationId));
 
@@ -51,12 +55,13 @@ export function RouteControls({
               id="route-from"
               value={originText}
               onChange={setOriginText}
-              onPick={(building) => {
-                setOriginText(building.name);
-                onOriginChange(building.id);
+              places={places}
+              onPick={(place) => {
+                setOriginText(place.name);
+                onOriginChange(place.id);
               }}
               onBlur={() => setOriginText(nameOf(originId))}
-              placeholder="Search a building"
+              placeholder="Search a building or garage"
               className={INPUT_CLASSES}
             />
           </div>
@@ -69,12 +74,13 @@ export function RouteControls({
               id="route-to"
               value={destinationText}
               onChange={setDestinationText}
-              onPick={(building) => {
-                setDestinationText(building.name);
-                onDestinationChange(building.id);
+              places={places}
+              onPick={(place) => {
+                setDestinationText(place.name);
+                onDestinationChange(place.id);
               }}
               onBlur={() => setDestinationText(nameOf(destinationId))}
-              placeholder="Search a building"
+              placeholder="Search a building or garage"
               className={INPUT_CLASSES}
             />
           </div>
