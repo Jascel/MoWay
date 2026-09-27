@@ -254,10 +254,6 @@ async function handleClearReports() {
       />
 
       <div className="-mt-6 space-y-6 px-4">
-        {/* SUCCESS */}
-
-        {sent && <ThankYou first={firstReport} />}
-
         <HelpersToday />
 
         {/* FORM */}
@@ -401,6 +397,10 @@ async function handleClearReports() {
               ? "Submitting..."
               : "Submit report"}
           </button>
+
+          {/* SUCCESS */}
+
+          {sent && <ThankYou first={firstReport} />}
         </form>
 
         {/* REAL ACTIVE REPORT */}

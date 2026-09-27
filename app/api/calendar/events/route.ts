@@ -24,52 +24,61 @@ function isValidTimeZone(value: string | null): value is string {
 }
 
 export async function GET(request: Request) {
-  const user = await getVerifiedMoWayUser(request);
-  if (!user) {
-    return NextResponse.json(
-      { error: "Your MoWay session has expired. Sign in again." },
-      { status: 401, headers: { "Cache-Control": "no-store" } },
-    );
-  }
-
-  const parameters = new URL(request.url).searchParams;
-  const timeMin = parameters.get("timeMin");
-  const timeMax = parameters.get("timeMax");
-  const timeZone = parameters.get("timeZone");
-  if (
-    !validRfc3339Instant(timeMin) ||
-    !validRfc3339Instant(timeMax) ||
-    Date.parse(timeMin) >= Date.parse(timeMax) ||
-    Date.parse(timeMax) - Date.parse(timeMin) > MAX_RANGE_MILLISECONDS ||
-    !isValidTimeZone(timeZone)
-  ) {
-    return NextResponse.json(
-      { error: "Calendar date range or timezone is invalid." },
-      { status: 400, headers: { "Cache-Control": "no-store" } },
-    );
-  }
-
-  if (user.is_anonymous) {
-    return NextResponse.json(
-      { events: [], connected: false, reconnectRequired: false },
-      { headers: { "Cache-Control": "no-store" } },
-    );
-  }
-
   try {
-    const result = await getPrimaryCalendarEvents(
-      user.id,
-      timeMin,
-      timeMax,
-      timeZone,
-    );
-    return NextResponse.json(result, {
-      headers: { "Cache-Control": "no-store" },
-    });
-  } catch {
+    const user = await getVerifiedMoWayUser(request);
+    if (!user) {
+      return NextResponse.json(
+        { error: "Your MoWay session has expired. Sign in again." },
+        { status: 401, headers: { "Cache-Control": "no-store" } },
+      );
+    }
+
+    const parameters = new URL(request.url).searchParams;
+    const timeMin = parameters.get("timeMin");
+    const timeMax = parameters.get("timeMax");
+    const timeZone = parameters.get("timeZone");
+    if (
+      !validRfc3339Instant(timeMin) ||
+      !validRfc3339Instant(timeMax) ||
+      Date.parse(timeMin) >= Date.parse(timeMax) ||
+      Date.parse(timeMax) - Date.parse(timeMin) > MAX_RANGE_MILLISECONDS ||
+      !isValidTimeZone(timeZone)
+    ) {
+      return NextResponse.json(
+        { error: "Calendar date range or timezone is invalid." },
+        { status: 400, headers: { "Cache-Control": "no-store" } },
+      );
+    }
+
+    if (user.is_anonymous) {
+      return NextResponse.json(
+        { events: [], connected: false, reconnectRequired: false },
+        { headers: { "Cache-Control": "no-store" } },
+      );
+    }
+
+    try {
+      const result = await getPrimaryCalendarEvents(
+        user.id,
+        timeMin,
+        timeMax,
+        timeZone,
+      );
+      return NextResponse.json(result, {
+        headers: { "Cache-Control": "no-store" },
+      });
+    } catch (error) {
+      console.error("Could not load Google Calendar events:", error);
+      return NextResponse.json(
+        { error: "Could not load Google Calendar events. Please try again." },
+        { status: 502, headers: { "Cache-Control": "no-store" } },
+      );
+    }
+  } catch (error) {
+    console.error("Calendar events route failed:", error);
     return NextResponse.json(
-      { error: "Could not load Google Calendar events. Please try again." },
-      { status: 502, headers: { "Cache-Control": "no-store" } },
+      { error: "Google Calendar is not set up on this server yet." },
+      { status: 500, headers: { "Cache-Control": "no-store" } },
     );
   }
 }

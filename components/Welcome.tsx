@@ -47,7 +47,7 @@ export default function Welcome({ initialStep = 0 }: { initialStep?: number }) {
     saveProfile(profile);
     void syncProfile(profile);
     saveOnboarded(true);
-    router.push("/");
+    router.push("/login");
   }
 
   const nextButton = "w-full rounded-full bg-ink py-3.5 font-semibold text-white active:bg-ink/80";
