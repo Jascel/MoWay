@@ -32,7 +32,6 @@ export default function AddPage() {
   const [building, setBuilding] = useState("");
   const [room, setRoom] = useState("");
   const [error, setError] = useState("");
-
 async function handleSubmit(e: React.FormEvent) {    e.preventDefault(); // stop the browser from reloading the page
     if (!title.trim() || !date || !start || !end || !building.trim()) {
       setError("Please fill in the name, date, times, and building.");
