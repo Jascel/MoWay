@@ -212,6 +212,41 @@ export async function exchangeGoogleAuthorizationCode(
   return result;
 }
 
+export async function refreshGoogleCalendarAccessToken(
+  refreshToken: string,
+): Promise<
+  | { readonly kind: "success"; readonly accessToken: string }
+  | { readonly kind: "reconnect" }
+> {
+  const response = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: requiredEnvironmentVariable("NEXT_PUBLIC_GOOGLE_CALENDAR_CLIENT_ID"),
+      client_secret: requiredEnvironmentVariable("GOOGLE_CALENDAR_CLIENT_SECRET"),
+      refresh_token: refreshToken,
+      grant_type: "refresh_token",
+    }),
+    cache: "no-store",
+  });
+
+  let result: GoogleTokenResponse;
+  try {
+    result = (await response.json()) as GoogleTokenResponse;
+  } catch {
+    throw new Error("Google Calendar token refresh failed.");
+  }
+
+  if (result.error === "invalid_grant") {
+    return { kind: "reconnect" };
+  }
+  if (!response.ok || !result.access_token) {
+    throw new Error("Google Calendar token refresh failed.");
+  }
+
+  return { kind: "success", accessToken: result.access_token };
+}
+
 function tokenEncryptionKey(): Buffer {
   const key = Buffer.from(
     requiredEnvironmentVariable("CALENDAR_TOKEN_ENCRYPTION_KEY"),
