@@ -195,7 +195,8 @@ The following is the honest status at the time this guide was written:
 | Same-ID confirmation propagating pin/banner/route and ~1-second timing | Checklist — not passed | Still unperformed; do not claim realtime latency. |
 | Wheelchair → walking → wheelchair live profile flip | Checklist — not passed | Logic is covered in code; cross-context/manual propagation is still unperformed. |
 | Community clear causing disappearance and `cleared` history state | Checklist — not passed | Depends on the live confidence threshold and a separate report. |
-| Owner-only cleanup of the disposable report | Manually observed | On disposable localhost:3001, **Clear my reports** removed the QA report from **Near you** and **Your reports** while an older existing report remained. Existing localhost:3000 reports/profile were untouched. |
+| Owner-only cleanup of the disposable report | Manually observed | On disposable localhost:3001, **Clear my reports** removed the QA report from **Near you** and **Your reports** while an older existing report remained; that disposable run preserved its pre-existing state. |
+| QA data-recovery limitation | Recorded limitation | A reviewer accidentally submitted and then used **Clear my reports** on localhost:3000. Root restored the exact visible local report history from a still-open tab's React-cached snapshot, but cannot prove that expired or non-visible owned database rows were not also resolved. Do not infer full database restoration from the visible UI. |
 | Full reset and repeat without touching existing user data | Checklist — not passed | Reset instructions are documented; a full repeat remains to be executed on disposable QA contexts. |
 
 Record the date, origin/context, report IDs, visible timestamps, and screenshots
