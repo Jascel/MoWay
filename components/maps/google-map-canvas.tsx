@@ -13,6 +13,7 @@ type GoogleMapCanvasProps = {
   readonly apiKey: string;
   readonly mapId: string;
   readonly buildings: readonly CampusBuilding[];
+  readonly featuredIds: readonly string[]; // buildings that always get a pin; the rest show only when picked as From or To
   readonly originId: string;
   readonly destinationId: string;
   readonly routeState: WalkingRouteState;
@@ -104,6 +105,7 @@ export function GoogleMapCanvas({
   apiKey,
   mapId,
   buildings,
+  featuredIds,
   originId,
   destinationId,
   routeState,
@@ -114,6 +116,8 @@ export function GoogleMapCanvas({
 
   const markerRecords =
     useRef<readonly MarkerRecord[]>([]);
+
+  const featuredRef = useRef(featuredIds);
 
   const selectedIds = useRef({
     originId,
@@ -202,9 +206,16 @@ export function GoogleMapCanvas({
 
         const records = buildings.map(
           (building) => {
-            bounds.extend(
-              building.position,
-            );
+            const shownAtStart =
+              featuredRef.current.includes(building.id) ||
+              building.id === selectedIds.current.originId ||
+              building.id === selectedIds.current.destinationId;
+
+            if (shownAtStart) {
+              bounds.extend(
+                building.position,
+              );
+            }
 
             const pin =
               new marker.PinElement({
@@ -218,7 +229,7 @@ export function GoogleMapCanvas({
               marker:
                 new marker.AdvancedMarkerElement(
                   {
-                    map,
+                    map: shownAtStart ? map : null,
                     position:
                       building.position,
                     title: building.name,
@@ -248,7 +259,9 @@ export function GoogleMapCanvas({
           },
         );
 
-        map.fitBounds(bounds, 52);
+        if (!bounds.isEmpty()) {
+          map.fitBounds(bounds, 52);
+        }
 
         markerRecords.current =
           records;
@@ -303,6 +316,31 @@ export function GoogleMapCanvas({
   // UPDATE MARKERS
   // --------------------
 
+  // When your schedule changes, frame the buildings on it.
+  useEffect(() => {
+    featuredRef.current = featuredIds;
+
+    if (runtime === null || featuredIds.length === 0) {
+      return;
+    }
+
+    const bounds = new runtime.LatLngBounds();
+
+    buildings.forEach((building) => {
+      if (featuredIds.includes(building.id)) {
+        bounds.extend(building.position);
+      }
+    });
+
+    if (!bounds.isEmpty()) {
+      runtime.map.fitBounds(bounds, 52);
+
+      if ((runtime.map.getZoom() ?? 0) > 17) {
+        runtime.map.setZoom(17);
+      }
+    }
+  }, [buildings, featuredIds, runtime]);
+
   useEffect(() => {
     markerRecords.current.forEach(
       (record) => {
@@ -311,9 +349,32 @@ export function GoogleMapCanvas({
           originId,
           destinationId,
         );
+
+        // Buildings that aren't always shown get a pin only while picked as From or To.
+        if (runtime !== null) {
+          const show =
+            featuredIds.includes(record.buildingId) ||
+            record.buildingId === originId ||
+            record.buildingId === destinationId;
+
+          record.marker.map = show ? runtime.map : null;
+        }
       },
     );
-  }, [destinationId, originId]);
+
+    // Bring a newly picked building into view if it's off the screen.
+    if (runtime !== null) {
+      const view = runtime.map.getBounds();
+
+      [originId, destinationId].forEach((id) => {
+        const building = buildings.find((b) => b.id === id);
+
+        if (building && view && !view.contains(building.position)) {
+          runtime.map.panTo(building.position);
+        }
+      });
+    }
+  }, [buildings, destinationId, featuredIds, originId, runtime]);
 
   // --------------------
   // DRAW WALKING ROUTE

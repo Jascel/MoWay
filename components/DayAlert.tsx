@@ -1,8 +1,8 @@
-import { TriangleAlert, X } from "lucide-react";
+import { BellRing, TriangleAlert, X } from "lucide-react";
 import type { RouteAlert } from "@/data/mock";
 
 // "Your day changed" banner. It only displays; the Today page decides when to show it.
-// If there is no alert, it shows a small "Reset demo" link so you can bring the banner back.
+// If there is no alert, it shows a small bell button that brings the banner back.
 export default function DayAlert({
   alert,
   onDismiss,
@@ -14,9 +14,16 @@ export default function DayAlert({
 }) {
   if (!alert) {
     return (
-      <button onClick={onReset} className="text-xs text-ink/40 underline">
-        Reset demo alert
-      </button>
+      <div className="flex justify-end pt-3">
+        <button
+          onClick={onReset}
+          aria-label="Show my day alert again"
+          title="Show my day alert again"
+          className="flex size-9 items-center justify-center rounded-full bg-white text-leaf shadow-sm"
+        >
+          <BellRing className="size-4" />
+        </button>
+      </div>
     );
   }
   return (

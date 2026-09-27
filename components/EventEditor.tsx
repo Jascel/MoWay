@@ -1,5 +1,6 @@
 "use client";
 
+import BuildingCombobox from "@/components/BuildingCombobox";
 import { useState } from "react";
 import ChipGroup from "@/components/ChipGroup";
 import { categoryStyles } from "@/lib/categories";
@@ -86,7 +87,8 @@ export default function EventEditor({
         <div className="flex gap-3">
           <div className="flex-[2]">
             <label className="mb-1 block text-sm font-bold" htmlFor="edit-building">Building</label>
-            <input id="edit-building" value={building} onChange={(e) => setBuilding(e.target.value)} className={inputClass} />
+            <BuildingCombobox id="edit-building" value={building} onChange={setBuilding}
+              onPick={(picked) => setBuilding(picked.code)} className={inputClass} />
           </div>
           <div className="flex-1">
             <label className="mb-1 block text-sm font-bold" htmlFor="edit-room">Room</label>

@@ -9,6 +9,8 @@ import { useWalkingRoute } from "@/components/maps/use-walking-route";
 import type { CampusBuilding } from "@/lib/maps/types";
 import ReportLegend from "@/components/maps/ReportLegend";
 import { isNearCampus } from "@/lib/campus";
+import { findBuildingByLabel } from "@/lib/maps/campus-buildings";
+import { useDayEvents } from "@/lib/useDayEvents";
 import { rowToReport } from "@/lib/database/mapReport";
 import { useActiveReports } from "@/lib/database/useActiveReports";
 
@@ -41,8 +43,23 @@ class CampusMapDataError extends Error {
 }
 
 export function CampusMap({ apiKey, mapId, buildings }: CampusMapProps) {
-  const [originId, setOriginId] = useState(buildings[0]?.id ?? "");
-  const [destinationId, setDestinationId] = useState(buildings[1]?.id ?? "");
+  // The map shows pins only for the buildings on your schedule (plus whatever you pick).
+  const events = useDayEvents();
+  const featuredIds = useMemo(() => {
+    const ids: string[] = [];
+    for (const event of events) {
+      const building = findBuildingByLabel(event.building, buildings);
+      if (building && !ids.includes(building.id)) ids.push(building.id);
+    }
+    return ids;
+  }, [events, buildings]);
+
+  // From and To start as your first two stops, until you pick something else.
+  const [originChoice, setOriginId] = useState<string | null>(null);
+  const [destinationChoice, setDestinationId] = useState<string | null>(null);
+  const fallbackIds = featuredIds.length >= 2 ? featuredIds : buildings.map((b) => b.id);
+  const originId = originChoice ?? fallbackIds[0] ?? "";
+  const destinationId = destinationChoice ?? fallbackIds.find((id) => id !== originId) ?? fallbackIds[1] ?? "";
   const origin = getBuilding(buildings, originId);
   const destination = getBuilding(buildings, destinationId);
   const {
@@ -85,6 +102,7 @@ export function CampusMap({ apiKey, mapId, buildings }: CampusMapProps) {
   return (
     <div className="space-y-5">
       <RouteControls
+        key={`${originId}|${destinationId}`}
         buildings={buildings}
         originId={originId}
         destinationId={destinationId}
@@ -105,6 +123,7 @@ export function CampusMap({ apiKey, mapId, buildings }: CampusMapProps) {
         apiKey={apiKey}
         mapId={mapId}
         buildings={buildings}
+        featuredIds={featuredIds}
         originId={originId}
         destinationId={destinationId}
         routeState={routeState}

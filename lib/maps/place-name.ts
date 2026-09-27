@@ -1,10 +1,10 @@
 import { distanceKm } from "@/lib/campus";
-import { CAMPUS_BUILDINGS } from "@/lib/maps/campus-buildings";
+import { ALL_CAMPUS_BUILDINGS } from "@/lib/maps/campus-buildings";
 
 // The campus building closest to a point, and how far away it is in meters.
 export function nearestBuilding(lat: number, lng: number): { name: string; meters: number } | null {
   let best: { name: string; meters: number } | null = null;
-  for (const building of CAMPUS_BUILDINGS) {
+  for (const building of ALL_CAMPUS_BUILDINGS) {
     const meters = distanceKm({ lat, lng }, building.position) * 1000;
     if (best === null || meters < best.meters) best = { name: building.name, meters };
   }

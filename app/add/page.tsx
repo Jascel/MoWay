@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
+import BuildingCombobox from "@/components/BuildingCombobox";
 import PageHeader from "@/components/PageHeader";
 import ChipGroup from "@/components/ChipGroup";
 import { categoryStyles } from "@/lib/categories";
@@ -133,8 +134,8 @@ async function handleSubmit(e: React.FormEvent) {    e.preventDefault(); // stop
         <div className="flex gap-3">
           <div className="flex-[2]">
             <label className="mb-1 block text-sm font-bold" htmlFor="building">Building</label>
-            <input id="building" value={building} onChange={(e) => setBuilding(e.target.value)}
-              placeholder="CIS" className={inputClass} />
+            <BuildingCombobox id="building" value={building} onChange={setBuilding}
+              onPick={(picked) => setBuilding(picked.code)} placeholder="Type CIS or a building name" className={inputClass} />
           </div>
           <div className="flex-1">
             <label className="mb-1 block text-sm font-bold" htmlFor="room">Room</label>

@@ -1,4 +1,5 @@
 import campusLocations from "@/data/campus-locations.json";
+import usfBuildings from "@/data/usf-buildings.json";
 import type { CampusBuilding } from "@/lib/maps/types";
 
 /**
@@ -15,6 +16,16 @@ import type { CampusBuilding } from "@/lib/maps/types";
 export const CAMPUS_BUILDINGS: readonly CampusBuilding[] =
   campusLocations.buildings;
 
+/**
+ * Every USF Tampa building we know, for search and schedule lookups. The hand-checked
+ * ones above come first, then the rest from data/usf-buildings.json (OpenStreetMap
+ * centroids). The map only draws pins for buildings on your schedule plus your From and To.
+ */
+export const ALL_CAMPUS_BUILDINGS: readonly CampusBuilding[] = [
+  ...CAMPUS_BUILDINGS,
+  ...usfBuildings.buildings,
+];
+
 function normalizeLabel(label: string): string {
   return label.trim().toLowerCase();
 }
@@ -25,7 +36,7 @@ function normalizeLabel(label: string): string {
  */
 export function findBuildingByLabel(
   label: string,
-  buildings: readonly CampusBuilding[] = CAMPUS_BUILDINGS,
+  buildings: readonly CampusBuilding[] = ALL_CAMPUS_BUILDINGS,
 ): CampusBuilding | undefined {
   const wanted = normalizeLabel(label);
 
@@ -40,4 +51,29 @@ export function findBuildingByLabel(
       normalizeLabel(building.id) === wanted ||
       (building.aliases ?? []).some((alias) => normalizeLabel(alias) === wanted),
   );
+}
+
+/** Buildings that match what someone typed (code, name, or alias), best matches first. */
+export function searchBuildings(
+  query: string,
+  buildings: readonly CampusBuilding[] = ALL_CAMPUS_BUILDINGS,
+  limit = 8,
+): CampusBuilding[] {
+  const wanted = normalizeLabel(query);
+  if (wanted === "") return buildings.slice(0, limit);
+
+  const scored: { building: CampusBuilding; score: number }[] = [];
+  for (const building of buildings) {
+    const code = normalizeLabel(building.code);
+    const name = normalizeLabel(building.name);
+    const aliases = (building.aliases ?? []).map(normalizeLabel);
+    let score = -1;
+    if (code === wanted) score = 0;
+    else if (code.startsWith(wanted)) score = 1;
+    else if (name.startsWith(wanted) || aliases.some((a) => a.startsWith(wanted))) score = 2;
+    else if (name.split(/\s+/).some((word) => word.startsWith(wanted))) score = 3;
+    else if (name.includes(wanted) || aliases.some((a) => a.includes(wanted))) score = 4;
+    if (score >= 0) scored.push({ building, score });
+  }
+  return scored.sort((a, b) => a.score - b.score).slice(0, limit).map(({ building }) => building);
 }
