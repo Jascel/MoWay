@@ -90,7 +90,11 @@ function stylePin(
     return;
   }
 
-  record.pin.glyphText = record.defaultGlyph;
+  // A short building code (like "CIS") in small type so three letters fit inside the pin.
+  const label = document.createElement("span");
+  label.textContent = record.defaultGlyph;
+  label.style.cssText = "font-size:9px;font-weight:800;letter-spacing:-0.4px;color:#006747";
+  record.pin.glyph = label;
   record.pin.background = "#ffffff";
   record.pin.borderColor = "#006747";
   record.pin.glyphColor = "#006747";
@@ -193,22 +197,23 @@ export function GoogleMapCanvas({
         const bounds =
           new core.LatLngBounds();
 
+        // One shared card that shows a building's name when its pin is tapped.
+        const buildingCard = new maps.InfoWindow();
+
         const records = buildings.map(
-          (building, index) => {
+          (building) => {
             bounds.extend(
               building.position,
             );
 
             const pin =
               new marker.PinElement({
-                scale: 1.05,
+                scale: 1.15,
               });
 
             const record: MarkerRecord = {
               buildingId: building.id,
-              defaultGlyph: String(
-                index + 1,
-              ),
+              defaultGlyph: building.code,
               pin,
               marker:
                 new marker.AdvancedMarkerElement(
@@ -229,6 +234,15 @@ export function GoogleMapCanvas({
               selectedIds.current
                 .destinationId,
             );
+
+            record.marker.addListener("click", () => {
+              const card = document.createElement("div");
+              card.textContent = building.name;
+              card.style.cssText =
+                "font-weight:700;font-size:14px;color:#1f2a44;max-width:200px";
+              buildingCard.setContent(card);
+              buildingCard.open({ map, anchor: record.marker });
+            });
 
             return record;
           },
