@@ -32,6 +32,8 @@ export default function RoutePanel({ choice, places, mode }: RoutePanelProps) {
   const miles = (route.distanceMeters / 1_609.344).toFixed(1);
   const originName = getPlaceName(places, route.originId);
   const destinationName = getPlaceName(places, route.destinationId);
+  // The status line above already says this for "unaffected", so drop the chip that repeats it.
+  const routeChips = choice.chips.filter((chip) => chip !== "Doesn't affect your route.");
 
   return (
     <section className="rounded-3xl bg-white p-4 shadow-sm" aria-labelledby="walking-route-heading">
@@ -55,9 +57,9 @@ export default function RoutePanel({ choice, places, mode }: RoutePanelProps) {
         {statusMessage(choice)}
       </p>
 
-      {choice.chips.length > 0 ? (
+      {routeChips.length > 0 ? (
         <div className="mt-3 flex flex-wrap gap-2" aria-label="Route details">
-          {choice.chips.map((chip) => (
+          {routeChips.map((chip) => (
             <span key={chip} className="rounded-full bg-aqua-soft px-3 py-1 text-xs font-semibold text-ink">
               {chip}
             </span>

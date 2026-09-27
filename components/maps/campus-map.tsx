@@ -9,10 +9,10 @@ import ReportLegend from "@/components/maps/ReportLegend";
 import { useWalkingRoute } from "@/components/maps/use-walking-route";
 import { mockDay, mockProfile, type Profile } from "@/data/mock";
 import { isNearCampus } from "@/lib/campus";
+import { findBuildingByLabel } from "@/lib/maps/campus-buildings";
 import { rowToReport } from "@/lib/database/mapReport";
 import { useActiveReports } from "@/lib/database/useActiveReports";
 import { PROFILE_KEY } from "@/lib/options";
-import { findBuildingByLabel } from "@/lib/maps/campus-buildings";
 import { CAMPUS_GARAGES } from "@/lib/maps/campus-parking";
 import { chooseRoute } from "@/lib/maps/route-hazards";
 import type { CampusBuilding, CampusPlace } from "@/lib/maps/types";
@@ -52,6 +52,8 @@ export function CampusMap({ apiKey, mapId, buildings }: CampusMapProps) {
       .filter((building): building is CampusBuilding => building !== undefined),
     [buildings, schedule.events],
   );
+  // The map only shows pins for buildings on your schedule, plus whatever you pick as From/To.
+  const featuredIds = useMemo(() => dayBuildings.map((building) => building.id), [dayBuildings]);
   const smartPark = useMemo(
     () => planSmartPark(CAMPUS_GARAGES, dayBuildings, mode),
     [dayBuildings, mode],
@@ -115,6 +117,7 @@ export function CampusMap({ apiKey, mapId, buildings }: CampusMapProps) {
   return (
     <div className="space-y-5">
       <RouteControls
+        key={`${originId}|${destinationId}`}
         buildings={buildings}
         garages={CAMPUS_GARAGES}
         originId={originId}
@@ -137,6 +140,7 @@ export function CampusMap({ apiKey, mapId, buildings }: CampusMapProps) {
         mapId={mapId}
         buildings={buildings}
         garages={CAMPUS_GARAGES}
+        featuredIds={featuredIds}
         originId={originId}
         destinationId={destinationId}
         routeState={routeState}

@@ -1,4 +1,5 @@
-export default function ThankYou() {
+import Confetti from "@/components/Confetti";
+export default function ThankYou({ first = false }: { first?: boolean }) {
   return (
     <section
       role="status"
@@ -10,7 +11,8 @@ export default function ThankYou() {
         </svg>
       </span>
       <div>
-        <p className="font-display text-xl font-bold leading-tight">You just helped people on campus</p>
+        {first && <Confetti />}
+        <p className="font-display text-xl font-bold leading-tight">{first ? "Your first report! Welcome to the crew" : "You just helped people on campus"}</p>
         <p className="mt-0.5 text-sm text-ink/70">Other people&apos;s routes will update.</p>
       </div>
     </section>

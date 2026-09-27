@@ -1,6 +1,6 @@
 import PageHeader from "@/components/PageHeader";
 import { CampusMap } from "@/components/maps/campus-map";
-import { CAMPUS_BUILDINGS } from "@/lib/maps/campus-buildings";
+import { ALL_CAMPUS_BUILDINGS } from "@/lib/maps/campus-buildings";
 
 const DEFAULT_GOOGLE_MAP_ID = "DEMO_MAP_ID";
 
@@ -17,7 +17,11 @@ export default function MapPage() {
         tone="ice"
       />
       <div className="-mt-6 space-y-6 px-4 pb-4">
-        <CampusMap apiKey={apiKey} mapId={mapId} buildings={CAMPUS_BUILDINGS} />
+        <CampusMap
+          apiKey={apiKey}
+          mapId={mapId}
+          buildings={ALL_CAMPUS_BUILDINGS}
+        />
       </div>
     </>
   );
