@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { greetingFor } from "@/lib/greeting";
 import PageHeader from "@/components/PageHeader";
 import Avatar from "@/components/Avatar";
 import WeatherCard from "@/components/WeatherCard";
@@ -240,6 +241,8 @@ export default function TodayPage() {
     return null;
   }
 
+  const greeting = greetingFor(new Date().getHours());
+
   const leaveBy =
     baseLeaveBy && alert
       ? minusMinutes(baseLeaveBy, alert.extraMinutes)
@@ -252,8 +255,8 @@ export default function TodayPage() {
   return (
     <>
       <PageHeader
-        title={`Hi ${profile.name || "there"}`}
-        subtitle="Here's your day"
+        title={`${greeting.hello}, ${profile.name || "there"}`}
+        subtitle={greeting.line}
         right={
           <Avatar
             name={profile.name}
@@ -270,7 +273,7 @@ export default function TodayPage() {
         />
       </PageHeader>
 
-      <div className="-mt-6 space-y-6 px-4 pb-4">
+      <div className="animate-fade-up -mt-6 space-y-6 px-4 pb-4">
         <DayAlert
           alert={alert}
           onDismiss={() => saveAlert(null)}

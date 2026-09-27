@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Check } from "lucide-react";
+import { CircleCheck } from "lucide-react";
 
 import PageHeader from "@/components/PageHeader";
 import ChipGroup from "@/components/ChipGroup";
+import ThankYou from "@/components/ThankYou";
+import EmptyState from "@/components/EmptyState";
+import SkeletonCard from "@/components/SkeletonCard";
 import StillThereCard from "@/components/StillThereCard";
 import LocationPicker from "@/components/maps/LocationPicker";
 
@@ -100,6 +103,7 @@ export default function ReportPage() {
 const {
   reports: activeReports,
   refresh: refreshReports,
+  loading: reportsLoading,
 } = useActiveReports();
 
 // "Near you" only lists reports near campus.
@@ -257,15 +261,7 @@ async function handleClearReports() {
       <div className="-mt-6 space-y-6 px-4">
         {/* SUCCESS */}
 
-        {sent && (
-          <p className="flex items-center gap-2 rounded-3xl bg-mint p-4 text-sm font-semibold">
-            <Check className="size-5 shrink-0 text-leaf" />
-
-            Thanks for reporting!
-            Other people&apos;s routes
-            will update.
-          </p>
-        )}
+        {sent && <ThankYou />}
 
         {/* FORM */}
 
@@ -296,7 +292,7 @@ async function handleClearReports() {
                     }}
                     className={`flex flex-col items-center gap-2 rounded-2xl border p-4 text-center text-sm font-semibold ${
                       category === value
-                        ? "border-ink bg-ink text-white"
+                        ? "animate-pop border-ink bg-ink text-white"
                         : "border-ink/10 bg-cream text-ink"
                     }`}
                   >
@@ -417,15 +413,19 @@ async function handleClearReports() {
             Near you
           </h2>
 
-          {nearbyReport ? (
+          {reportsLoading ? (
+            <SkeletonCard />
+          ) : nearbyReport ? (
             <StillThereCard
               key={nearbyReport.id} // a new report starts with a fresh card
               report={nearbyReport}
             />
           ) : (
-            <p className="text-sm text-ink/60">
-              No active reports nearby.
-            </p>
+            <EmptyState
+              icon={CircleCheck}
+              title="All clear on campus"
+              text="No active reports nearby right now."
+            />
           )}
         </section>
 
