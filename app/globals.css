@@ -86,3 +86,16 @@ button:not(:disabled):active, a[class*="rounded-full"]:active { transform: scale
 @media (prefers-reduced-motion: reduce) {
   .animate-pin-drop { animation: none; }
 }
+
+/* iPhone Safari gives time boxes a fixed width; make them fill their column like the other inputs. */
+.time-input {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 3rem;
+  font-size: 0.875rem;
+}
+.time-input::-webkit-date-and-time-value { text-align: left; }

@@ -72,14 +72,14 @@ export default function EventEditor({
           <input id="edit-title" value={title} onChange={(e) => setTitle(e.target.value)} className={inputClass} />
         </div>
 
-        <div className="flex gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <div className="min-w-0 flex-1">
             <label className="mb-1 block text-sm font-bold" htmlFor="edit-start">Start</label>
-            <input id="edit-start" type="time" value={start} onChange={(e) => setStart(e.target.value)} className={`${inputClass} min-w-0 text-sm`} />
+            <input id="edit-start" type="time" value={start} onChange={(e) => setStart(e.target.value)} className={`${inputClass} time-input`} />
           </div>
           <div className="min-w-0 flex-1">
             <label className="mb-1 block text-sm font-bold" htmlFor="edit-end">End</label>
-            <input id="edit-end" type="time" value={end} onChange={(e) => setEnd(e.target.value)} className={`${inputClass} min-w-0 text-sm`} />
+            <input id="edit-end" type="time" value={end} onChange={(e) => setEnd(e.target.value)} className={`${inputClass} time-input`} />
           </div>
         </div>
 
