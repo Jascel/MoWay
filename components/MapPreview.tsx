@@ -1,3 +1,4 @@
+
 // Stand-in "map" drawn with SVG, styled like the reference: soft gray streets,
 // a dotted route, and two pins. It gets replaced by Andres's real Google map.
 // The thin dark-green border is the USF touch.

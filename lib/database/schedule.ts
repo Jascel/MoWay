@@ -105,6 +105,48 @@ export async function getScheduleForDate(
 }
 
 // --------------------
+// GET SCHEDULE FOR DATE RANGE
+// --------------------
+
+export async function getScheduleForDateRange(
+  startDate: string,
+  endDateExclusive: string
+) {
+  if (startDate >= endDateExclusive) {
+    throw new Error("Schedule range must end after it starts.");
+  }
+
+  const supabase = getSupabaseClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError) {
+    throw userError;
+  }
+
+  if (!user) {
+    throw new Error("You must be logged in to view your schedule.");
+  }
+
+  const { data, error } = await supabase
+    .from("schedule_events")
+    .select("*")
+    .eq("user_id", user.id)
+    .gte("event_date", startDate)
+    .lt("event_date", endDateExclusive)
+    .order("event_date", { ascending: true })
+    .order("start_time", { ascending: true });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+// --------------------
 // DELETE EVENT
 // --------------------
 
