@@ -21,6 +21,23 @@ type GoogleEvent = {
   readonly start?: GoogleDateTime;
   readonly end?: GoogleDateTime;
   readonly location?: string;
+  readonly colorId?: string;
+};
+
+// Google's 11 event colors (colorId "1".."11") are fairly saturated, so each maps to the
+// closest pastel token in our own palette instead of Google's real (non-pastel) hex value.
+const GOOGLE_EVENT_COLORS: Record<string, string> = {
+  "1": "bg-lilac", // Lavender
+  "2": "bg-mint", // Sage
+  "3": "bg-lilac", // Grape
+  "4": "bg-rose", // Flamingo
+  "5": "bg-sun", // Banana
+  "6": "bg-coral", // Tangerine
+  "7": "bg-aqua", // Peacock
+  "8": "bg-sand", // Graphite
+  "9": "bg-aqua", // Blueberry
+  "10": "bg-mint", // Basil
+  "11": "bg-rose", // Tomato
 };
 
 type GoogleEventsResponse = {
@@ -129,6 +146,7 @@ function normalizeGoogleEvent(
   const title = event.summary?.trim() || "Untitled event";
   const location = event.location?.trim() || undefined;
   const place = recognizedLocation(location);
+  const color = event.colorId ? GOOGLE_EVENT_COLORS[event.colorId] : undefined;
   if (event.start.date && event.end.date) {
     return {
       id: `google:${event.id}`,
@@ -138,6 +156,7 @@ function normalizeGoogleEvent(
       allDay: true,
       endDate: event.end.date,
       ...(location ? { location } : {}),
+      ...(color ? { color } : {}),
       ...place,
     };
   }
@@ -157,6 +176,7 @@ function normalizeGoogleEvent(
     start: start.time,
     end: end.time,
     ...(location ? { location } : {}),
+    ...(color ? { color } : {}),
     ...place,
   };
 }
@@ -203,7 +223,7 @@ export async function getPrimaryCalendarEvents(
       orderBy: "startTime",
       showDeleted: "false",
       maxResults: "2500",
-      fields: "items(id,summary,status,start(date,dateTime,timeZone),end(date,dateTime,timeZone),location),nextPageToken",
+      fields: "items(id,summary,status,start(date,dateTime,timeZone),end(date,dateTime,timeZone),location,colorId),nextPageToken",
     });
     if (pageToken) {
       parameters.set("pageToken", pageToken);

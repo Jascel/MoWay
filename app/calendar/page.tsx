@@ -652,8 +652,9 @@ export default function CalendarPage() {
             <div className="space-y-2">
               {events.map((event) => {
                 const style = categoryStyles[event.category ?? "event"];
+                const bg = event.source === "google" ? (event.color ?? "bg-aqua-soft") : style.bg;
                 return (
-                  <article key={event.id} className={`rounded-2xl p-4 ${style.bg}`}>
+                  <article key={event.id} className={`rounded-2xl p-4 ${bg}`}>
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-sm font-bold">
                         {event.allDay
