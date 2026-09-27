@@ -50,3 +50,14 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .animate-slide-in, .animate-flash, .animate-pop, .animate-ping { animation: none; }
 }
+
+/* A new report's pin drops onto the map. */
+@keyframes moway-pin-drop {
+  0% { transform: translateY(-70px) scale(0.6); opacity: 0; }
+  60% { transform: translateY(6px) scale(1.1); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+.animate-pin-drop { animation: moway-pin-drop 0.7s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .animate-pin-drop { animation: none; }
+}

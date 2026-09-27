@@ -25,6 +25,7 @@ import {
 } from "@/data/mock";
 
 import { ALERT_KEY, alertFromReport } from "@/lib/alerts";
+import { buildDayLegs, minutesBackToGarage } from "@/lib/dayLegs";
 import { useLiveReport } from "@/lib/database/useLiveReport";
 import {
   deleteScheduleEvent,
@@ -36,6 +37,11 @@ import { PROFILE_KEY } from "@/lib/options";
 import { ONBOARDED_KEY } from "@/lib/onboarding";
 import { useDriveEstimate } from "@/lib/driveTime";
 import { useStoredState } from "@/lib/useStoredState";
+import { findBuildingByLabel } from "@/lib/maps/campus-buildings";
+import { CAMPUS_GARAGES } from "@/lib/maps/campus-parking";
+import type { CampusBuilding } from "@/lib/maps/types";
+import { campusMode } from "@/lib/profileMode";
+import { planSmartPark, toParkingRecommendation } from "@/lib/smartPark";
 
 export default function TodayPage() {
   const day = mockDay;
@@ -188,6 +194,27 @@ export default function TodayPage() {
   );
 
   // --------------------
+  // SMART PARK + WALKING LEGS
+  // --------------------
+
+  // Rank the 3 garages by total campus travel for today's buildings in the user's campus
+  // mode (wheelchair for a driver who rolls on campus). Events whose building we don't
+  // have coordinates for are skipped. Falls back to the mock pick if nothing resolves.
+  const mode = campusMode(profile);
+  const dayBuildings = events
+    .map((event) => findBuildingByLabel(event.building))
+    .filter((building): building is CampusBuilding => building !== undefined);
+  const smartPark = planSmartPark(CAMPUS_GARAGES, dayBuildings, mode);
+  const parking =
+    toParkingRecommendation(smartPark, { spotsLeftPercent: day.parking.spotsLeftPercent }) ?? day.parking;
+
+  // The walks between stops use the same distance/speed math as Smart Park, so the
+  // timeline and the card agree, and events you add or edit get a leg automatically.
+  const garage = smartPark.winner?.garage;
+  const legs = buildDayLegs(events, garage, mode);
+  const walkToCarMinutes = minutesBackToGarage(events, garage, mode) ?? 2;
+
+  // --------------------
   // COMMUTE
   // --------------------
 
@@ -199,7 +226,7 @@ export default function TodayPage() {
     drive.minutes ?? day.driveMinutes;
 
   const first = events[0];
-  const affectedId = pickAffectedLeg(events, day.legs);
+  const affectedId = pickAffectedLeg(events, legs);
 
   const arriveBy = first
     ? minusMinutes(first.start, profile.parkingBufferMinutes)
@@ -261,7 +288,7 @@ export default function TodayPage() {
               changedFrom={alert && baseLeaveBy ? baseLeaveBy : undefined}
             />
 
-            <ParkingCard parking={day.parking} />
+            <ParkingCard parking={parking} campusMode={mode} />
           </>
         ) : (
           <section className="rounded-3xl bg-white p-5 text-center shadow-sm">
@@ -280,8 +307,9 @@ export default function TodayPage() {
 
         <Timeline
           events={events}
-          legs={day.legs}
-          homeTrip={{ walkMinutes: 2, driveMinutes }}
+          legs={legs}
+          homeTrip={{ walkMinutes: walkToCarMinutes, driveMinutes }}
+          campusMode={mode}
           onEdit={setEditing}
           onDelete={deleteEvent}
           hiddenCount={hiddenCount}

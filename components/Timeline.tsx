@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Car, Footprints, House, MapPin, Pencil, Trash2 } from "lucide-react";
+import { Car, House, MapPin, Pencil, Trash2 } from "lucide-react";
 import type { ClassEvent, Leg } from "@/data/mock";
+import { campusTravelIcons } from "@/lib/options";
+import type { CampusMode } from "@/lib/profileMode";
 import { formatTime, minusMinutes, plusMinutes } from "@/lib/time";
 import { categoryStyles } from "@/lib/categories";
 import RouteChips from "@/components/RouteChips";
@@ -85,13 +87,32 @@ function EventCard({
   );
 }
 
-function StepIcon({ mode }: { mode?: "walk" | "drive" }) {
-  const Icon = mode === "drive" ? Car : Footprints;
+function LegStepIcon({ legMode, campusMode }: { legMode?: "walk" | "drive"; campusMode: CampusMode }) {
+  if (legMode === "drive") {
+    return <Car className="size-4 shrink-0 text-leaf" />;
+  }
+  const Icon = campusTravelIcons[campusMode];
   return <Icon className="size-4 shrink-0 text-leaf" />;
 }
 
-// The walk between two stops: "8 min walk, leave by 9:52" plus route chips.
-function WalkConnector({ leg, arriveBy, extraMinutes = 0 }: { leg: Leg; arriveBy: string; extraMinutes?: number }) {
+function travelWordFor(campusMode: CampusMode): "walk" | "trip" {
+  return campusMode === "walking" ? "walk" : "trip";
+}
+
+// The leg between two stops: "8 min walk, leave by 9:52" plus route chips.
+// `extraMinutes` > 0 means a live report made this leg longer (it then gets highlighted).
+function WalkConnector({
+  leg,
+  arriveBy,
+  campusMode,
+  extraMinutes = 0,
+}: {
+  leg: Leg;
+  arriveBy: string;
+  campusMode: CampusMode;
+  extraMinutes?: number;
+}) {
+  const travelWord = travelWordFor(campusMode);
   const minutes = leg.minutes + extraMinutes;
   const changed = extraMinutes > 0;
   return (
@@ -104,8 +125,8 @@ function WalkConnector({ leg, arriveBy, extraMinutes = 0 }: { leg: Leg; arriveBy
       }
     >
       <p className="flex items-center gap-2 text-sm font-medium">
-        {changed ? <AlertIcon /> : <StepIcon mode={leg.mode} />}
-        {minutes} min {leg.steps ? "total" : leg.mode === "drive" ? "drive" : "walk"}, leave by{" "}
+        {changed ? <AlertIcon /> : <LegStepIcon legMode={leg.mode} campusMode={campusMode} />}
+        {minutes} min {leg.steps ? "total" : leg.mode === "drive" ? "drive" : travelWord}, leave by{" "}
         {formatTime(minusMinutes(arriveBy, minutes))}
         {changed && <span className="text-xs font-semibold text-ink/60">(was {leg.minutes} min)</span>}
       </p>
@@ -113,7 +134,7 @@ function WalkConnector({ leg, arriveBy, extraMinutes = 0 }: { leg: Leg; arriveBy
         <ul className="mt-1.5 space-y-1 text-xs text-ink/70">
           {leg.steps.map((step) => (
             <li key={step.label} className="flex items-center gap-2">
-              <StepIcon mode={step.mode} />
+              <LegStepIcon legMode={step.mode} campusMode={campusMode} />
               {step.label} ({step.minutes} min)
             </li>
           ))}
@@ -126,9 +147,22 @@ function WalkConnector({ leg, arriveBy, extraMinutes = 0 }: { leg: Leg; arriveBy
   );
 }
 
-// The trip home after your last stop: a short walk to the car, then the drive.
-function HomeTrip({ last, walkMinutes, driveMinutes }: { last: ClassEvent; walkMinutes: number; driveMinutes: number }) {
+// The trip home after your last stop: a short leg to the car, then the drive.
+function HomeTrip({
+  last,
+  walkMinutes,
+  driveMinutes,
+  campusMode,
+}: {
+  last: ClassEvent;
+  walkMinutes: number;
+  driveMinutes: number;
+  campusMode: CampusMode;
+}) {
   const total = walkMinutes + driveMinutes;
+  const travelWord = travelWordFor(campusMode);
+  const toCar = travelWord === "walk" ? "Walk to your car" : "Trip to your car";
+  const ToCarIcon = campusTravelIcons[campusMode];
   return (
     <div className="mb-3">
       <div className="ml-6 border-l-2 border-dashed border-leaf/50 py-3 pl-4">
@@ -138,8 +172,8 @@ function HomeTrip({ last, walkMinutes, driveMinutes }: { last: ClassEvent; walkM
         </p>
         <ul className="mt-1.5 space-y-1 text-xs text-ink/70">
           <li className="flex items-center gap-2">
-            <Footprints className="size-4 shrink-0 text-leaf" />
-            Walk to your car ({walkMinutes} min)
+            <ToCarIcon className="size-4 shrink-0 text-leaf" />
+            {toCar} ({walkMinutes} min)
           </li>
           <li className="flex items-center gap-2">
             <Car className="size-4 shrink-0 text-leaf" />
@@ -170,6 +204,7 @@ export default function Timeline({
   hiddenCount = 0,
   onRestore,
   affected,
+  campusMode = "walking",
 }: {
   events: ClassEvent[];
   legs: Leg[];
@@ -179,6 +214,8 @@ export default function Timeline({
   hiddenCount?: number;
   onRestore?: () => void;
   affected?: { toEventId: string; extraMinutes: number } | null;
+  /** On-campus mobility for legs (same as Profile icons / leg time estimates). */
+  campusMode?: CampusMode;
 }) {
   return (
     <section>
@@ -196,6 +233,7 @@ export default function Timeline({
               <WalkConnector
                 leg={leg}
                 arriveBy={event.start}
+                campusMode={campusMode}
                 extraMinutes={affected?.toEventId === event.id ? affected.extraMinutes : 0}
               />
             )}
@@ -204,7 +242,12 @@ export default function Timeline({
         );
       })}
       {homeTrip && events.length > 0 && (
-        <HomeTrip last={events[events.length - 1]} walkMinutes={homeTrip.walkMinutes} driveMinutes={homeTrip.driveMinutes} />
+        <HomeTrip
+          last={events[events.length - 1]}
+          walkMinutes={homeTrip.walkMinutes}
+          driveMinutes={homeTrip.driveMinutes}
+          campusMode={campusMode}
+        />
       )}
       {hiddenCount > 0 && onRestore && (
         <button onClick={onRestore} className="mb-3 text-sm text-ink/60 underline">

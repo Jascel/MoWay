@@ -89,6 +89,10 @@ export interface ParkingRecommendation {
   spotsLeftPercent: number; // 0-100 how full it is
   walkMinutesToFirstClass: number;
   walkMinutesFromLastClass: number;
+  // Filled in by Smart Park (lib/smartPark.ts) so the card can show its reasoning.
+  totalWalkMinutes?: number; // whole day: garage -> every stop -> garage
+  alternatives?: { garage: string; totalWalkMinutes: number }[]; // the garages it did not pick, best first
+  modeVerb?: string; // "walking" | "rolling" | ... for the user's campus mode
 }
 
 export interface Weather {
@@ -168,13 +172,15 @@ export const mockDay: DayPlan = {
     stormAt: "14:30",
     summary: "Storms this afternoon. Bring an umbrella.",
   },
+  // Fallback only. The Today page runs Smart Park (lib/smartPark.ts) over the day's buildings
+  // and replaces everything here except spotsLeftPercent, which stays mock (no live counts).
   parking: {
-    garage: "Zimmerman (outside CIS)",
-    reason: "Right next to CIS, where your first three stops are. Before your lab, you move your car to the Fishbowl.",
-    savesWalkMinutes: 19,
+    garage: "Collins Garage",
+    reason: "Add a class with a campus building and we'll pick the garage with the least walking.",
+    savesWalkMinutes: 0,
     spotsLeftPercent: 34,
-    walkMinutesToFirstClass: 4,
-    walkMinutesFromLastClass: 4,
+    walkMinutesToFirstClass: 0,
+    walkMinutesFromLastClass: 0,
   },
   events: [
     { id: "e1", category: "class", title: "MAC 2312", building: "CIS", room: "1045", start: "09:30", end: "10:45" },
@@ -184,25 +190,9 @@ export const mockDay: DayPlan = {
     { id: "e5", category: "fitness", title: "Pilates", building: "USF Recreation Center", start: "16:30", end: "17:30" },
     { id: "e6", category: "class", title: "CDA 3201L", building: "ENB", room: "214", start: "18:00", end: "19:45" },
   ],
-  legs: [
-    { fromEventId: "parking", toEventId: "e1", minutes: 4, distanceMeters: 300, tags: ["Paved", "Step-free"] },
-    { fromEventId: "e1", toEventId: "e2", minutes: 1, distanceMeters: 40, tags: ["Same building"] },
-    { fromEventId: "e2", toEventId: "e3", minutes: 8, distanceMeters: 820, tags: ["Avoids construction"] },
-    { fromEventId: "e3", toEventId: "e4", minutes: 7, distanceMeters: 480, tags: ["More shaded"] },
-    { fromEventId: "e4", toEventId: "e5", minutes: 10, distanceMeters: 750, tags: ["Step-free"] },
-    {
-      fromEventId: "e5",
-      toEventId: "e6",
-      minutes: 15,
-      distanceMeters: 2200,
-      tags: ["Park at the Fishbowl"],
-      steps: [
-        { mode: "walk", minutes: 8, label: "Walk to your car" },
-        { mode: "drive", minutes: 5, label: "Drive to the Fishbowl (about 1 mi)" },
-        { mode: "walk", minutes: 2, label: "Walk into ENB" },
-      ],
-    },
-  ],
+  // Legs are no longer mocked: the Today page computes them from the events' buildings
+  // (lib/dayLegs.ts), so added or edited events get a walk automatically.
+  legs: [],
   alert: {
     reportId: "r1",
     message: "Ramp near the Marshall Student Center is blocked. Your walk to CDA 3201 now takes 3 min longer.",
