@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { LogoMark } from "@/components/Logo";
 import PageHeader from "@/components/PageHeader";
 import ChipGroup from "@/components/ChipGroup";
+import HomeAddressSelector from "@/components/HomeAddressSelector";
 import { modeOptions, prefOptions, PROFILE_KEY } from "@/lib/options";
 import { ONBOARDED_KEY } from "@/lib/onboarding";
 import { useStoredState } from "@/lib/useStoredState";
@@ -96,12 +97,11 @@ export default function Welcome({ initialStep = 0 }: { initialStep?: number }) {
             <p className="mb-3 text-xs text-ink/70">
               So we can work out your drive to campus. Saved only on this device.
             </p>
-            <input
+            <HomeAddressSelector
               id="home"
               value={home}
-              onChange={(e) => setHome(e.target.value)}
+              onChange={setHome}
               placeholder="Street address, city"
-              autoComplete="street-address"
               className="w-full rounded-2xl border border-ink/15 bg-cream p-3"
             />
           </section>
