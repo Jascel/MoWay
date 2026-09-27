@@ -43,6 +43,27 @@ export async function createAccount(email: string, password: string): Promise<Si
   return data.session ? "signed-in" : "confirm-email";
 }
 
+// True when Google sign-in really works. Used to hide the Google button until it does.
+export async function isGoogleEnabled(): Promise<boolean> {
+  try {
+    const settings = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/settings`, {
+      headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "" },
+    }).then((response) => response.json() as Promise<{ external?: { google?: boolean } }>);
+    if (!settings.external?.google) return false;
+
+    // "On" isn't enough: Google can be switched on without its client secret. Ask Supabase to start a
+    // Google sign-in and see what comes back. A redirect (to Google) means it works; an error means it doesn't.
+    // no-cors + manual redirect lets us tell the two apart without following the redirect.
+    const probe = await fetch(
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(window.location.origin)}`,
+      { redirect: "manual", mode: "no-cors" }
+    );
+    return probe.type === "opaqueredirect";
+  } catch {
+    return false;
+  }
+}
+
 // Continues with a Google account. The browser leaves for Google and comes back to the app signed in.
 // If this browser is using the anonymous guest account, Google is linked to that SAME account (same
 // user id), so the person's profile, schedule and reports stay with them. That needs

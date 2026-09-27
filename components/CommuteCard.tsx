@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Car, House } from "lucide-react";
 import { formatTime } from "@/lib/time";
+import AlertIcon from "@/components/AlertIcon";
 
 // "Smart Commute": when to leave home. Props are plain values so it's easy to reuse.
 export default function CommuteCard({
@@ -9,12 +10,14 @@ export default function CommuteCard({
   arriveBy,
   reason,
   hasHome,
+  changedFrom,
 }: {
   leaveBy: string;
   driveMinutes: number;
   arriveBy: string;
   reason: string;
   hasHome: boolean;
+  changedFrom?: string; // the leave-by time before a report moved it
 }) {
   // "8:40 AM" -> big "8:40" plus small "AM"
   const [time, suffix] = formatTime(leaveBy).split(" ");
@@ -24,10 +27,16 @@ export default function CommuteCard({
         <div>
           <p className="text-xs font-bold uppercase tracking-wider text-leaf">Smart Commute</p>
           <p className="mt-2 text-sm font-semibold text-ink/70">Leave home at</p>
-          <p className="font-display text-4xl font-bold leading-none">
+          <p key={leaveBy} className="animate-pop font-display text-4xl font-bold leading-none">
             {time}
             <span className="ml-1.5 text-lg">{suffix}</span>
           </p>
+          {changedFrom && (
+            <p className="mt-1.5 flex items-center gap-1.5 text-xs font-semibold text-ink/70">
+              <AlertIcon label="Changed by a report" />
+              Moved earlier from <span className="line-through">{formatTime(changedFrom)}</span>
+            </p>
+          )}
         </div>
         <div className="flex size-10 items-center justify-center rounded-2xl bg-white/60">
           <House className="size-5 text-leaf" />
