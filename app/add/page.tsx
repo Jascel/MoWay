@@ -118,15 +118,15 @@ async function handleSubmit(e: React.FormEvent) {    e.preventDefault(); // stop
         </div>
 
         <div className="flex gap-3">
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             <label className="mb-1 block text-sm font-bold" htmlFor="start">Start</label>
             <input id="start" type="time" value={start} onChange={(e) => setStart(e.target.value)}
-              className={inputClass} />
+              className={`${inputClass} min-w-0 text-sm`} />
           </div>
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             <label className="mb-1 block text-sm font-bold" htmlFor="end">End</label>
             <input id="end" type="time" value={end} onChange={(e) => setEnd(e.target.value)}
-              className={inputClass} />
+              className={`${inputClass} min-w-0 text-sm`} />
           </div>
         </div>
 
