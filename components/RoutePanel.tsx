@@ -1,5 +1,4 @@
 import { categoryInfo } from "@/lib/reportCategories";
-import { minutesFor } from "@/lib/maps/speeds";
 import type { CampusPlace } from "@/lib/maps/types";
 import type { CampusMode } from "@/lib/profileMode";
 import type { RouteChoice } from "@/lib/maps/route-hazards";
@@ -28,7 +27,7 @@ export default function RoutePanel({ choice, places, mode }: RoutePanelProps) {
   const route = choice.chosen;
   if (route === null) return null;
 
-  const minutes = minutesFor(route.distanceMeters, mode);
+  const minutes = choice.selectedMinutes;
   const miles = (route.distanceMeters / 1_609.344).toFixed(1);
   const originName = getPlaceName(places, route.originId);
   const destinationName = getPlaceName(places, route.destinationId);

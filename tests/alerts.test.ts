@@ -15,6 +15,7 @@ function choice(status: RouteChoice["status"], extraMinutes: number): RouteChoic
   return {
     chosen: null,
     rejected: [],
+    selectedMinutes: 0,
     extraMinutes,
     chips: [],
     hazards: [],

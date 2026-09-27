@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import RoutePanel from "@/components/RoutePanel";
 import { GoogleMapCanvas } from "@/components/maps/google-map-canvas";
@@ -14,9 +14,11 @@ import { rowToReport } from "@/lib/database/mapReport";
 import { useActiveReports } from "@/lib/database/useActiveReports";
 import { PROFILE_KEY } from "@/lib/options";
 import { CAMPUS_GARAGES } from "@/lib/maps/campus-parking";
+import { loadGeocodingLibrary } from "@/lib/maps/google-maps";
+import { MAP_ROUTE_KEY, restoreMapSelection, type MapSelection } from "@/lib/maps/map-persistence";
 import { chooseRoute } from "@/lib/maps/route-hazards";
-import type { CampusBuilding, CampusPlace } from "@/lib/maps/types";
-import { campusMode } from "@/lib/profileMode";
+import type { CampusBuilding, CampusGarage, CampusPlace } from "@/lib/maps/types";
+import { campusMode, profileUsesDriving } from "@/lib/profileMode";
 import { planSmartPark } from "@/lib/smartPark";
 import { useDaySchedule } from "@/lib/useDaySchedule";
 import { useStoredState } from "@/lib/useStoredState";
@@ -37,15 +39,60 @@ class CampusMapDataError extends Error {
 
 export function CampusMap({ apiKey, mapId, buildings }: CampusMapProps) {
   const [profile, , profileLoaded] = useStoredState<Profile>(PROFILE_KEY, mockProfile);
-  const schedule = useDaySchedule(mockDay.date);
-  const places = useMemo<readonly CampusPlace[]>(
-    () => [...CAMPUS_GARAGES, ...buildings],
-    [buildings],
+  const [savedSelection, saveSelection, selectionLoaded] = useStoredState<MapSelection>(
+    MAP_ROUTE_KEY,
+    { originId: "", destinationId: "" },
   );
-
-  if (places.length < 2) throw new CampusMapDataError();
-
+  const schedule = useDaySchedule(mockDay.date);
+  const driving = profileUsesDriving(profile);
   const mode = campusMode(profile);
+  const [homeStart, setHomeStart] = useState<{
+    readonly address: string;
+    readonly place: CampusGarage | null;
+  }>({ address: "", place: null });
+
+  useEffect(() => {
+    if (!profileLoaded) return;
+    const address = profile.homeAddress?.trim() ?? "";
+    if (driving || address.length === 0 || apiKey.length === 0) return;
+
+    let active = true;
+    void loadGeocodingLibrary(apiKey)
+      .then((geocoding) => new geocoding.Geocoder().geocode({ address, region: "us" }))
+      .then((response) => {
+        if (!active) return;
+        const result = response.results[0];
+        if (!result) {
+          setHomeStart({ address, place: null });
+          return;
+        }
+        setHomeStart({
+          address,
+          place: {
+            id: "home-start",
+            name: "Starting location",
+            position: { lat: result.geometry.location.lat(), lng: result.geometry.location.lng() },
+            source: "Google Geocoder",
+          },
+        });
+      })
+      .catch(() => {
+        if (active) setHomeStart({ address, place: null });
+      });
+    return () => { active = false; };
+  }, [apiKey, driving, profile.homeAddress, profileLoaded]);
+
+  const currentAddress = profile.homeAddress?.trim() ?? "";
+  const homePending = !driving && currentAddress.length > 0 && apiKey.length > 0
+    && homeStart.address !== currentAddress;
+  const homePlace = !driving && currentAddress.length > 0 && apiKey.length > 0
+    && homeStart.address === currentAddress ? homeStart.place : null;
+  const garages = useMemo(
+    () => driving ? CAMPUS_GARAGES : homePlace ? [homePlace] : [],
+    [driving, homePlace],
+  );
+  const places = useMemo<readonly CampusPlace[]>(() => [...garages, ...buildings], [buildings, garages]);
+  if (buildings.length === 0) throw new CampusMapDataError();
   const dayBuildings = useMemo(
     () => schedule.events
       .map((event) => findBuildingByLabel(event.building, buildings))
@@ -59,20 +106,26 @@ export function CampusMap({ apiKey, mapId, buildings }: CampusMapProps) {
     [dayBuildings, mode],
   );
   const firstClass = dayBuildings[0] ?? buildings[0];
-  const defaultOriginId = smartPark.winner?.garage.id ?? CAMPUS_GARAGES[0]?.id ?? places[0].id;
-  const defaultDestinationId = firstClass?.id ?? places[1].id;
-  const [originId, setOriginId] = useState("");
-  const [destinationId, setDestinationId] = useState("");
-  const selectionInitialized = useRef(false);
+  const defaultOriginId = driving
+    ? smartPark.winner?.garage.id ?? CAMPUS_GARAGES[0]?.id ?? ""
+    : homePlace?.id ?? "";
+  const defaultDestinationId = firstClass?.id ?? buildings[0]?.id ?? "";
+  const selectionReady = profileLoaded && selectionLoaded && schedule.loaded && !homePending;
+  const selection = selectionReady
+    ? restoreMapSelection(
+      savedSelection,
+      places.map((place) => place.id),
+      buildings.map((building) => building.id),
+      defaultOriginId,
+      defaultDestinationId,
+    )
+    : { originId: "", destinationId: "" };
+  const originId = selection.originId;
+  const destinationId = selection.destinationId;
 
-  useEffect(() => {
-    if (!profileLoaded || !schedule.loaded || selectionInitialized.current) return;
-    setOriginId(defaultOriginId);
-    setDestinationId(defaultDestinationId);
-    selectionInitialized.current = true;
-  }, [defaultDestinationId, defaultOriginId, profileLoaded, schedule.loaded]);
-
-  const getPlace = (id: string): CampusPlace => places.find((place) => place.id === id) ?? places[0];
+  const fallbackPlace = places[0] ?? buildings[0];
+  if (!fallbackPlace) throw new CampusMapDataError();
+  const getPlace = (id: string): CampusPlace => places.find((place) => place.id === id) ?? fallbackPlace;
   const origin = getPlace(originId);
   const destination = getPlace(destinationId);
   const {
@@ -82,18 +135,30 @@ export function CampusMap({ apiKey, mapId, buildings }: CampusMapProps) {
   } = useWalkingRoute(apiKey, origin, destination);
 
   useEffect(() => {
-    if (!selectionInitialized.current || originId === "" || destinationId === "" || originId === destinationId) return;
+    if (!selectionReady || !places.some((place) => place.id === originId)
+      || originId === "" || destinationId === "" || originId === destinationId) return;
     void requestRoute();
-  }, [destinationId, originId, requestRoute]);
+  }, [destinationId, originId, places, requestRoute, selectionReady]);
 
   const { reports: reportRows, loading: reportsLoading } = useActiveReports();
   const reports = useMemo(
     () => reportRows.filter((row) => isNearCampus(row.latitude, row.longitude)).map(rowToReport),
     [reportRows],
   );
+  const activeRouteState = useMemo(() => routeState.kind === "success"
+    && selectionReady
+    && places.some((place) => place.id === originId)
+    && buildings.some((building) => building.id === destinationId)
+    && routeState.candidates.every((candidate) => candidate.originId === originId
+      && candidate.destinationId === destinationId)
+    ? routeState
+    : routeState.kind === "success" ? { kind: "idle" as const } : routeState,
+  [buildings, destinationId, originId, places, routeState, selectionReady]);
   const choice = useMemo(
-    () => routeState.kind === "success" ? chooseRoute(routeState.candidates, reports, mode) : null,
-    [mode, reports, routeState],
+    () => activeRouteState.kind === "success"
+      ? chooseRoute(activeRouteState.candidates, reports, mode)
+      : null,
+    [activeRouteState, mode, reports],
   );
 
   if (apiKey.length === 0) {
@@ -116,51 +181,59 @@ export function CampusMap({ apiKey, mapId, buildings }: CampusMapProps) {
 
   return (
     <div className="space-y-5">
-      <RouteControls
+      {originId !== "" ? <RouteControls
         key={`${originId}|${destinationId}`}
         buildings={buildings}
-        garages={CAMPUS_GARAGES}
+        garages={garages}
         originId={originId}
         destinationId={destinationId}
-        isLoading={routeState.kind === "loading"}
-        isRetry={routeState.kind === "error"}
+        isLoading={activeRouteState.kind === "loading"}
+        isRetry={activeRouteState.kind === "error"}
         onOriginChange={(placeId) => {
           resetRoute();
-          setOriginId(placeId);
+          saveSelection({ originId: placeId, destinationId });
         }}
         onDestinationChange={(placeId) => {
           resetRoute();
-          setDestinationId(placeId);
+          saveSelection({ originId, destinationId: placeId });
         }}
         onSubmit={() => void requestRoute()}
-      />
+      /> : <p className="rounded-2xl border border-ink/10 bg-white px-4 py-3 text-sm leading-6 text-ink/70" role="status">
+        {driving
+          ? "Choose a route after your campus map loads."
+          : currentAddress.length === 0
+            ? "Add a starting address in Profile to get a route."
+            : homePending
+              ? "Finding your starting location…"
+              : "Your starting address could not be found. Update it in Profile to get a route."}
+      </p>}
 
       <GoogleMapCanvas
         apiKey={apiKey}
         mapId={mapId}
         buildings={buildings}
-        garages={CAMPUS_GARAGES}
+        garages={garages}
         featuredIds={featuredIds}
         originId={originId}
         destinationId={destinationId}
-        routeState={routeState}
+        routeState={activeRouteState}
         reports={reports}
         reportsReady={!reportsLoading}
         choice={choice}
       />
 
       <div aria-live="polite" aria-atomic="true">
-        {routeState.kind === "loading" ? (
+        {activeRouteState.kind === "loading" ? (
           <p className="rounded-2xl border border-ink/10 bg-white px-4 py-3 text-sm text-ink/70 shadow-sm">
             Finding routes…
           </p>
         ) : null}
-        {routeState.kind === "error" ? (
+        {activeRouteState.kind === "error" ? (
           <p className="rounded-2xl border border-coral bg-white px-4 py-3 text-sm leading-6 text-ink shadow-sm" role="alert">
-            {routeState.message}
+            {activeRouteState.message}
           </p>
         ) : null}
-        {routeState.kind === "success" && choice?.chosen ? (
+        {activeRouteState.kind === "success" && choice?.chosen ? (
           <RoutePanel choice={choice} places={places} mode={mode} />
         ) : null}
       </div>
