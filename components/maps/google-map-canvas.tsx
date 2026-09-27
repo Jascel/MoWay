@@ -5,6 +5,9 @@ import { useEffect, useRef, useState } from "react";
 import { loadMapLibraries } from "@/lib/maps/google-maps";
 import type { CampusBuilding } from "@/lib/maps/types";
 import type { WalkingRouteState } from "@/components/maps/use-walking-route";
+import type { Report } from "@/data/mock";
+import { pinColor } from "@/lib/maps/report-pins";
+import { categoryInfo, impactOptions } from "@/lib/reportCategories";
 
 type GoogleMapCanvasProps = {
   readonly apiKey: string;
@@ -13,6 +16,8 @@ type GoogleMapCanvasProps = {
   readonly originId: string;
   readonly destinationId: string;
   readonly routeState: WalkingRouteState;
+  readonly reports?: readonly Report[]; // live community reports, drawn as colored pins
+  readonly reportsReady?: boolean; // false until the first list of reports has loaded
 };
 
 type MapRuntime = {
@@ -20,7 +25,39 @@ type MapRuntime = {
   readonly LatLngBounds: typeof google.maps.LatLngBounds;
   readonly Polyline: typeof google.maps.Polyline;
   readonly TrafficLayer: typeof google.maps.TrafficLayer;
+  readonly AdvancedMarkerElement: typeof google.maps.marker.AdvancedMarkerElement;
+  readonly PinElement: typeof google.maps.marker.PinElement;
+  readonly InfoWindow: typeof google.maps.InfoWindow;
 };
+
+type ReportPin = {
+  readonly marker: google.maps.marker.AdvancedMarkerElement;
+  report: Report;
+};
+
+// The small card that opens when you tap a report pin. Built with textContent, never HTML,
+// because the place name and note are typed by users.
+function buildReportInfo(report: Report): HTMLElement {
+  const line = (text: string, style: string) => {
+    const element = document.createElement("div");
+    element.textContent = text;
+    element.style.cssText = style;
+    return element;
+  };
+  const impact = impactOptions.find((i) => i.value === report.impact)?.label;
+  const ago = report.minutesAgo === 0 ? "just now" : `${report.minutesAgo} min ago`;
+
+  const card = document.createElement("div");
+  card.style.cssText = "max-width:220px;color:#1f2a44;line-height:1.35";
+  card.append(line(categoryInfo(report.category).label, "font-weight:700;font-size:15px"));
+  card.append(line(report.location, "font-size:13px;margin-top:2px"));
+  if (impact) card.append(line(impact, "font-size:12px;margin-top:4px;font-weight:600"));
+  if (report.note) card.append(line(report.note, "font-size:12px;margin-top:4px;opacity:0.8"));
+  card.append(
+    line(`${report.confirmations} confirmed · ${ago}`, "font-size:11px;margin-top:6px;opacity:0.65")
+  );
+  return card;
+}
 
 type MarkerRecord = {
   readonly buildingId: string;
@@ -53,7 +90,11 @@ function stylePin(
     return;
   }
 
-  record.pin.glyphText = record.defaultGlyph;
+  // A short building code (like "CIS") in small type so three letters fit inside the pin.
+  const label = document.createElement("span");
+  label.textContent = record.defaultGlyph;
+  label.style.cssText = "font-size:9px;font-weight:800;letter-spacing:-0.4px;color:#006747";
+  record.pin.glyph = label;
   record.pin.background = "#ffffff";
   record.pin.borderColor = "#006747";
   record.pin.glyphColor = "#006747";
@@ -66,6 +107,8 @@ export function GoogleMapCanvas({
   originId,
   destinationId,
   routeState,
+  reports = [],
+  reportsReady = false,
 }: GoogleMapCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -154,22 +197,23 @@ export function GoogleMapCanvas({
         const bounds =
           new core.LatLngBounds();
 
+        // One shared card that shows a building's name when its pin is tapped.
+        const buildingCard = new maps.InfoWindow();
+
         const records = buildings.map(
-          (building, index) => {
+          (building) => {
             bounds.extend(
               building.position,
             );
 
             const pin =
               new marker.PinElement({
-                scale: 1.05,
+                scale: 1.15,
               });
 
             const record: MarkerRecord = {
               buildingId: building.id,
-              defaultGlyph: String(
-                index + 1,
-              ),
+              defaultGlyph: building.code,
               pin,
               marker:
                 new marker.AdvancedMarkerElement(
@@ -191,6 +235,15 @@ export function GoogleMapCanvas({
                 .destinationId,
             );
 
+            record.marker.addListener("click", () => {
+              const card = document.createElement("div");
+              card.textContent = building.name;
+              card.style.cssText =
+                "font-weight:700;font-size:14px;color:#1f2a44;max-width:200px";
+              buildingCard.setContent(card);
+              buildingCard.open({ map, anchor: record.marker });
+            });
+
             return record;
           },
         );
@@ -207,6 +260,10 @@ export function GoogleMapCanvas({
           Polyline: maps.Polyline,
           TrafficLayer:
             maps.TrafficLayer,
+          AdvancedMarkerElement:
+            marker.AdvancedMarkerElement,
+          PinElement: marker.PinElement,
+          InfoWindow: maps.InfoWindow,
         });
 
         setLoadState("ready");
@@ -323,6 +380,95 @@ export function GoogleMapCanvas({
       trafficLayer.setMap(null);
     };
   }, [runtime, trafficEnabled]);
+
+  // --------------------
+  // LIVE REPORT PINS
+  // --------------------
+
+  const reportPins = useRef(new Map<string, ReportPin>());
+  const reportsSeen = useRef(false);
+  const infoWindow = useRef<google.maps.InfoWindow | null>(null);
+
+  useEffect(() => {
+    if (runtime === null || !reportsReady) {
+      return;
+    }
+
+    const pins = reportPins.current;
+    if (infoWindow.current === null) {
+      infoWindow.current = new runtime.InfoWindow();
+    }
+    const info = infoWindow.current;
+    const liveIds = new Set(reports.map((report) => report.id));
+
+    // Take down pins for reports that were resolved or expired.
+    pins.forEach((pin, id) => {
+      if (!liveIds.has(id)) {
+        pin.marker.map = null;
+        pins.delete(id);
+      }
+    });
+
+    reports.forEach((report) => {
+      const existing = pins.get(report.id);
+      if (existing) {
+        existing.report = report; // keep the details fresh (like the confirmed count)
+        if (existing.marker.map !== runtime.map) {
+          existing.marker.map = runtime.map;
+        }
+        return;
+      }
+
+      // The first list of reports is the starting picture. Only reports that arrive AFTER it
+      // drop in with an animation and open their card, which is the live moment.
+      const arrivedLive = reportsSeen.current;
+      const position = { lat: report.latitude, lng: report.longitude };
+      const pin = new runtime.PinElement({
+        background: pinColor(report.category),
+        borderColor: "#ffffff",
+        glyphColor: "#ffffff",
+        glyphText: "!",
+        scale: 1.2,
+      });
+      if (arrivedLive) {
+        pin.element.classList.add("animate-pin-drop");
+      }
+
+      const marker = new runtime.AdvancedMarkerElement({
+        map: runtime.map,
+        position,
+        title: categoryInfo(report.category).label,
+        content: pin.element,
+        zIndex: 10,
+      });
+      const entry: ReportPin = { marker, report };
+      pins.set(report.id, entry);
+
+      const openCard = () => {
+        info.setContent(buildReportInfo(entry.report));
+        info.open({ map: runtime.map, anchor: marker });
+      };
+      marker.addListener("click", openCard);
+
+      if (arrivedLive) {
+        runtime.map.panTo(position);
+        openCard();
+      }
+    });
+
+    reportsSeen.current = true;
+  }, [reports, reportsReady, runtime]);
+
+  // Remove every report pin when the map goes away.
+  useEffect(() => {
+    const pins = reportPins.current;
+    return () => {
+      pins.forEach((pin) => {
+        pin.marker.map = null;
+      });
+      pins.clear();
+    };
+  }, []);
 
   return (
     <div className="relative min-h-[28rem] overflow-hidden rounded-3xl border border-usf-green bg-mint-soft lg:min-h-[38rem]">
