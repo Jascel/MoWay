@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
 import Avatar from "@/components/Avatar";
 import ChipGroup from "@/components/ChipGroup";
+import HomeAddressSelector from "@/components/HomeAddressSelector";
 import { useStoredState } from "@/lib/useStoredState";
 import { modeOptions, prefOptions, PROFILE_KEY } from "@/lib/options";
 import { Car } from "lucide-react";
@@ -168,22 +169,28 @@ export default function ProfilePage() {
           <p className="mb-3 text-xs text-ink/70">
             We use it to work out your drive to campus. It&apos;s saved only on this device.
           </p>
-          <input
+          <HomeAddressSelector
             id="home"
             value={profile.homeAddress ?? ""}
-            onChange={(e) => saveProfile({ ...profile, homeAddress: e.target.value })}
+            onChange={(homeAddress: string) => saveProfile({ ...profile, homeAddress })}
             placeholder="Street address, city"
-            autoComplete="street-address"
             className="w-full rounded-2xl border border-ink/15 bg-cream p-3"
           />
           {drive.status === "loading" && <p className="mt-3 text-sm text-ink/60">Working out your drive...</p>}
           {drive.status === "error" && (
-            <p className="mt-3 text-sm text-red-600">Couldn&apos;t find that address. Try adding the street and city.</p>
+            <p className="mt-3 text-sm text-red-600">
+              Couldn&apos;t find that address. Choose another suggested address.
+            </p>
           )}
           {drive.minutes !== null && (
             <p className="mt-3 flex items-center gap-2 text-sm font-medium">
               <Car className="size-4 text-leaf" />
-              About {drive.minutes} min to campus ({drive.miles?.toFixed(1)} mi, without traffic)
+              <span className="min-w-0">
+                <span className="block">About {drive.minutes} min to campus</span>
+                <span className="block break-words text-xs font-normal text-ink/65">
+                  From {profile.homeAddress} · {drive.miles?.toFixed(1)} mi without traffic
+                </span>
+              </span>
             </p>
           )}
         </section>
