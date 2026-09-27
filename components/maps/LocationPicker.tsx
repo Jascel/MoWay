@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { LocateFixed, Search } from "lucide-react";
 import { CAMPUS_CENTER, isNearCampus } from "@/lib/campus";
 import { findBuildingByLabel } from "@/lib/maps/campus-buildings";
+import { DEMO_SPOT } from "@/lib/maps/demo-spot";
 import { loadGeocodingLibrary, loadMapLibraries } from "@/lib/maps/google-maps";
 import { nameForPoint, shortAddress } from "@/lib/maps/place-name";
 
@@ -20,7 +21,6 @@ type Props = {
 type Point = { lat: number; lng: number };
 
 const CAMPUS_BOUNDS = { south: 28.048, west: -82.43, north: 28.075, east: -82.396 };
-const MARSHALL_STUDENT_CENTER: Point = { lat: 28.063634, lng: -82.413211 };
 
 function readPosition(marker: google.maps.marker.AdvancedMarkerElement): Point {
   const position = marker.position;
@@ -270,7 +270,7 @@ export default function LocationPicker({ value, name, onPick, onNameChange, onUs
         <button
           type="button"
           onClick={() => {
-            void placePin(MARSHALL_STUDENT_CENTER.lat, MARSHALL_STUDENT_CENTER.lng, "Marshall Student Center");
+            void placePin(DEMO_SPOT.lat, DEMO_SPOT.lng, DEMO_SPOT.label);
           }}
           className="rounded-full border border-ink/15 px-4 py-2 text-sm font-semibold text-ink/70"
         >

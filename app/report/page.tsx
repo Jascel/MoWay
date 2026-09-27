@@ -26,13 +26,7 @@ import {
   type Report,
   type ReportCategory,
   type ReportImpact,
-  type RouteAlert,
 } from "@/data/mock";
-
-import {
-  ALERT_KEY,
-  alertFromReport,
-} from "@/lib/alerts";
 
 import {
   createReport,
@@ -52,12 +46,6 @@ type Coords = {
 export default function ReportPage() {
   const [myReports, saveMyReports] =
     useStoredState<Report[]>(REPORTS_KEY, []);
-
-  const [, saveAlert] =
-    useStoredState<RouteAlert | null>(
-      ALERT_KEY,
-      null
-    );
 
   const [category, setCategory] =
     useState<ReportCategory | null>(null);
@@ -107,14 +95,14 @@ const {
 } = useActiveReports();
 
 // "Near you" only lists reports near campus.
-const nearbyReports = activeReports.filter((r) =>
-  isNearCampus(r.latitude, r.longitude)
-);
-
-const nearbyReport =
-  nearbyReports.length > 0
-    ? rowToReport(nearbyReports[0])
-    : null;
+const nearbyReports = activeReports
+  .filter((r) => isNearCampus(r.latitude, r.longitude))
+  .sort(
+    (a, b) =>
+      new Date(b.created_at).getTime() -
+      new Date(a.created_at).getTime(),
+  )
+  .map(rowToReport);
 
   // --------------------
   // SUBMIT REPORT
@@ -184,10 +172,6 @@ const nearbyReport =
         report,
         ...myReports,
       ]);
-
-      saveAlert(
-        alertFromReport(report)
-      );
 
       // Reload active reports from
       // Supabase so Near You updates.
@@ -416,11 +400,10 @@ async function handleClearReports() {
 
           {reportsLoading ? (
             <SkeletonCard />
-          ) : nearbyReport ? (
-            <StillThereCard
-              key={nearbyReport.id} // a new report starts with a fresh card
-              report={nearbyReport}
-            />
+          ) : nearbyReports.length > 0 ? (
+            nearbyReports.map((report) => (
+              <StillThereCard key={report.id} report={report} />
+            ))
           ) : (
             <EmptyState
               icon={CircleCheck}
