@@ -27,11 +27,23 @@ test("confirmed wheelchair report reroutes with ordered metadata", () => {
   const result = chooseRoute([alternate, fast], [report], "wheelchair");
   assert.equal(result.chosen, alternate);
   assert.deepEqual(result.rejected, [fast]);
+  assert.equal(result.selectedMinutes, 9);
   assert.equal(result.extraMinutes, 2);
   assert.equal(result.status, "rerouted");
   assert.deepEqual(result.hazards, [report]);
   assert.ok(result.chips.includes("+2 min"));
   assert.ok(result.chips.includes("Avoids blocked sidewalk"));
+});
+test("multiple alternatives compare the chosen route with the fastest physical baseline", () => {
+  const longer = { ...alternate, distanceMeters: 850,
+    path: [{ lat: 0.002, lng: 0 }, { lat: 0.002, lng: 0.01 }] };
+  const result = chooseRoute([fast, longer, alternate], [report], "wheelchair");
+
+  assert.equal(result.chosen, alternate);
+  assert.deepEqual(result.rejected, [longer, fast]);
+  assert.equal(result.selectedMinutes, 9);
+  assert.equal(result.extraMinutes, 2);
+  assert.ok(result.chips.includes("+2 min"));
 });
 test("unconfirmed blocker warns without rerouting", () => {
   const result = chooseRoute([fast, alternate], [{ ...report, status: "unconfirmed" }], "wheelchair");
@@ -43,7 +55,10 @@ test("unconfirmed blocker warns without rerouting", () => {
 test("mode change returns fastest route for an unaffected walker", () => {
   const result = chooseRoute([fast, alternate], [report], "walking");
   assert.equal(result.chosen, fast);
+  assert.equal(result.selectedMinutes, 6);
   assert.equal(result.status, "unaffected");
+  assert.equal(result.extraMinutes, 0);
+  assert.ok(!result.chips.some((chip) => /^\+\d+ min$/.test(chip)));
 });
 test("inconvenience nudges by two minutes without inflating travel time", () => {
   const annoying: Report = { ...report, impact: "inconvenience", status: "unconfirmed" };
@@ -59,6 +74,8 @@ test("all blocked chooses fewest blockers then fastest and warns", () => {
   const third = { ...report, id: "third" };
   const result = chooseRoute([fast, alternate], [report, other, third], "wheelchair");
   assert.equal(result.chosen, alternate);
+  assert.equal(result.selectedMinutes, 9);
+  assert.equal(result.extraMinutes, 2);
   assert.equal(result.status, "blocked");
   assert.ok(result.chips.includes("All routes have confirmed barriers."));
 });
@@ -69,7 +86,7 @@ test("25m is included and a point just beyond it is excluded", () => {
 });
 test("empty candidates retain the complete result contract", () => {
   assert.deepEqual(chooseRoute([], [report], "walking"), {
-    chosen: null, rejected: [], extraMinutes: 0, chips: [], hazards: [], status: "unavailable",
+    chosen: null, rejected: [], selectedMinutes: 0, extraMinutes: 0, chips: [], hazards: [], status: "unavailable",
   });
 });
 test("clear choice preserves stable ties and input order without mutation", () => {
@@ -77,6 +94,8 @@ test("clear choice preserves stable ties and input order without mutation", () =
   const input = Object.freeze([alternate, fast, tied]);
   const result = chooseRoute(input, [], "walking");
   assert.equal(result.chosen, fast);
+  assert.equal(result.selectedMinutes, 6);
+  assert.equal(result.extraMinutes, 0);
   assert.deepEqual(result.rejected, [tied, alternate]);
   assert.equal(result.status, "clear");
   assert.deepEqual(input, [alternate, fast, tied]);

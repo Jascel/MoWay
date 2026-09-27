@@ -41,14 +41,14 @@ import { useStoredState } from "@/lib/useStoredState";
 import { CAMPUS_BUILDINGS, findBuildingByLabel } from "@/lib/maps/campus-buildings";
 import { CAMPUS_GARAGES } from "@/lib/maps/campus-parking";
 import type { CampusBuilding } from "@/lib/maps/types";
-import { campusMode } from "@/lib/profileMode";
+import { campusMode, profileStartOrigin, profileUsesDriving } from "@/lib/profileMode";
 import { planSmartPark, toParkingRecommendation } from "@/lib/smartPark";
 import { useWalkingRoute } from "@/components/maps/use-walking-route";
 import { chooseRoute } from "@/lib/maps/route-hazards";
 import { isNearCampus } from "@/lib/campus";
 import { useDaySchedule } from "@/lib/useDaySchedule";
 import type { CampusPlace } from "@/lib/maps/types";
-import { minutesFor } from "@/lib/maps/speeds";
+import { loadGeocodingLibrary } from "@/lib/maps/google-maps";
 
 type TodayAlert = DerivedAlert;
 
@@ -102,6 +102,55 @@ export default function TodayPage() {
     PROFILE_KEY,
     mockProfile
   );
+  const driving = profileUsesDriving(profile);
+  const [resolvedHomeOrigin, setResolvedHomeOrigin] = useState<{
+    readonly address: string;
+    readonly place: CampusPlace;
+  } | null>(null);
+  const [failedHomeAddress, setFailedHomeAddress] = useState<string | null>(null);
+  const savedHomeAddress = profile.homeAddress?.trim() ?? "";
+  const homeOrigin = !driving && savedHomeAddress.length > 0 && resolvedHomeOrigin?.address === savedHomeAddress
+    ? resolvedHomeOrigin.place
+    : null;
+  const googleMapsKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
+
+  useEffect(() => {
+    const address = savedHomeAddress;
+    if (driving || address.length === 0 || googleMapsKey.length === 0) return;
+
+    let cancelled = false;
+    void loadGeocodingLibrary(googleMapsKey)
+      .then(async (geocoding) => {
+        const response = await new geocoding.Geocoder().geocode({ address, region: "us" });
+        const result = response.results[0];
+        if (cancelled) return;
+        if (result === undefined) {
+          setFailedHomeAddress(address);
+          return;
+        }
+        const position = result.geometry.location;
+        setResolvedHomeOrigin({
+          address,
+          place: {
+            id: `home-address:${result.place_id}`,
+            name: "Home",
+            position: { lat: position.lat(), lng: position.lng() },
+          },
+        });
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        if (error instanceof Error) {
+          setFailedHomeAddress(address);
+          return;
+        }
+        throw error;
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [driving, googleMapsKey, savedHomeAddress]);
 
   // --------------------
   // SMART PARK + WALKING LEGS
@@ -114,21 +163,28 @@ export default function TodayPage() {
   const dayBuildings = events
     .map((event) => findBuildingByLabel(event.building))
     .filter((building): building is CampusBuilding => building !== undefined);
-  const smartPark = planSmartPark(CAMPUS_GARAGES, dayBuildings, mode);
-  const parking =
-    toParkingRecommendation(smartPark, { spotsLeftPercent: day.parking.spotsLeftPercent }) ?? day.parking;
+  const smartPark = driving ? planSmartPark(CAMPUS_GARAGES, dayBuildings, mode) : null;
+  const parking = smartPark
+    ? toParkingRecommendation(smartPark, { spotsLeftPercent: day.parking.spotsLeftPercent }) ?? day.parking
+    : day.parking;
 
   // The walks between stops use the same distance/speed math as Smart Park, so the
   // timeline and the card agree, and events you add or edit get a leg automatically.
-  const garage = smartPark.winner?.garage;
-  const legs = buildDayLegs(events, garage, mode);
-  const walkToCarMinutes = minutesBackToGarage(events, garage, mode) ?? 2;
+  const garage = smartPark?.winner?.garage;
+  const startOrigin = profileStartOrigin(profile, garage, homeOrigin ?? undefined);
+  const legsFromOrigin = buildDayLegs(events, startOrigin, mode);
+  const legs = !driving && startOrigin
+    ? legsFromOrigin.map((leg) => leg.fromEventId === "parking"
+      ? { ...leg, fromEventId: "home", tags: [`From ${startOrigin.name}`, ...leg.tags.slice(1)] }
+      : leg)
+    : legsFromOrigin;
+  const walkToCarMinutes = driving ? minutesBackToGarage(events, garage, mode) ?? 2 : 0;
 
   const first = events[0];
   const firstBuilding = first ? findBuildingByLabel(first.building) : undefined;
-  const routeOrigin: CampusPlace = garage ?? CAMPUS_GARAGES[0] ?? {
-    id: "today-garage",
-    name: "Campus garage",
+  const routeOrigin: CampusPlace = startOrigin ?? (driving ? CAMPUS_GARAGES[0] : CAMPUS_BUILDINGS[0]) ?? {
+    id: "today-origin-unavailable",
+    name: "Starting location unavailable",
     position: { lat: 0, lng: 0 },
   };
   const routeDestination: CampusPlace = firstBuilding ?? CAMPUS_BUILDINGS[0] ?? {
@@ -137,7 +193,6 @@ export default function TodayPage() {
     name: "First class",
     position: { lat: 0, lng: 0 },
   };
-  const googleMapsKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
   const {
     state: routeState,
     requestRoute,
@@ -148,7 +203,7 @@ export default function TodayPage() {
     if (
       !schedule.loaded ||
       googleMapsKey.length === 0 ||
-      garage === undefined ||
+      startOrigin === undefined ||
       firstBuilding === undefined ||
       routeOrigin.id === routeDestination.id
     ) {
@@ -158,13 +213,13 @@ export default function TodayPage() {
     void requestRoute();
   }, [
     firstBuilding,
-    garage,
     googleMapsKey,
     requestRoute,
     resetRoute,
     routeDestination.id,
     routeOrigin.id,
     schedule.loaded,
+    startOrigin,
   ]);
 
   const { reports: reportRows, loading: reportsLoading, error: reportsError } = useActiveReports();
@@ -175,7 +230,7 @@ export default function TodayPage() {
     [reportRows],
   );
   const routeMatchesCurrentPlaces = schedule.loaded
-    && garage !== undefined
+    && startOrigin !== undefined
     && firstBuilding !== undefined
     && routeState.kind === "success"
     && routeState.candidates.every(
@@ -186,12 +241,12 @@ export default function TodayPage() {
     : null;
 
   const baselineFirstLeg = legs.find(
-    (leg) => leg.fromEventId === "parking" && leg.toEventId === first?.id,
+    (leg) => leg.fromEventId === (driving ? "parking" : "home") && leg.toEventId === first?.id,
   );
   const selectedFirstLeg = choice?.chosen && baselineFirstLeg
     ? {
         ...baselineFirstLeg,
-        minutes: minutesFor(choice.chosen.distanceMeters, mode),
+        minutes: choice.selectedMinutes,
         distanceMeters: choice.chosen.distanceMeters,
         tags: [...new Set([...choice.chips, `From ${routeOrigin.name}`, "Google route"])],
       }
@@ -260,9 +315,7 @@ export default function TodayPage() {
   // COMMUTE
   // --------------------
 
-  const drive = useDriveEstimate(
-    profile.homeAddress ?? ""
-  );
+  const drive = useDriveEstimate(profile.homeAddress ?? "");
 
   const driveMinutes =
     drive.minutes ?? day.driveMinutes;
@@ -316,7 +369,21 @@ export default function TodayPage() {
           onDismiss={() => saveAlert(null)}
         />
 
-        {leaveBy && arriveBy ? (
+        {!driving && !homeOrigin && events.length > 0 && (
+          <section className="rounded-3xl bg-white p-5 shadow-sm" role="status">
+            <p className="font-display text-lg font-bold">Add your starting location</p>
+            <p className="mt-1 text-sm text-ink/70">
+              {failedHomeAddress === savedHomeAddress
+                ? "We couldn’t locate your saved home address. Check it in your profile to plan the first trip."
+                : "We need your saved home address to plan the first trip to campus."}
+            </p>
+            <Link href="/profile" className="mt-3 inline-block text-sm font-semibold underline">
+              Set your address
+            </Link>
+          </section>
+        )}
+
+        {driving && leaveBy && arriveBy ? (
           <>
             <CommuteCard
               leaveBy={leaveBy}
@@ -329,7 +396,7 @@ export default function TodayPage() {
 
             <ParkingCard parking={parking} campusMode={mode} />
           </>
-        ) : (
+        ) : events.length === 0 ? (
           <section className="rounded-3xl bg-white p-5 text-center shadow-sm">
             <p className="font-display text-xl font-bold">Nothing on your schedule</p>
             <p className="mt-1 text-sm text-ink/70">
@@ -342,12 +409,12 @@ export default function TodayPage() {
               Add something
             </Link>
           </section>
-        )}
+        ) : null}
 
         <Timeline
           events={events}
           legs={displayLegs}
-          homeTrip={{ walkMinutes: walkToCarMinutes, driveMinutes }}
+          homeTrip={driving ? { walkMinutes: walkToCarMinutes, driveMinutes } : undefined}
           campusMode={mode}
           onEdit={setEditing}
           onDelete={deleteEvent}

@@ -7,6 +7,7 @@ export type RouteChoiceStatus = "unavailable" | "clear" | "watching" | "rerouted
 export type RouteChoice = {
   readonly chosen: WalkingRouteResult | null;
   readonly rejected: readonly WalkingRouteResult[];
+  readonly selectedMinutes: number;
   readonly extraMinutes: number;
   readonly chips: readonly string[];
   readonly hazards: readonly Report[];
@@ -46,10 +47,12 @@ export function chooseRoute(candidates: readonly WalkingRouteResult[], reports: 
   const selected = ranked[0];
   const fastest = [...ranked].sort((a, b) => a.route.distanceMeters - b.route.distanceMeters || a.index - b.index)[0];
   if (!selected || !fastest) {
-    return { chosen: null, rejected: [], extraMinutes: 0, chips: [], hazards: [], status: "unavailable" };
+    return { chosen: null, rejected: [], selectedMinutes: 0, extraMinutes: 0, chips: [], hazards: [], status: "unavailable" };
   }
   const hazards = uniqueReports.filter((report) => selected.hazards.includes(report) || fastest.hazards.includes(report));
-  const extraMinutes = minutesFor(selected.route.distanceMeters, myMode) - minutesFor(fastest.route.distanceMeters, myMode);
+  const selectedMinutes = minutesFor(selected.route.distanceMeters, myMode);
+  const fastestMinutes = minutesFor(fastest.route.distanceMeters, myMode);
+  const extraMinutes = Math.max(0, selectedMinutes - fastestMinutes);
   const watching = selected.hazards.some((report) => report.status === "unconfirmed" && isBlockingForMe(report, myMode));
   const rerouted = selected.index !== fastest.index;
   const status: RouteChoiceStatus = selected.blockers.length > 0 ? "blocked"
@@ -69,5 +72,5 @@ export function chooseRoute(candidates: readonly WalkingRouteResult[], reports: 
     chips.push("Doesn't affect your route.");
   }
   return { chosen: selected.route, rejected: ranked.slice(1).map(({ route }) => route),
-    extraMinutes, chips: [...new Set(chips)], hazards, status };
+    selectedMinutes, extraMinutes, chips: [...new Set(chips)], hazards, status };
 }

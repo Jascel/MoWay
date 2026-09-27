@@ -1,7 +1,20 @@
 import type { Mode, Profile } from "@/data/mock";
+import type { CampusGarage, CampusPlace } from "@/lib/maps/types";
 
 /** Modes you can use on campus paths. Driving and transit get you *to* campus. */
 export type CampusMode = Exclude<Mode, "driving" | "transit">;
+
+export function profileUsesDriving(profile: Pick<Profile, "modes">): boolean {
+  return profile.modes.includes("driving");
+}
+
+export function profileStartOrigin(
+  profile: Pick<Profile, "modes">,
+  garage: CampusGarage | undefined,
+  savedHome: CampusPlace | undefined,
+): CampusPlace | undefined {
+  return profileUsesDriving(profile) ? garage : savedHome;
+}
 
 export function isCampusMode(mode: Mode): mode is CampusMode {
   return mode !== "driving" && mode !== "transit";
