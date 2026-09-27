@@ -13,7 +13,7 @@ export default function MapPage() {
     <>
       <PageHeader
         title="Map"
-        subtitle="Walking directions around USF Tampa"
+        subtitle="Routes around USF Tampa"
         tone="ice"
       />
       <div className="-mt-6 space-y-6 px-4 pb-4">

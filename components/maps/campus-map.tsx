@@ -149,12 +149,10 @@ export function CampusMap({ apiKey, mapId, buildings }: CampusMapProps) {
         choice={choice}
       />
 
-      <ReportLegend count={reports.length} />
-
       <div aria-live="polite" aria-atomic="true">
         {routeState.kind === "loading" ? (
           <p className="rounded-2xl border border-ink/10 bg-white px-4 py-3 text-sm text-ink/70 shadow-sm">
-            Asking Google for walking routes…
+            Finding routes…
           </p>
         ) : null}
         {routeState.kind === "error" ? (
@@ -166,6 +164,8 @@ export function CampusMap({ apiKey, mapId, buildings }: CampusMapProps) {
           <RoutePanel choice={choice} places={places} mode={mode} />
         ) : null}
       </div>
+
+      <ReportLegend count={reports.length} />
     </div>
   );
 }

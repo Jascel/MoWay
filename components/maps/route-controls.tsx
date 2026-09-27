@@ -93,15 +93,15 @@ export function RouteControls({
         className="mt-5 min-h-12 w-full rounded-full bg-ink px-4 py-3 text-sm font-semibold text-white transition hover:bg-ink/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-aqua disabled:cursor-not-allowed disabled:bg-ink/30"
       >
         {isLoading
-          ? "Finding walking route…"
+          ? "Finding route…"
           : isRetry
             ? "Try route again"
-            : "Get walking route"}
+            : "Get route"}
       </button>
 
       {sameBuilding ? (
         <p className="mt-3 text-sm leading-6 text-ink/70" role="status">
-          Choose two different buildings to get a walking route.
+          Choose two different places to get a route.
         </p>
       ) : null}
     </form>
