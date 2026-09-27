@@ -15,6 +15,8 @@ export type CalendarEvent = {
   /** Exclusive end date for multi-day Google all-day events. */
   readonly endDate?: string;
   readonly category?: EventCategory;
+  /** Pastel Tailwind bg-* class for a Google event with its own color, e.g. "bg-lilac". */
+  readonly color?: string;
   readonly building?: string;
   readonly room?: string;
   /** Original external location text; Google data remains unmodified. */
