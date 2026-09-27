@@ -3,11 +3,42 @@
 import { useState } from "react";
 import { Check, X } from "lucide-react";
 
-import type { Report, RouteAlert } from "@/data/mock";
+import { mockProfile, type Profile, type Report } from "@/data/mock";
 import { categoryInfo } from "@/lib/reportCategories";
-import { ALERT_KEY, alertFromReport } from "@/lib/alerts";
+import { isBlockingForMe } from "@/lib/maps/route-hazards";
+import { campusMode, type CampusMode } from "@/lib/profileMode";
+import { PROFILE_KEY } from "@/lib/options";
 import { useStoredState } from "@/lib/useStoredState";
 import { confirmReport } from "@/lib/database/reports";
+
+function campusModeCopy(mode: CampusMode): string {
+  switch (mode) {
+    case "walking":
+      return "walking";
+    case "wheelchair":
+      return "rolling";
+    case "scooter":
+    case "bike":
+      return "ride";
+    default: {
+      const exhaustive: never = mode;
+      return exhaustive;
+    }
+  }
+}
+
+function confirmationMessage(report: Report, mode: CampusMode, affectsMyMode: boolean): string {
+  if (report.impact === "inconvenience") {
+    return "Confirmed. Thanks for the update.";
+  }
+  if (!affectsMyMode) {
+    if (mode === "scooter" || mode === "bike") {
+      return "Confirmed. Doesn't affect your ride.";
+    }
+    return `Confirmed. Doesn't affect your ${campusModeCopy(mode)} route.`;
+  }
+  return `Confirmed. This can block your ${campusModeCopy(mode)} route.`;
+}
 
 export default function StillThereCard({
   report,
@@ -15,7 +46,7 @@ export default function StillThereCard({
   report: Report;
 }) {
   const [answer, setAnswer] =
-    useState<"yes" | "no" | null>(null);
+    useState<"yes" | "no" | "done" | null>(null);
 
   const [submitting, setSubmitting] =
     useState(false);
@@ -23,11 +54,9 @@ export default function StillThereCard({
   const [error, setError] =
     useState("");
 
-  const [, saveAlert] =
-    useStoredState<RouteAlert | null>(
-      ALERT_KEY,
-      null
-    );
+  const [profile] = useStoredState<Profile>(PROFILE_KEY, mockProfile);
+  const mode = campusMode(profile);
+  const affectsMyMode = isBlockingForMe(report, mode);
 
   const info = categoryInfo(
     report.category
@@ -53,16 +82,18 @@ export default function StillThereCard({
 
       if (stillThere) {
         setAnswer("yes");
-
-        saveAlert(
-          alertFromReport(report)
-        );
       } else {
         setAnswer("no");
-
-        saveAlert(null);
       }
     } catch (err) {
+      if (
+        err instanceof Error &&
+        err.message.includes("already confirmed")
+      ) {
+        setAnswer("done");
+        return;
+      }
+
       console.error(
         "Could not confirm report:",
         err
@@ -146,8 +177,10 @@ export default function StillThereCard({
         <p className="mt-4 rounded-2xl bg-white p-3 text-sm font-medium text-ink">
           Thanks!{" "}
           {answer === "yes"
-            ? "We'll keep routing around it."
-            : "We'll let others know it's clear."}
+            ? confirmationMessage(report, mode, affectsMyMode)
+            : answer === "no"
+              ? "We'll let others know it's clear."
+              : "You already answered this one. Thanks for helping!"}
         </p>
       )}
     </section>

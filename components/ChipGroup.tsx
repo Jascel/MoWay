@@ -23,7 +23,7 @@ export default function ChipGroup({
             onClick={() => onToggle(value)}
             className={`flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-semibold ${
               on
-                ? "border-ink bg-ink text-white"
+                ? "animate-pop border-ink bg-ink text-white"
                 : "border-ink/15 bg-white text-ink"
             }`}
           >

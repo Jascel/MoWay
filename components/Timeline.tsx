@@ -8,6 +8,7 @@ import type { CampusMode } from "@/lib/profileMode";
 import { formatTime, minusMinutes, plusMinutes } from "@/lib/time";
 import { categoryStyles } from "@/lib/categories";
 import RouteChips from "@/components/RouteChips";
+import AlertIcon from "@/components/AlertIcon";
 
 // One class/stop card, colored by category (like a calendar app).
 function EventCard({
@@ -99,14 +100,35 @@ function travelWordFor(campusMode: CampusMode): "walk" | "trip" {
 }
 
 // The leg between two stops: "8 min walk, leave by 9:52" plus route chips.
-function WalkConnector({ leg, arriveBy, campusMode }: { leg: Leg; arriveBy: string; campusMode: CampusMode }) {
+// `extraMinutes` > 0 means a live report made this leg longer (it then gets highlighted).
+function WalkConnector({
+  leg,
+  arriveBy,
+  campusMode,
+  extraMinutes = 0,
+}: {
+  leg: Leg;
+  arriveBy: string;
+  campusMode: CampusMode;
+  extraMinutes?: number;
+}) {
   const travelWord = travelWordFor(campusMode);
+  const minutes = leg.minutes + extraMinutes;
+  const changed = extraMinutes > 0;
   return (
-    <div className="ml-6 border-l-2 border-dashed border-leaf/50 py-3 pl-4">
+    <div
+      key={changed ? "changed" : "normal"}
+      className={
+        changed
+          ? "animate-flash my-1 ml-4 rounded-xl border-l-4 border-dashed border-sun/70 bg-sun/15 py-2 pl-3 pr-2"
+          : "ml-6 border-l-2 border-dashed border-leaf/50 py-3 pl-4"
+      }
+    >
       <p className="flex items-center gap-2 text-sm font-medium">
-        <LegStepIcon legMode={leg.mode} campusMode={campusMode} />
-        {leg.minutes} min {leg.steps ? "total" : leg.mode === "drive" ? "drive" : travelWord}, leave by{" "}
-        {formatTime(minusMinutes(arriveBy, leg.minutes))}
+        {changed ? <AlertIcon /> : <LegStepIcon legMode={leg.mode} campusMode={campusMode} />}
+        {minutes} min {leg.steps ? "total" : leg.mode === "drive" ? "drive" : travelWord}, leave by{" "}
+        {formatTime(minusMinutes(arriveBy, minutes))}
+        {changed && <span className="text-xs font-semibold text-ink/60">(was {leg.minutes} min)</span>}
       </p>
       {leg.steps && (
         <ul className="mt-1.5 space-y-1 text-xs text-ink/70">
@@ -118,8 +140,8 @@ function WalkConnector({ leg, arriveBy, campusMode }: { leg: Leg; arriveBy: stri
           ))}
         </ul>
       )}
-      <div className="mt-2">
-        <RouteChips tags={leg.tags} />
+      <div className={changed ? "mt-1.5" : "mt-2"}>
+        <RouteChips tags={changed ? [`+${extraMinutes} min`, "Due to a report", ...leg.tags] : leg.tags} />
       </div>
     </div>
   );
@@ -181,6 +203,7 @@ export default function Timeline({
   onDelete,
   hiddenCount = 0,
   onRestore,
+  affected,
   campusMode = "walking",
 }: {
   events: ClassEvent[];
@@ -190,6 +213,7 @@ export default function Timeline({
   onDelete?: (event: ClassEvent) => void;
   hiddenCount?: number;
   onRestore?: () => void;
+  affected?: { toEventId: string; extraMinutes: number } | null;
   /** On-campus mobility for legs (same as Profile icons / leg time estimates). */
   campusMode?: CampusMode;
 }) {
@@ -205,7 +229,14 @@ export default function Timeline({
         );
         return (
           <div key={event.id} className="mb-3">
-            {leg && <WalkConnector leg={leg} arriveBy={event.start} campusMode={campusMode} />}
+            {leg && (
+              <WalkConnector
+                leg={leg}
+                arriveBy={event.start}
+                campusMode={campusMode}
+                extraMinutes={affected?.toEventId === event.id ? affected.extraMinutes : 0}
+              />
+            )}
             <EventCard event={event} onEdit={onEdit} onDelete={onDelete} />
           </div>
         );

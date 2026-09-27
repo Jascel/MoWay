@@ -13,7 +13,10 @@
   --color-sun: #fce38a;
   --color-blush: #fee2ad;
   --color-coral: #ffb9a3;
+  --color-rose: #ffc9c9;
   --color-lilac: #d9ccf5;
+  --color-mist: #deedf0;
+  --color-sand: #f2efe7;
   --color-cream: #f7f8f1;
   --color-ink: #1f2a44;
   --color-leaf: #2e9e6b;
@@ -27,6 +30,52 @@ body {
   color: var(--color-ink);
 }
 
+/* "Live moment" motion: the alert slides in, the changed walk glows, the new leave-by pops. */
+@keyframes moway-slide-in {
+  from { opacity: 0; transform: translateY(-14px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes moway-flash {
+  0% { box-shadow: 0 0 0 0 rgba(252, 227, 138, 0); }
+  25% { box-shadow: 0 0 0 8px rgba(252, 227, 138, 0.55); }
+  100% { box-shadow: 0 0 0 0 rgba(252, 227, 138, 0); }
+}
+@keyframes moway-pop {
+  0% { transform: scale(1.14); }
+  100% { transform: scale(1); }
+}
+.animate-slide-in { animation: moway-slide-in 0.45s ease-out both; }
+.animate-flash { animation: moway-flash 1.8s ease-out 1; }
+.animate-pop { animation: moway-pop 0.5s ease-out both; }
+
+/* Little touches: cards fade up, the thank-you check draws itself, buttons press down. */
+@keyframes moway-fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes moway-draw {
+  from { stroke-dashoffset: 30; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes moway-badge {
+  0% { transform: scale(0.4); opacity: 0; }
+  60% { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.animate-fade-up { animation: moway-fade-up 0.5s ease-out both; }
+.animate-badge { animation: moway-badge 0.55s ease-out both; }
+.animate-draw { stroke-dasharray: 30; animation: moway-draw 0.5s ease-out 0.35s both; }
+
+button, a[class*="rounded-full"] { transition: transform 0.12s ease, background-color 0.15s ease; }
+button:not(:disabled):active, a[class*="rounded-full"]:active { transform: scale(0.96); }
+
+/* People who ask their device for less motion get none of it. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-slide-in, .animate-flash, .animate-pop, .animate-ping,
+  .animate-fade-up, .animate-badge, .animate-draw, .animate-pulse { animation: none; }
+  button:not(:disabled):active, a[class*="rounded-full"]:active { transform: none; }
+}
+
 /* A new report's pin drops onto the map. */
 @keyframes moway-pin-drop {
   0% { transform: translateY(-70px) scale(0.6); opacity: 0; }
@@ -37,3 +86,16 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .animate-pin-drop { animation: none; }
 }
+
+/* iPhone Safari gives time boxes a fixed width; make them fill their column like the other inputs. */
+.time-input {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 3rem;
+  font-size: 0.875rem;
+}
+.time-input::-webkit-date-and-time-value { text-align: left; }

@@ -1,11 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Check, LocateFixed } from "lucide-react";
+import { CircleCheck } from "lucide-react";
 
 import PageHeader from "@/components/PageHeader";
 import ChipGroup from "@/components/ChipGroup";
+import ThankYou from "@/components/ThankYou";
+import EmptyState from "@/components/EmptyState";
+import SkeletonCard from "@/components/SkeletonCard";
 import StillThereCard from "@/components/StillThereCard";
+import LocationPicker from "@/components/maps/LocationPicker";
 
 import {
   categoryInfo,
@@ -22,13 +26,7 @@ import {
   type Report,
   type ReportCategory,
   type ReportImpact,
-  type RouteAlert,
 } from "@/data/mock";
-
-import {
-  ALERT_KEY,
-  alertFromReport,
-} from "@/lib/alerts";
 
 import {
   createReport,
@@ -45,21 +43,9 @@ type Coords = {
   longitude: number;
 };
 
-// Marshall Student Center for demo/testing
-const DEMO_COORDS: Coords = {
-  latitude: 28.063634,
-  longitude: -82.413211,
-};
-
 export default function ReportPage() {
   const [myReports, saveMyReports] =
     useStoredState<Report[]>(REPORTS_KEY, []);
-
-  const [, saveAlert] =
-    useStoredState<RouteAlert | null>(
-      ALERT_KEY,
-      null
-    );
 
   const [category, setCategory] =
     useState<ReportCategory | null>(null);
@@ -73,8 +59,9 @@ export default function ReportPage() {
   const [coords, setCoords] =
     useState<Coords | null>(null);
 
-  const [locStatus, setLocStatus] =
-    useState("");
+  // The person's real position, if they shared it (only used when they tap "Use my location").
+  const [userCoords, setUserCoords] =
+    useState<Coords | null>(null);
 
   const [locationName, setLocationName] =
     useState("");
@@ -104,61 +91,18 @@ export default function ReportPage() {
 const {
   reports: activeReports,
   refresh: refreshReports,
+  loading: reportsLoading,
 } = useActiveReports();
 
 // "Near you" only lists reports near campus.
-const nearbyReports = activeReports.filter((r) =>
-  isNearCampus(r.latitude, r.longitude)
-);
-
-const nearbyReport =
-  nearbyReports.length > 0
-    ? rowToReport(nearbyReports[0])
-    : null;
-
-  // --------------------
-  // GET USER LOCATION
-  // --------------------
-
-  function findMyLocation() {
-    setLocStatus("Finding you...");
-
-    if (!navigator.geolocation) {
-      setLocStatus(
-        "Location isn't available on this device."
-      );
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setCoords({
-          latitude:
-            pos.coords.latitude,
-
-          longitude:
-            pos.coords.longitude,
-        });
-
-        setLocStatus(
-          `Location found (within about ${Math.round(
-            pos.coords.accuracy
-          )} m)`
-        );
-      },
-
-      () => {
-        setLocStatus(
-          "Couldn't get your location. Allow location access, or use the demo spot."
-        );
-      },
-
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-      }
-    );
-  }
+const nearbyReports = activeReports
+  .filter((r) => isNearCampus(r.latitude, r.longitude))
+  .sort(
+    (a, b) =>
+      new Date(b.created_at).getTime() -
+      new Date(a.created_at).getTime(),
+  )
+  .map(rowToReport);
 
   // --------------------
   // SUBMIT REPORT
@@ -178,7 +122,7 @@ const nearbyReport =
 
     if (!coords) {
       setError(
-        "Add your location so we know where it is."
+        "Search for the place, tap the map, or drag the pin to where the problem is."
       );
       return;
     }
@@ -189,6 +133,7 @@ const nearbyReport =
 
     const report: Report = {
       id: crypto.randomUUID(),
+      status: "unconfirmed",
 
       category,
       impact,
@@ -198,13 +143,7 @@ const nearbyReport =
       longitude: coords.longitude,
 
       location:
-        locationName.trim() ||
-        (coords.latitude ===
-          DEMO_COORDS.latitude &&
-        coords.longitude ===
-          DEMO_COORDS.longitude
-          ? "Marshall Student Center"
-          : "Your location"),
+        locationName.trim() || "Pinned location",
 
       note:
         note.trim() || undefined,
@@ -220,7 +159,7 @@ const nearbyReport =
       const backendInput =
         toReportInput(
           report,
-          coords
+          userCoords ?? coords
         );
 
       // Save to Supabase.
@@ -234,10 +173,6 @@ const nearbyReport =
         ...myReports,
       ]);
 
-      saveAlert(
-        alertFromReport(report)
-      );
-
       // Reload active reports from
       // Supabase so Near You updates.
       await refreshReports();
@@ -247,7 +182,7 @@ const nearbyReport =
       setImpact(null);
       setDuration("temporary");
       setCoords(null);
-      setLocStatus("");
+      setUserCoords(null);
       setLocationName("");
       setNote("");
       setSent(true);
@@ -311,15 +246,7 @@ async function handleClearReports() {
       <div className="-mt-6 space-y-6 px-4">
         {/* SUCCESS */}
 
-        {sent && (
-          <p className="flex items-center gap-2 rounded-3xl bg-mint p-4 text-sm font-semibold">
-            <Check className="size-5 shrink-0 text-leaf" />
-
-            Thanks for reporting!
-            Other people&apos;s routes
-            will update.
-          </p>
-        )}
+        {sent && <ThankYou />}
 
         {/* FORM */}
 
@@ -350,7 +277,7 @@ async function handleClearReports() {
                     }}
                     className={`flex flex-col items-center gap-2 rounded-2xl border p-4 text-center text-sm font-semibold ${
                       category === value
-                        ? "border-ink bg-ink text-white"
+                        ? "animate-pop border-ink bg-ink text-white"
                         : "border-ink/10 bg-cream text-ink"
                     }`}
                   >
@@ -406,82 +333,18 @@ async function handleClearReports() {
             />
           </div>
 
-          {/* COORDINATES */}
+          {/* WHERE IS IT? */}
 
-          <div>
-            <h3 className="mb-1 text-sm font-bold">
-              Where is it?
-            </h3>
-
-            <p className="mb-2 text-xs text-ink/60">
-              Reports are placed where
-              you&apos;re standing, so
-              you need to be close to it.
-            </p>
-
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={
-                  findMyLocation
-                }
-                className="flex items-center gap-1.5 rounded-full bg-aqua px-4 py-2 text-sm font-semibold"
-              >
-                <LocateFixed className="size-4" />
-
-                Use my location
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setCoords(
-                    DEMO_COORDS
-                  );
-
-                  setLocationName(
-                    "Marshall Student Center"
-                  );
-
-                  setLocStatus(
-                    "Using the demo spot (Marshall Student Center)"
-                  );
-                }}
-                className="rounded-full border border-ink/15 px-4 py-2 text-sm font-semibold text-ink/70"
-              >
-                Use demo spot
-              </button>
-            </div>
-
-            {locStatus && (
-              <p className="mt-2 text-xs text-ink/70">
-                {locStatus}
-              </p>
-            )}
-          </div>
-
-          {/* PLACE NAME */}
-
-          <div>
-            <label
-              htmlFor="locationName"
-              className="mb-1 block text-sm font-bold"
-            >
-              Place name (optional)
-            </label>
-
-            <input
-              id="locationName"
-              value={locationName}
-              onChange={(e) =>
-                setLocationName(
-                  e.target.value
-                )
-              }
-              placeholder="Marshall Student Center"
-              className="w-full rounded-2xl border border-ink/15 bg-cream p-3"
-            />
-          </div>
+          <LocationPicker
+            value={coords}
+            name={locationName}
+            onPick={(picked, pickedName) => {
+              setCoords(picked);
+              setLocationName(pickedName);
+            }}
+            onNameChange={setLocationName}
+            onUserLocation={setUserCoords}
+          />
 
           {/* DETAILS */}
 
@@ -535,15 +398,18 @@ async function handleClearReports() {
             Near you
           </h2>
 
-          {nearbyReport ? (
-            <StillThereCard
-              key={nearbyReport.id} // a new report starts with a fresh card
-              report={nearbyReport}
-            />
+          {reportsLoading ? (
+            <SkeletonCard />
+          ) : nearbyReports.length > 0 ? (
+            nearbyReports.map((report) => (
+              <StillThereCard key={report.id} report={report} />
+            ))
           ) : (
-            <p className="text-sm text-ink/60">
-              No active reports nearby.
-            </p>
+            <EmptyState
+              icon={CircleCheck}
+              title="All clear on campus"
+              text="No active reports nearby right now."
+            />
           )}
         </section>
 

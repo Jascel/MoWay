@@ -17,6 +17,7 @@ export default function PageHeader({
   right,
   large = false,
   brand = false,
+  status,
   children,
 }: {
   title: string;
@@ -24,6 +25,7 @@ export default function PageHeader({
   tone?: keyof typeof tones;
   right?: React.ReactNode;
   brand?: boolean; // show the "MoWay" wordmark row at the very top, like an app logo bar
+  status?: React.ReactNode; // small status (like "Live") shown next to the avatar in that row
   large?: boolean; // bigger title (used for the greeting on Today)
   children?: React.ReactNode; // extra content shown inside the colored header, under the title
 }) {
@@ -34,7 +36,10 @@ export default function PageHeader({
       {brand && (
         <div className="mb-5 flex items-center justify-between">
           <Logo />
-          {right}
+          <div className="flex items-center gap-3">
+            {status}
+            {right}
+          </div>
         </div>
       )}
       <div className="flex items-start justify-between gap-3">

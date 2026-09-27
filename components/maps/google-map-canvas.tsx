@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 
 import { loadMapLibraries } from "@/lib/maps/google-maps";
-import type { CampusBuilding } from "@/lib/maps/types";
+import type { CampusBuilding, CampusGarage } from "@/lib/maps/types";
+import type { RouteChoice } from "@/lib/maps/route-hazards";
 import type { WalkingRouteState } from "@/components/maps/use-walking-route";
 import type { Report } from "@/data/mock";
 import { pinColor } from "@/lib/maps/report-pins";
@@ -13,11 +14,13 @@ type GoogleMapCanvasProps = {
   readonly apiKey: string;
   readonly mapId: string;
   readonly buildings: readonly CampusBuilding[];
+  readonly garages?: readonly CampusGarage[];
   readonly originId: string;
   readonly destinationId: string;
   readonly routeState: WalkingRouteState;
   readonly reports?: readonly Report[]; // live community reports, drawn as colored pins
   readonly reportsReady?: boolean; // false until the first list of reports has loaded
+  readonly choice?: RouteChoice | null;
 };
 
 type MapRuntime = {
@@ -32,6 +35,7 @@ type MapRuntime = {
 
 type ReportPin = {
   readonly marker: google.maps.marker.AdvancedMarkerElement;
+  readonly pin: google.maps.marker.PinElement;
   report: Report;
 };
 
@@ -53,15 +57,24 @@ function buildReportInfo(report: Report): HTMLElement {
   card.append(line(report.location, "font-size:13px;margin-top:2px"));
   if (impact) card.append(line(impact, "font-size:12px;margin-top:4px;font-weight:600"));
   if (report.note) card.append(line(report.note, "font-size:12px;margin-top:4px;opacity:0.8"));
-  card.append(
-    line(`${report.confirmations} confirmed · ${ago}`, "font-size:11px;margin-top:6px;opacity:0.65")
-  );
+  const status = report.status === "confirmed" ? "Confirmed" : "Needs confirmation";
+  card.append(line(`${status} · ${report.confirmations} confirmed · ${ago}`, "font-size:11px;margin-top:6px;opacity:0.65"));
   return card;
 }
 
+function styleReportPin(pin: google.maps.marker.PinElement, report: Report): void {
+  const confirmed = report.status === "confirmed";
+  pin.background = pinColor(report.category);
+  pin.borderColor = confirmed ? "#006747" : "#ffffff";
+  pin.glyphColor = "#ffffff";
+  pin.glyphText = confirmed ? "✓" : "!";
+  pin.scale = confirmed ? 1.34 : 1.2;
+}
+
 type MarkerRecord = {
-  readonly buildingId: string;
+  readonly placeId: string;
   readonly defaultGlyph: string;
+  readonly isGarage: boolean;
   readonly marker: google.maps.marker.AdvancedMarkerElement;
   readonly pin: google.maps.marker.PinElement;
 };
@@ -74,7 +87,7 @@ function stylePin(
   originId: string,
   destinationId: string,
 ): void {
-  if (record.buildingId === originId) {
+  if (record.placeId === originId) {
     record.pin.glyphText = "A";
     record.pin.background = "#006747";
     record.pin.borderColor = "#004d35";
@@ -82,11 +95,19 @@ function stylePin(
     return;
   }
 
-  if (record.buildingId === destinationId) {
+  if (record.placeId === destinationId) {
     record.pin.glyphText = "B";
     record.pin.background = "#fce38a";
     record.pin.borderColor = "#1f2a44";
     record.pin.glyphColor = "#1f2a44";
+    return;
+  }
+
+  if (record.isGarage) {
+    record.pin.glyphText = "P";
+    record.pin.background = "#ffffff";
+    record.pin.borderColor = "#006747";
+    record.pin.glyphColor = "#006747";
     return;
   }
 
@@ -104,11 +125,13 @@ export function GoogleMapCanvas({
   apiKey,
   mapId,
   buildings,
+  garages = [],
   originId,
   destinationId,
   routeState,
   reports = [],
   reportsReady = false,
+  choice = null,
 }: GoogleMapCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -212,8 +235,9 @@ export function GoogleMapCanvas({
               });
 
             const record: MarkerRecord = {
-              buildingId: building.id,
+              placeId: building.id,
               defaultGlyph: building.code,
+              isGarage: false,
               pin,
               marker:
                 new marker.AdvancedMarkerElement(
@@ -248,10 +272,36 @@ export function GoogleMapCanvas({
           },
         );
 
+        const garageRecords = (garages ?? []).map((garage) => {
+          bounds.extend(garage.position);
+          const pin = new marker.PinElement({ scale: 1.15 });
+          const record: MarkerRecord = {
+            placeId: garage.id,
+            defaultGlyph: "P",
+            isGarage: true,
+            pin,
+            marker: new marker.AdvancedMarkerElement({
+              map,
+              position: garage.position,
+              title: garage.name,
+              content: pin,
+            }),
+          };
+          stylePin(record, selectedIds.current.originId, selectedIds.current.destinationId);
+          record.marker.addListener("click", () => {
+            const card = document.createElement("div");
+            card.textContent = garage.name;
+            card.style.cssText = "font-weight:700;font-size:14px;color:#1f2a44;max-width:200px";
+            buildingCard.setContent(card);
+            buildingCard.open({ map, anchor: record.marker });
+          });
+          return record;
+        });
+
         map.fitBounds(bounds, 52);
 
         markerRecords.current =
-          records;
+          [...records, ...garageRecords];
 
         setRuntime({
           map,
@@ -297,7 +347,7 @@ export function GoogleMapCanvas({
           previousAuthFailure;
       }
     };
-  }, [apiKey, buildings, mapId]);
+  }, [apiKey, buildings, garages, mapId]);
 
   // --------------------
   // UPDATE MARKERS
@@ -327,22 +377,34 @@ export function GoogleMapCanvas({
       return;
     }
 
-    const line =
-      new runtime.Polyline({
-        map: runtime.map,
-        path: [
-          ...routeState.route.path,
-        ],
-        geodesic: true,
-        strokeColor: "#006747",
-        strokeOpacity: 0.92,
-        strokeWeight: 6,
-      });
+    const chosen = choice?.chosen ?? routeState.route;
+    const rejected = choice?.rejected ?? [];
+    const rejectedLines = rejected.map((route) => new runtime.Polyline({
+      map: runtime.map,
+      path: [...route.path],
+      geodesic: true,
+      strokeColor: "#6b7280",
+      strokeOpacity: 0.2,
+      strokeWeight: 4,
+      icons: [{
+        icon: { path: "M 0,-1 0,1", strokeOpacity: 0.9, scale: 3 },
+        offset: "0",
+        repeat: "14px",
+      }],
+    }));
+    const line = new runtime.Polyline({
+      map: runtime.map,
+      path: [...chosen.path],
+      geodesic: true,
+      strokeColor: "#006747",
+      strokeOpacity: 0.92,
+      strokeWeight: 6,
+    });
 
     const bounds =
       new runtime.LatLngBounds();
 
-    routeState.route.path.forEach(
+    chosen.path.forEach(
       (position) =>
         bounds.extend(position),
     );
@@ -354,8 +416,9 @@ export function GoogleMapCanvas({
 
     return () => {
       line.setMap(null);
+      rejectedLines.forEach((rejectedLine) => rejectedLine.setMap(null));
     };
-  }, [routeState, runtime]);
+  }, [choice, routeState, runtime]);
 
   // --------------------
   // TRAFFIC LAYER
@@ -412,7 +475,8 @@ export function GoogleMapCanvas({
     reports.forEach((report) => {
       const existing = pins.get(report.id);
       if (existing) {
-        existing.report = report; // keep the details fresh (like the confirmed count)
+        existing.report = report;
+        styleReportPin(existing.pin, report);
         if (existing.marker.map !== runtime.map) {
           existing.marker.map = runtime.map;
         }
@@ -423,13 +487,8 @@ export function GoogleMapCanvas({
       // drop in with an animation and open their card, which is the live moment.
       const arrivedLive = reportsSeen.current;
       const position = { lat: report.latitude, lng: report.longitude };
-      const pin = new runtime.PinElement({
-        background: pinColor(report.category),
-        borderColor: "#ffffff",
-        glyphColor: "#ffffff",
-        glyphText: "!",
-        scale: 1.2,
-      });
+      const pin = new runtime.PinElement({ scale: 1.2 });
+      styleReportPin(pin, report);
       if (arrivedLive) {
         pin.element.classList.add("animate-pin-drop");
       }
@@ -441,7 +500,7 @@ export function GoogleMapCanvas({
         content: pin.element,
         zIndex: 10,
       });
-      const entry: ReportPin = { marker, report };
+      const entry: ReportPin = { marker, pin, report };
       pins.set(report.id, entry);
 
       const openCard = () => {
@@ -488,7 +547,7 @@ export function GoogleMapCanvas({
               (current) => !current,
             )
           }
-          className="absolute right-4 top-4 z-10 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink shadow-md"
+          className="absolute left-4 top-4 z-10 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink shadow-md"
           aria-pressed={trafficEnabled}
         >
           {trafficEnabled
