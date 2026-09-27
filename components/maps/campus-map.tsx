@@ -1,12 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import RoutePanel from "@/components/RoutePanel";
 import { GoogleMapCanvas } from "@/components/maps/google-map-canvas";
 import { RouteControls } from "@/components/maps/route-controls";
 import { useWalkingRoute } from "@/components/maps/use-walking-route";
 import type { CampusBuilding } from "@/lib/maps/types";
+import ReportLegend from "@/components/maps/ReportLegend";
+import { isNearCampus } from "@/lib/campus";
+import { rowToReport } from "@/lib/database/mapReport";
+import { useActiveReports } from "@/lib/database/useActiveReports";
 
 type CampusMapProps = {
   readonly apiKey: string;
@@ -46,6 +50,14 @@ export function CampusMap({ apiKey, mapId, buildings }: CampusMapProps) {
     requestRoute,
     resetRoute,
   } = useWalkingRoute(apiKey, origin, destination);
+
+  // Live community reports, kept up to date by Supabase Realtime. Only ones near campus get a pin.
+  const { reports: reportRows, loading: reportsLoading } = useActiveReports();
+  const reports = useMemo(
+    () => reportRows.filter((row) => isNearCampus(row.latitude, row.longitude)).map(rowToReport),
+    [reportRows],
+  );
+
   if (apiKey.length === 0) {
     return (
       <section
@@ -96,7 +108,11 @@ export function CampusMap({ apiKey, mapId, buildings }: CampusMapProps) {
         originId={originId}
         destinationId={destinationId}
         routeState={routeState}
+        reports={reports}
+        reportsReady={!reportsLoading}
       />
+
+      <ReportLegend count={reports.length} />
 
       <div aria-live="polite" aria-atomic="true">
         {routeState.kind === "loading" ? (
