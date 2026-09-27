@@ -28,3 +28,24 @@ export const WALKING_DETOUR_FACTOR = 1.3;
 export function estimatedPathMeters(a: MapPosition, b: MapPosition): number {
   return haversineMeters(a, b) * WALKING_DETOUR_FACTOR;
 }
+
+export function distanceToPathMeters(point: MapPosition, path: readonly MapPosition[]): number {
+  if (path.length === 0) return Infinity;
+  if (path.length === 1) return haversineMeters(point, path[0]);
+  const longitudeScale = Math.cos(toRadians(point.lat));
+  const projected = path.map((position) => ({
+    x: EARTH_RADIUS_METERS * toRadians(position.lng - point.lng) * longitudeScale,
+    y: EARTH_RADIUS_METERS * toRadians(position.lat - point.lat),
+  }));
+  let nearest = Infinity;
+  for (let index = 1; index < projected.length; index += 1) {
+    const a = projected[index - 1];
+    const b = projected[index];
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const lengthSquared = dx * dx + dy * dy;
+    const fraction = lengthSquared === 0 ? 0 : Math.max(0, Math.min(1, -(a.x * dx + a.y * dy) / lengthSquared));
+    nearest = Math.min(nearest, Math.hypot(a.x + fraction * dx, a.y + fraction * dy));
+  }
+  return nearest;
+}
