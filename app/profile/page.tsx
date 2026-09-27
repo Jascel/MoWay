@@ -64,7 +64,7 @@ export default function ProfilePage() {
         right={<Avatar name={profile.name} photo={profile.photo} size="lg" />}
       />
       <div className="-mt-6 space-y-6 px-4">
-        <section className="flex items-center gap-4 rounded-3xl bg-white p-5 shadow-sm">
+        <section className="flex items-center gap-4 rounded-3xl bg-sand p-5 shadow-sm">
           <Avatar name={profile.name} photo={profile.photo} size="lg" />
           <div>
             <p className="font-display text-lg font-bold">Profile photo</p>
@@ -99,7 +99,7 @@ export default function ProfilePage() {
           </div>
         </section>
 
-        <section className="rounded-3xl bg-white p-5 shadow-sm">
+        <section className="rounded-3xl bg-petal p-5 shadow-sm">
           <h2 className="font-display text-lg font-bold">Account</h2>
           {accountEmail ? (
             <>
@@ -127,8 +127,8 @@ export default function ProfilePage() {
           )}
         </section>
 
-        <section className="rounded-3xl bg-white p-5 shadow-sm">
-          <label className="mb-2 block text-lg font-bold" htmlFor="name">
+        <section className="rounded-3xl bg-petal p-5 shadow-sm">
+          <label className="mb-2 block font-display text-lg font-bold" htmlFor="name">
             Your name
           </label>
           <input
@@ -139,7 +139,7 @@ export default function ProfilePage() {
           />
         </section>
 
-        <section className="rounded-3xl bg-white p-5 shadow-sm">
+        <section className="rounded-3xl bg-petal p-5 shadow-sm">
           <label className="mb-1 block font-display text-lg font-bold" htmlFor="home">
             Where do you live?
           </label>
@@ -176,7 +176,7 @@ export default function ProfilePage() {
           />
         </section>
 
-        <section className="rounded-3xl bg-white p-5 shadow-sm">
+        <section className="rounded-3xl bg-sand p-5 shadow-sm">
           <h2 className="font-display text-lg font-bold">Using today</h2>
           <p className="mb-3 text-xs text-ink/70">Which one are you using right now?</p>
           <ChipGroup

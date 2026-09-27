@@ -24,7 +24,7 @@ export default function Avatar({
 
   return (
     <div
-      className={`${dims} flex shrink-0 items-center justify-center rounded-full border border-usf-green bg-seafoam font-bold text-leaf`}
+      className={`${dims} flex shrink-0 items-center justify-center rounded-full border border-usf-green bg-white font-bold text-leaf`}
     >
       {(name.trim()[0] ?? "?").toUpperCase()}
     </div>
