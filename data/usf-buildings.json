@@ -1,0 +1,1174 @@
+{
+  "buildings": [
+    {
+      "id": "alc",
+      "code": "ALC",
+      "name": "Alumni Center",
+      "position": {
+        "lat": 28.055961,
+        "lng": -82.410274
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "dac",
+      "code": "DAC",
+      "name": "Anchin Center",
+      "position": {
+        "lat": 28.060716,
+        "lng": -82.410839
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "rar",
+      "code": "RAR",
+      "name": "Argos Center",
+      "position": {
+        "lat": 28.064435,
+        "lng": -82.410429
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "aux",
+      "code": "AUX",
+      "name": "Auxiliary Services",
+      "position": {
+        "lat": 28.068186,
+        "lng": -82.408358
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "bpt",
+      "code": "BPT",
+      "name": "Baptist Student Center",
+      "position": {
+        "lat": 28.065029,
+        "lng": -82.402385
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "bcd",
+      "code": "BCD",
+      "name": "Baseball Stadium",
+      "position": {
+        "lat": 28.05843,
+        "lng": -82.404618
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "rbn",
+      "code": "RBN",
+      "name": "Beacon Hall",
+      "position": {
+        "lat": 28.067368,
+        "lng": -82.41258
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "beh",
+      "code": "BEH",
+      "name": "Behavioral Sciences Building",
+      "position": {
+        "lat": 28.062036,
+        "lng": -82.410112
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "acs",
+      "code": "ACS",
+      "name": "Benjamin Mendick Hope Lodge",
+      "position": {
+        "lat": 28.062726,
+        "lng": -82.420241
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "rbe",
+      "code": "RBE",
+      "name": "Beta Hall",
+      "position": {
+        "lat": 28.064949,
+        "lng": -82.409341
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "bsf",
+      "code": "BSF",
+      "name": "Bioscience Building",
+      "position": {
+        "lat": 28.060636,
+        "lng": -82.414648
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "cic",
+      "code": "CIC",
+      "name": "Campus Information Center",
+      "position": {
+        "lat": 28.055662,
+        "lng": -82.412624
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "mdh",
+      "code": "MDH",
+      "name": "Carol & Frank Morsani Center for Advanced Health Care",
+      "position": {
+        "lat": 28.067015,
+        "lng": -82.419649
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "rbc",
+      "code": "RBC",
+      "name": "Castor Hall",
+      "position": {
+        "lat": 28.063898,
+        "lng": -82.411059
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "cee",
+      "code": "CEE",
+      "name": "Center for Econ. Education",
+      "position": {
+        "lat": 28.061087,
+        "lng": -82.410773
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "cutr",
+      "code": "CUTR",
+      "name": "Center for Urban Transportation Research",
+      "position": {
+        "lat": 28.058569,
+        "lng": -82.41633
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "din",
+      "code": "DIN",
+      "name": "Champion's Choice Dining",
+      "position": {
+        "lat": 28.05971,
+        "lng": -82.407305
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "cha",
+      "code": "CHA",
+      "name": "Chapel Center",
+      "position": {
+        "lat": 28.063369,
+        "lng": -82.402351
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "che",
+      "code": "CHE",
+      "name": "Chemistry",
+      "position": {
+        "lat": 28.061353,
+        "lng": -82.415423
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "mhf",
+      "code": "MHF",
+      "name": "Child and Family Studies Center",
+      "position": {
+        "lat": 28.067396,
+        "lng": -82.421283
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "cms",
+      "code": "CMS",
+      "name": "Childrens Medical Services",
+      "position": {
+        "lat": 28.066308,
+        "lng": -82.425189
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "cmc",
+      "code": "CMC",
+      "name": "College of Arts & Sciences Multidisciplinary Complex",
+      "position": {
+        "lat": 28.059606,
+        "lng": -82.414688
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "edu",
+      "code": "EDU",
+      "name": "College of Education",
+      "position": {
+        "lat": 28.060352,
+        "lng": -82.410738
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "mdn",
+      "code": "MDN",
+      "name": "College of Nursing",
+      "position": {
+        "lat": 28.064749,
+        "lng": -82.42416
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "cph",
+      "code": "CPH",
+      "name": "College of Public Health",
+      "position": {
+        "lat": 28.067316,
+        "lng": -82.424679
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "nec",
+      "code": "NEC",
+      "name": "Continuing Education",
+      "position": {
+        "lat": 28.068121,
+        "lng": -82.424856
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "cpr",
+      "code": "CPR",
+      "name": "Cooper Hall Arts and Sciences Building",
+      "position": {
+        "lat": 28.059622,
+        "lng": -82.410781
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "wfc",
+      "code": "WFC",
+      "name": "Crosswinds Wesley Foundation",
+      "position": {
+        "lat": 28.062705,
+        "lng": -82.402347
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "rcc",
+      "code": "RCC",
+      "name": "Cypress Apartments Building C",
+      "position": {
+        "lat": 28.067224,
+        "lng": -82.408277
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "rcd",
+      "code": "RCD",
+      "name": "Cypress Apartments Building D",
+      "position": {
+        "lat": 28.067241,
+        "lng": -82.408649
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "rce",
+      "code": "RCE",
+      "name": "Cypress Apartments Building E",
+      "position": {
+        "lat": 28.066723,
+        "lng": -82.408857
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "rca",
+      "code": "RCA",
+      "name": "Cypress Hall Building A",
+      "position": {
+        "lat": 28.06604,
+        "lng": -82.409018
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "rcb",
+      "code": "RCB",
+      "name": "Cypress Hall Building B",
+      "position": {
+        "lat": 28.066146,
+        "lng": -82.408489
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "fad",
+      "code": "FAD",
+      "name": "Dance",
+      "position": {
+        "lat": 28.063939,
+        "lng": -82.415076
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "dhb",
+      "code": "DHB",
+      "name": "Department of Health Building",
+      "position": {
+        "lat": 28.057435,
+        "lng": -82.420335
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "eng",
+      "code": "ENG",
+      "name": "Edgar W Kopp Engineering Building",
+      "position": {
+        "lat": 28.059472,
+        "lng": -82.415901
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "ren",
+      "code": "REN",
+      "name": "Endeavor Hall",
+      "position": {
+        "lat": 28.066132,
+        "lng": -82.411463
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "enc",
+      "code": "ENC",
+      "name": "Engineering Building III",
+      "position": {
+        "lat": 28.058816,
+        "lng": -82.414508
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "ena",
+      "code": "ENA",
+      "name": "Engineering Teaching Auditorium",
+      "position": {
+        "lat": 28.059961,
+        "lng": -82.415909
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "mdo",
+      "code": "MDO",
+      "name": "Eye Institute",
+      "position": {
+        "lat": 28.065028,
+        "lng": -82.419435
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "fao",
+      "code": "FAO",
+      "name": "Faculty Office Building",
+      "position": {
+        "lat": 28.061454,
+        "lng": -82.410122
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "fas",
+      "code": "FAS",
+      "name": "Fine Arts Studio",
+      "position": {
+        "lat": 28.064015,
+        "lng": -82.416623
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "fah",
+      "code": "FAH",
+      "name": "Fine Arts and Music",
+      "position": {
+        "lat": 28.063075,
+        "lng": -82.41659
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "mhc",
+      "code": "MHC",
+      "name": "Florida Mental Health Institute",
+      "position": {
+        "lat": 28.067854,
+        "lng": -82.422917
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "mcc",
+      "code": "MCC",
+      "name": "H. Lee Moffitt Cancer Center",
+      "position": {
+        "lat": 28.064061,
+        "lng": -82.421445
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "hil",
+      "code": "HIL",
+      "name": "Hillel Jewish Student Center",
+      "position": {
+        "lat": 28.064181,
+        "lng": -82.402364
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "haa",
+      "code": "HAA",
+      "name": "Holly A",
+      "position": {
+        "lat": 28.065991,
+        "lng": -82.411069
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "hab",
+      "code": "HAB",
+      "name": "Holly B",
+      "position": {
+        "lat": 28.06599,
+        "lng": -82.410278
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "hac",
+      "code": "HAC",
+      "name": "Holly Housing Building C",
+      "position": {
+        "lat": 28.066146,
+        "lng": -82.409485
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "had",
+      "code": "HAD",
+      "name": "Holly Housing Building D",
+      "position": {
+        "lat": 28.065284,
+        "lng": -82.411451
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "hae",
+      "code": "HAE",
+      "name": "Holly Housing Building E",
+      "position": {
+        "lat": 28.065288,
+        "lng": -82.410893
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "haf",
+      "code": "HAF",
+      "name": "Holly Housing Building F",
+      "position": {
+        "lat": 28.065292,
+        "lng": -82.410447
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "hag",
+      "code": "HAG",
+      "name": "Holly Housing Building G",
+      "position": {
+        "lat": 28.065438,
+        "lng": -82.409672
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "haj",
+      "code": "HAJ",
+      "name": "Holly Housing Building J",
+      "position": {
+        "lat": 28.065486,
+        "lng": -82.410142
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "hal",
+      "code": "HAL",
+      "name": "Holly L",
+      "position": {
+        "lat": 28.066223,
+        "lng": -82.410444
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "ham",
+      "code": "HAM",
+      "name": "Holly M",
+      "position": {
+        "lat": 28.066223,
+        "lng": -82.41089
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "rhn",
+      "code": "RHN",
+      "name": "Horizon Hall",
+      "position": {
+        "lat": 28.066718,
+        "lng": -82.41242
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "isa",
+      "code": "ISA",
+      "name": "Interdisciplinary Sciences",
+      "position": {
+        "lat": 28.061524,
+        "lng": -82.414331
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "aln",
+      "code": "ALN",
+      "name": "John & Grace Allen / Welcome Center",
+      "position": {
+        "lat": 28.061572,
+        "lng": -82.413213
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "alz",
+      "code": "ALZ",
+      "name": "Johnnie B. Byrd, Sr. Alzheimer's Center",
+      "position": {
+        "lat": 28.068275,
+        "lng": -82.417694
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "hon",
+      "code": "HON",
+      "name": "Judy Genshaft Honors College",
+      "position": {
+        "lat": 28.059601,
+        "lng": -82.409401
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "rjh",
+      "code": "RJH",
+      "name": "Juniper Hall",
+      "position": {
+        "lat": 28.059798,
+        "lng": -82.418296
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "jph",
+      "code": "JPH",
+      "name": "Juniper-Poplar Hall",
+      "position": {
+        "lat": 28.059823,
+        "lng": -82.418707
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "rko",
+      "code": "RKO",
+      "name": "Kosove Hall",
+      "position": {
+        "lat": 28.064611,
+        "lng": -82.411378
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "lrc",
+      "code": "LRC",
+      "name": "Lawton and Rhea Chiles Center",
+      "position": {
+        "lat": 28.068165,
+        "lng": -82.423821
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "ath",
+      "code": "ATH",
+      "name": "Lee Roy Selmon Athletics Center",
+      "position": {
+        "lat": 28.060726,
+        "lng": -82.405242
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "lsa",
+      "code": "LSA",
+      "name": "Life Science Annex",
+      "position": {
+        "lat": 28.061339,
+        "lng": -82.417357
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "prs",
+      "code": "PRS",
+      "name": "Lifsey House",
+      "position": {
+        "lat": 28.055735,
+        "lng": -82.411463
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "mab",
+      "code": "MAB",
+      "name": "Magnolia Apartments Building B",
+      "position": {
+        "lat": 28.058329,
+        "lng": -82.4181
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "maa",
+      "code": "MAA",
+      "name": "Magnolia Apartments Building A",
+      "position": {
+        "lat": 28.058326,
+        "lng": -82.418963
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "mac",
+      "code": "MAC",
+      "name": "Magnolia Apartments Building C",
+      "position": {
+        "lat": 28.058674,
+        "lng": -82.419168
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "mad",
+      "code": "MAD",
+      "name": "Magnolia Apartments Building D",
+      "position": {
+        "lat": 28.058678,
+        "lng": -82.418755
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "mae",
+      "code": "MAE",
+      "name": "Magnolia Apartments Building E",
+      "position": {
+        "lat": 28.058678,
+        "lng": -82.418353
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "maf",
+      "code": "MAF",
+      "name": "Magnolia Apartments Building F",
+      "position": {
+        "lat": 28.058671,
+        "lng": -82.417919
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "mag",
+      "code": "MAG",
+      "name": "Magnolia Apartments Building G",
+      "position": {
+        "lat": 28.059091,
+        "lng": -82.418947
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "mdf",
+      "code": "MDF",
+      "name": "Medical Faculty Office Building",
+      "position": {
+        "lat": 28.066363,
+        "lng": -82.41957
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "mfb",
+      "code": "MFB",
+      "name": "Moffitt Faculty Building",
+      "position": {
+        "lat": 28.063417,
+        "lng": -82.421429
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "mrc",
+      "code": "MRC",
+      "name": "Moffitt Research Building",
+      "position": {
+        "lat": 28.065609,
+        "lng": -82.419563
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "mcb",
+      "code": "MCB",
+      "name": "Muriel Rothman Clinic Building",
+      "position": {
+        "lat": 28.064934,
+        "lng": -82.421866
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "nta",
+      "code": "NTA",
+      "name": "Nanotech Center",
+      "position": {
+        "lat": 28.059973,
+        "lng": -82.416278
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "nes",
+      "code": "NES",
+      "name": "Natural and Environmental Sciences",
+      "position": {
+        "lat": 28.061685,
+        "lng": -82.415223
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "hah",
+      "code": "HAH",
+      "name": "North Campus Mail Center",
+      "position": {
+        "lat": 28.065437,
+        "lng": -82.41118
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "bbp",
+      "code": "BBP",
+      "name": "Pam & Les Muma Basketball Practice Center",
+      "position": {
+        "lat": 28.058599,
+        "lng": -82.406497
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "cgs",
+      "code": "CGS",
+      "name": "Patel Center for Global Solutions",
+      "position": {
+        "lat": 28.05514,
+        "lng": -82.408549
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "ped",
+      "code": "PED",
+      "name": "Physical Education Building",
+      "position": {
+        "lat": 28.061284,
+        "lng": -82.407657
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "rpn",
+      "code": "RPN",
+      "name": "Pinnacle Hall",
+      "position": {
+        "lat": 28.066135,
+        "lng": -82.412522
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "rph",
+      "code": "RPH",
+      "name": "Poplar Hall",
+      "position": {
+        "lat": 28.059769,
+        "lng": -82.418988
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "pcd",
+      "code": "PCD",
+      "name": "Psychology and Communication Disorders Building",
+      "position": {
+        "lat": 28.063744,
+        "lng": -82.418583
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "idr",
+      "code": "IDR",
+      "name": "Research & Development",
+      "position": {
+        "lat": 28.056742,
+        "lng": -82.415823
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "bpb",
+      "code": "BPB",
+      "name": "Research & Development",
+      "position": {
+        "lat": 28.056037,
+        "lng": -82.415076
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "mus",
+      "code": "MUS",
+      "name": "School of Music",
+      "position": {
+        "lat": 28.064662,
+        "lng": -82.418179
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "sca",
+      "code": "SCA",
+      "name": "Science Center",
+      "position": {
+        "lat": 28.06046,
+        "lng": -82.415948
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "sps",
+      "code": "SPS",
+      "name": "Soccer Stadium",
+      "position": {
+        "lat": 28.060073,
+        "lng": -82.403847
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "soc",
+      "code": "SOC",
+      "name": "Social Sciences Building",
+      "position": {
+        "lat": 28.061451,
+        "lng": -82.409344
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "srb",
+      "code": "SRB",
+      "name": "Stabile Research Building",
+      "position": {
+        "lat": 28.065637,
+        "lng": -82.421289
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "swc",
+      "code": "SWC",
+      "name": "Student Health & Wellness Center",
+      "position": {
+        "lat": 28.059254,
+        "lng": -82.408245
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "shs",
+      "code": "SHS",
+      "name": "Student Health Services",
+      "position": {
+        "lat": 28.063445,
+        "lng": -82.411983
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "svc",
+      "code": "SVC",
+      "name": "Student Services Building",
+      "position": {
+        "lat": 28.062479,
+        "lng": -82.412498
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "rsu",
+      "code": "RSU",
+      "name": "Summit Hall",
+      "position": {
+        "lat": 28.066728,
+        "lng": -82.41125
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "tat",
+      "code": "TAT",
+      "name": "Teaching Auditorium and Theatre I",
+      "position": {
+        "lat": 28.063492,
+        "lng": -82.414487
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "fit",
+      "code": "FIT",
+      "name": "The Fit Health & Wellness Center",
+      "position": {
+        "lat": 28.067356,
+        "lng": -82.411199
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "tar",
+      "code": "TAR",
+      "name": "Theatre Arts Rehearsal Building",
+      "position": {
+        "lat": 28.06395,
+        "lng": -82.414485
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "thr",
+      "code": "THR",
+      "name": "Theatre II",
+      "position": {
+        "lat": 28.063553,
+        "lng": -82.414879
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "bks",
+      "code": "BKS",
+      "name": "USF Bookstore",
+      "position": {
+        "lat": 28.063491,
+        "lng": -82.412531
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "mdt",
+      "code": "MDT",
+      "name": "USF Health - Psychiatry, School of Physical Therapy",
+      "position": {
+        "lat": 28.068206,
+        "lng": -82.418905
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "mda",
+      "code": "MDA",
+      "name": "USF Health Clinics",
+      "position": {
+        "lat": 28.064742,
+        "lng": -82.425299
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "mdc",
+      "code": "MDC",
+      "name": "USF Health Morsani College of Medicine",
+      "position": {
+        "lat": 28.063685,
+        "lng": -82.424485
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "mdl",
+      "code": "MDL",
+      "name": "USF Health Student Group Learning",
+      "position": {
+        "lat": 28.063053,
+        "lng": -82.424414
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "bsn",
+      "code": "BSN",
+      "name": "USF Muma College of Business",
+      "position": {
+        "lat": 28.058319,
+        "lng": -82.409783
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "hms",
+      "code": "HMS",
+      "name": "USF School of Architecture and Community Design",
+      "position": {
+        "lat": 28.06086,
+        "lng": -82.40933
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "udi",
+      "code": "UDI",
+      "name": "University Diagnostic Institute",
+      "position": {
+        "lat": 28.057211,
+        "lng": -82.421238
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "ulh",
+      "code": "ULH",
+      "name": "University Lecture Hall",
+      "position": {
+        "lat": 28.060532,
+        "lng": -82.409802
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "cam",
+      "code": "CAM",
+      "name": "University Of South Florida Contemporary Art Museum;Contemporary Art Museum",
+      "position": {
+        "lat": 28.063496,
+        "lng": -82.41555
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "uta",
+      "code": "UTA",
+      "name": "University Technology Center I",
+      "position": {
+        "lat": 28.057208,
+        "lng": -82.417316
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "utb",
+      "code": "UTB",
+      "name": "University Technology Center II",
+      "position": {
+        "lat": 28.057264,
+        "lng": -82.418406
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "mha",
+      "code": "MHA",
+      "name": "Westside Conference Center",
+      "position": {
+        "lat": 28.067202,
+        "lng": -82.423636
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    },
+    {
+      "id": "sun",
+      "code": "SUN",
+      "name": "Yuengling Center",
+      "position": {
+        "lat": 28.059245,
+        "lng": -82.406566
+      },
+      "source": "OpenStreetMap building centroid, 2026-09-27"
+    }
+  ]
+}

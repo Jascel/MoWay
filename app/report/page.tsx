@@ -5,6 +5,7 @@ import { CircleCheck } from "lucide-react";
 
 import PageHeader from "@/components/PageHeader";
 import ChipGroup from "@/components/ChipGroup";
+import HelpersToday from "@/components/HelpersToday";
 import ThankYou from "@/components/ThankYou";
 import EmptyState from "@/components/EmptyState";
 import SkeletonCard from "@/components/SkeletonCard";
@@ -46,6 +47,13 @@ type Coords = {
 export default function ReportPage() {
   const [myReports, saveMyReports] =
     useStoredState<Report[]>(REPORTS_KEY, []);
+
+  // The confetti moment happens only for someone's very first report.
+  const [celebrated, saveCelebrated] =
+    useStoredState<boolean>("moway.firstReportDone.v1", false);
+
+  const [firstReport, setFirstReport] =
+    useState(false);
 
   const [category, setCategory] =
     useState<ReportCategory | null>(null);
@@ -185,6 +193,8 @@ const nearbyReports = activeReports
       setUserCoords(null);
       setLocationName("");
       setNote("");
+      setFirstReport(!celebrated);
+      saveCelebrated(true);
       setSent(true);
     } catch (err) {
       console.error(err);
@@ -246,7 +256,9 @@ async function handleClearReports() {
       <div className="-mt-6 space-y-6 px-4">
         {/* SUCCESS */}
 
-        {sent && <ThankYou />}
+        {sent && <ThankYou first={firstReport} />}
+
+        <HelpersToday />
 
         {/* FORM */}
 
