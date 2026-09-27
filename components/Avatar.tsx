@@ -17,14 +17,14 @@ export default function Avatar({
       <img
         src={photo}
         alt={`${name || "Your"} profile photo`}
-        className={`${dims} shrink-0 rounded-full border border-usf-green object-cover`}
+        className={`${dims} shrink-0 rounded-full border-[1.5px] border-usf-green object-cover`}
       />
     );
   }
 
   return (
     <div
-      className={`${dims} flex shrink-0 items-center justify-center rounded-full border border-usf-green bg-white font-bold text-leaf`}
+      className={`${dims} flex shrink-0 items-center justify-center rounded-full border-[1.5px] border-usf-green bg-white font-logo text-leaf`}
     >
       {(name.trim()[0] ?? "?").toUpperCase()}
     </div>

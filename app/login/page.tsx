@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
 import ChipGroup from "@/components/ChipGroup";
-import { createAccount, friendlyAuthError, logIn, logOut, signInWithGoogle } from "@/lib/auth";
+import { createAccount, friendlyAuthError, isGoogleEnabled, logIn, logOut, signInWithGoogle } from "@/lib/auth";
 import { useAuthUser } from "@/lib/useAuthUser";
 
 const modes = [
@@ -24,6 +24,18 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [googleOn, setGoogleOn] = useState(false);
+
+  // Show the Google button only once Google sign-in really works.
+  useEffect(() => {
+    let alive = true;
+    void isGoogleEnabled().then((enabled) => {
+      if (alive) setGoogleOn(enabled);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   // A real account (not the anonymous guest) is signed in.
   const signedInEmail = user && !user.is_anonymous ? user.email : null;
@@ -147,20 +159,24 @@ export default function LoginPage() {
               {busy ? "One moment..." : mode === "signup" ? "Create account" : "Log in"}
             </button>
 
-            <div className="flex items-center gap-3 text-xs text-ink/50">
-              <span className="h-px flex-1 bg-ink/10" />
-              or
-              <span className="h-px flex-1 bg-ink/10" />
-            </div>
+            {googleOn && (
+              <>
+                <div className="flex items-center gap-3 text-xs text-ink/50">
+                  <span className="h-px flex-1 bg-ink/10" />
+                  or
+                  <span className="h-px flex-1 bg-ink/10" />
+                </div>
 
-            <button
-              type="button"
-              onClick={handleGoogle}
-              disabled={busy}
-              className="w-full rounded-full border border-ink/20 bg-white py-3.5 font-semibold disabled:opacity-50"
-            >
-              Continue with Google
-            </button>
+                <button
+                  type="button"
+                  onClick={handleGoogle}
+                  disabled={busy}
+                  className="w-full rounded-full border border-ink/20 bg-white py-3.5 font-semibold disabled:opacity-50"
+                >
+                  Continue with Google
+                </button>
+              </>
+            )}
           </form>
         )}
 
