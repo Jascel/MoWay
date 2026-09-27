@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
 import Avatar from "@/components/Avatar";
 import ChipGroup from "@/components/ChipGroup";
@@ -14,11 +15,13 @@ import { syncProfile } from "@/lib/syncProfile";
 import { logOut } from "@/lib/auth";
 import { useAuthUser } from "@/lib/useAuthUser";
 import { photoToDataUrl } from "@/lib/photo";
+import { resetLocalDemo } from "@/lib/resetDemo";
 
 // Every change is saved right away (no Save button), in the browser under PROFILE_KEY.
 export default function ProfilePage() {
   const [profile, saveProfile] = useStoredState<Profile>(PROFILE_KEY, mockProfile);
   const drive = useDriveEstimate(profile.homeAddress ?? "");
+  const router = useRouter();
   const { user } = useAuthUser();
   const accountEmail = user && !user.is_anonymous ? user.email : null;
 
@@ -219,6 +222,20 @@ export default function ProfilePage() {
         <p className="text-center text-xs text-ink/40">Saved automatically on this device.</p>
         <p className="pb-2 text-center text-xs">
           <Link href="/welcome" className="text-ink/50 underline">Replay the welcome screens</Link>
+        </p>
+        <p className="pb-2 text-center text-xs">
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm("Reset the demo? This clears your saved profile, photo, schedule changes and alert on this device.")) {
+                resetLocalDemo();
+                router.push("/");
+              }
+            }}
+            className="text-ink/50 underline"
+          >
+            Reset demo on this device
+          </button>
         </p>
       </div>
     </>
