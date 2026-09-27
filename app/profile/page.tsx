@@ -102,7 +102,7 @@ export default function ProfilePage() {
           </div>
         </section>
 
-        <section className="rounded-3xl bg-white p-5 shadow-sm">
+        <section className="rounded-3xl bg-mist p-5 shadow-sm">
           <h2 className="font-display text-lg font-bold">Account</h2>
           {accountEmail ? (
             <>
@@ -110,7 +110,7 @@ export default function ProfilePage() {
               <button
                 type="button"
                 onClick={() => void logOut()}
-                className="mt-3 rounded-full border border-ink/20 px-4 py-2 text-sm font-semibold"
+                className="mt-3 rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white active:bg-ink/80"
               >
                 Log out
               </button>
@@ -130,8 +130,8 @@ export default function ProfilePage() {
           )}
         </section>
 
-        <section className="rounded-3xl bg-white p-5 shadow-sm">
-          <label className="mb-2 block text-lg font-bold" htmlFor="name">
+        <section className="rounded-3xl bg-mist p-5 shadow-sm">
+          <label className="mb-2 block font-display text-lg font-bold" htmlFor="name">
             Your name
           </label>
           <input
@@ -142,7 +142,7 @@ export default function ProfilePage() {
           />
         </section>
 
-        <section className="rounded-3xl bg-white p-5 shadow-sm">
+        <section className="rounded-3xl bg-mist p-5 shadow-sm">
           <label className="mb-1 block font-display text-lg font-bold" htmlFor="home">
             Where do you live?
           </label>
@@ -179,7 +179,7 @@ export default function ProfilePage() {
           />
         </section>
 
-        <section className="rounded-3xl bg-white p-5 shadow-sm">
+        <section className="rounded-3xl bg-sand p-5 shadow-sm">
           <h2 className="font-display text-lg font-bold">Using today</h2>
           <p className="mb-3 text-xs text-ink/70">Which one are you using right now?</p>
           <ChipGroup
