@@ -15,7 +15,7 @@ export default function StillThereCard({
   report: Report;
 }) {
   const [answer, setAnswer] =
-    useState<"yes" | "no" | null>(null);
+    useState<"yes" | "no" | "done" | null>(null);
 
   const [submitting, setSubmitting] =
     useState(false);
@@ -63,6 +63,14 @@ export default function StillThereCard({
         saveAlert(null);
       }
     } catch (err) {
+      if (
+        err instanceof Error &&
+        err.message.includes("already confirmed")
+      ) {
+        setAnswer("done");
+        return;
+      }
+
       console.error(
         "Could not confirm report:",
         err
@@ -147,7 +155,9 @@ export default function StillThereCard({
           Thanks!{" "}
           {answer === "yes"
             ? "We'll keep routing around it."
-            : "We'll let others know it's clear."}
+            : answer === "no"
+              ? "We'll let others know it's clear."
+              : "You already answered this one. Thanks for helping!"}
         </p>
       )}
     </section>
