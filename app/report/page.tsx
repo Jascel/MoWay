@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Check, LocateFixed } from "lucide-react";
+import { Check } from "lucide-react";
 
 import PageHeader from "@/components/PageHeader";
 import ChipGroup from "@/components/ChipGroup";
 import StillThereCard from "@/components/StillThereCard";
+import LocationPicker from "@/components/maps/LocationPicker";
 
 import {
   categoryInfo,
@@ -45,12 +46,6 @@ type Coords = {
   longitude: number;
 };
 
-// Marshall Student Center for demo/testing
-const DEMO_COORDS: Coords = {
-  latitude: 28.063634,
-  longitude: -82.413211,
-};
-
 export default function ReportPage() {
   const [myReports, saveMyReports] =
     useStoredState<Report[]>(REPORTS_KEY, []);
@@ -73,8 +68,9 @@ export default function ReportPage() {
   const [coords, setCoords] =
     useState<Coords | null>(null);
 
-  const [locStatus, setLocStatus] =
-    useState("");
+  // The person's real position, if they shared it (only used when they tap "Use my location").
+  const [userCoords, setUserCoords] =
+    useState<Coords | null>(null);
 
   const [locationName, setLocationName] =
     useState("");
@@ -117,50 +113,6 @@ const nearbyReport =
     : null;
 
   // --------------------
-  // GET USER LOCATION
-  // --------------------
-
-  function findMyLocation() {
-    setLocStatus("Finding you...");
-
-    if (!navigator.geolocation) {
-      setLocStatus(
-        "Location isn't available on this device."
-      );
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setCoords({
-          latitude:
-            pos.coords.latitude,
-
-          longitude:
-            pos.coords.longitude,
-        });
-
-        setLocStatus(
-          `Location found (within about ${Math.round(
-            pos.coords.accuracy
-          )} m)`
-        );
-      },
-
-      () => {
-        setLocStatus(
-          "Couldn't get your location. Allow location access, or use the demo spot."
-        );
-      },
-
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-      }
-    );
-  }
-
-  // --------------------
   // SUBMIT REPORT
   // --------------------
 
@@ -178,7 +130,7 @@ const nearbyReport =
 
     if (!coords) {
       setError(
-        "Add your location so we know where it is."
+        "Search for the place, tap the map, or drag the pin to where the problem is."
       );
       return;
     }
@@ -198,13 +150,7 @@ const nearbyReport =
       longitude: coords.longitude,
 
       location:
-        locationName.trim() ||
-        (coords.latitude ===
-          DEMO_COORDS.latitude &&
-        coords.longitude ===
-          DEMO_COORDS.longitude
-          ? "Marshall Student Center"
-          : "Your location"),
+        locationName.trim() || "Pinned location",
 
       note:
         note.trim() || undefined,
@@ -220,7 +166,7 @@ const nearbyReport =
       const backendInput =
         toReportInput(
           report,
-          coords
+          userCoords ?? coords
         );
 
       // Save to Supabase.
@@ -247,7 +193,7 @@ const nearbyReport =
       setImpact(null);
       setDuration("temporary");
       setCoords(null);
-      setLocStatus("");
+      setUserCoords(null);
       setLocationName("");
       setNote("");
       setSent(true);
@@ -406,82 +352,18 @@ async function handleClearReports() {
             />
           </div>
 
-          {/* COORDINATES */}
+          {/* WHERE IS IT? */}
 
-          <div>
-            <h3 className="mb-1 text-sm font-bold">
-              Where is it?
-            </h3>
-
-            <p className="mb-2 text-xs text-ink/60">
-              Reports are placed where
-              you&apos;re standing, so
-              you need to be close to it.
-            </p>
-
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={
-                  findMyLocation
-                }
-                className="flex items-center gap-1.5 rounded-full bg-aqua px-4 py-2 text-sm font-semibold"
-              >
-                <LocateFixed className="size-4" />
-
-                Use my location
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setCoords(
-                    DEMO_COORDS
-                  );
-
-                  setLocationName(
-                    "Marshall Student Center"
-                  );
-
-                  setLocStatus(
-                    "Using the demo spot (Marshall Student Center)"
-                  );
-                }}
-                className="rounded-full border border-ink/15 px-4 py-2 text-sm font-semibold text-ink/70"
-              >
-                Use demo spot
-              </button>
-            </div>
-
-            {locStatus && (
-              <p className="mt-2 text-xs text-ink/70">
-                {locStatus}
-              </p>
-            )}
-          </div>
-
-          {/* PLACE NAME */}
-
-          <div>
-            <label
-              htmlFor="locationName"
-              className="mb-1 block text-sm font-bold"
-            >
-              Place name (optional)
-            </label>
-
-            <input
-              id="locationName"
-              value={locationName}
-              onChange={(e) =>
-                setLocationName(
-                  e.target.value
-                )
-              }
-              placeholder="Marshall Student Center"
-              className="w-full rounded-2xl border border-ink/15 bg-cream p-3"
-            />
-          </div>
+          <LocationPicker
+            value={coords}
+            name={locationName}
+            onPick={(picked, pickedName) => {
+              setCoords(picked);
+              setLocationName(pickedName);
+            }}
+            onNameChange={setLocationName}
+            onUserLocation={setUserCoords}
+          />
 
           {/* DETAILS */}
 

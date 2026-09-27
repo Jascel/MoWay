@@ -488,7 +488,7 @@ export function GoogleMapCanvas({
               (current) => !current,
             )
           }
-          className="absolute right-4 top-4 z-10 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink shadow-md"
+          className="absolute left-4 top-4 z-10 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink shadow-md"
           aria-pressed={trafficEnabled}
         >
           {trafficEnabled
