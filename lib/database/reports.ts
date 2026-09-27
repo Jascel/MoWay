@@ -1,4 +1,5 @@
 import { getSupabaseClient } from "@/lib/supabase/client";
+import { isNearCampus } from "@/lib/campus";
 
 // --------------------
 // REPORT TYPES
@@ -124,23 +125,10 @@ export async function createReport(
     );
   }
 
-  // Calculate distance from user to reported problem
-  const distance = distanceInMeters(
-    input.userLatitude,
-    input.userLongitude,
-    input.latitude,
-    input.longitude
-  );
-
-  // Construction can be reported from farther away.
-  const allowedDistance =
-    input.reportType === "construction"
-      ? 300
-      : 50;
-
-  if (distance > allowedDistance) {
+  // Reports must be within the USF Tampa campus area.
+  if (!isNearCampus(input.latitude, input.longitude)) {
     throw new Error(
-      `You must be within ${allowedDistance} meters of the reported location.`
+      "Report location must be within the USF Tampa campus area."
     );
   }
 
