@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
@@ -16,10 +16,12 @@ import { logOut } from "@/lib/auth";
 import { useAuthUser } from "@/lib/useAuthUser";
 import { photoToDataUrl } from "@/lib/photo";
 import { resetLocalDemo } from "@/lib/resetDemo";
+import { resolveMyReports } from "@/lib/database/reports";
 
 // Every change is saved right away (no Save button), in the browser under PROFILE_KEY.
 export default function ProfilePage() {
   const [profile, saveProfile] = useStoredState<Profile>(PROFILE_KEY, mockProfile);
+  const [resolvingReports, setResolvingReports] = useState(false);
   const drive = useDriveEstimate(profile.homeAddress ?? "");
   const router = useRouter();
   const { user } = useAuthUser();
@@ -55,6 +57,23 @@ export default function ProfilePage() {
       saveProfile({ ...profile, photo: await photoToDataUrl(file) });
     } catch {
       alert("Sorry, that picture couldn't be used. Try a different one.");
+    }
+  }
+
+  async function handleResolveAllReports() {
+    if (!window.confirm("Resolve all unresolved reports submitted from this account? Reports will not be deleted.")) {
+      return;
+    }
+
+    setResolvingReports(true);
+    try {
+      const resolved = await resolveMyReports();
+      window.alert(resolved.length > 0 ? "All reports resolved" : "No active reports to resolve");
+    } catch (error) {
+      console.error("Could not resolve reports:", error);
+      window.alert(error instanceof Error ? error.message : "Could not resolve reports. Try again.");
+    } finally {
+      setResolvingReports(false);
     }
   }
 
@@ -237,6 +256,21 @@ export default function ProfilePage() {
             Reset demo on this device
           </button>
         </p>
+
+        <section className="rounded-3xl bg-mist p-5 shadow-sm">
+          <h2 className="font-display text-lg font-bold">Demo Tools</h2>
+          <p className="mt-1 text-sm text-ink/70">
+            Resolve unresolved reports submitted from this account. Reports are kept, not deleted.
+          </p>
+          <button
+            type="button"
+            onClick={() => void handleResolveAllReports()}
+            disabled={resolvingReports}
+            className="mt-3 rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+          >
+            {resolvingReports ? "Resolving reports..." : "Resolve All Reports"}
+          </button>
+        </section>
       </div>
     </>
   );
