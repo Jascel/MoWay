@@ -29,11 +29,18 @@ export default function LoginPage() {
   // Show the Google button only once Google sign-in really works.
   useEffect(() => {
     let alive = true;
-    void isGoogleEnabled().then((enabled) => {
-      if (alive) setGoogleOn(enabled);
-    });
+    const check = () => {
+      void isGoogleEnabled().then((enabled) => {
+        if (alive) setGoogleOn(enabled);
+      });
+    };
+    check();
+    // The network can still be settling right after the page loads (especially on
+    // phones), so a single failed check shouldn't permanently hide the button.
+    const retry = window.setTimeout(check, 3000);
     return () => {
       alive = false;
+      window.clearTimeout(retry);
     };
   }, []);
 
