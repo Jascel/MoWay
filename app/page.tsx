@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -14,35 +14,43 @@ import Timeline from "@/components/Timeline";
 import EventEditor from "@/components/EventEditor";
 import DayAlert from "@/components/DayAlert";
 import LiveDot from "@/components/LiveDot";
-import { pickAffectedLeg } from "@/lib/routeImpact";
 
 import {
   mockDay,
   mockProfile,
   type ClassEvent,
+  type Leg,
   type Profile,
-  type RouteAlert,
-  type SavedEvent,
 } from "@/data/mock";
 
-import { ALERT_KEY, alertFromReport } from "@/lib/alerts";
-import { buildDayLegs, minutesBackToGarage } from "@/lib/dayLegs";
-import { useLiveReport } from "@/lib/database/useLiveReport";
 import {
-  deleteScheduleEvent,
-  getScheduleForDate,
-  updateScheduleEvent,
-} from "@/lib/database/schedule";
+  ALERT_KEY,
+  reportForChoice,
+  reconcileAlert,
+  leaveByForFirstLeg,
+  type DerivedAlert,
+} from "@/lib/alerts";
+import { buildDayLegs, minutesBackToGarage } from "@/lib/dayLegs";
+import { rowToReport } from "@/lib/database/mapReport";
+import { useActiveReports } from "@/lib/database/useActiveReports";
 import { minusMinutes } from "@/lib/time";
 import { PROFILE_KEY } from "@/lib/options";
 import { ONBOARDED_KEY } from "@/lib/onboarding";
 import { useDriveEstimate } from "@/lib/driveTime";
 import { useStoredState } from "@/lib/useStoredState";
-import { findBuildingByLabel } from "@/lib/maps/campus-buildings";
+import { CAMPUS_BUILDINGS, findBuildingByLabel } from "@/lib/maps/campus-buildings";
 import { CAMPUS_GARAGES } from "@/lib/maps/campus-parking";
 import type { CampusBuilding } from "@/lib/maps/types";
 import { campusMode } from "@/lib/profileMode";
 import { planSmartPark, toParkingRecommendation } from "@/lib/smartPark";
+import { useWalkingRoute } from "@/components/maps/use-walking-route";
+import { chooseRoute } from "@/lib/maps/route-hazards";
+import { isNearCampus } from "@/lib/campus";
+import { useDaySchedule } from "@/lib/useDaySchedule";
+import type { CampusPlace } from "@/lib/maps/types";
+import { minutesFor } from "@/lib/maps/speeds";
+
+type TodayAlert = DerivedAlert;
 
 export default function TodayPage() {
   const day = mockDay;
@@ -67,123 +75,24 @@ export default function TodayPage() {
   // LIVE REPORT ALERTS
   // --------------------
 
-  const [alert, saveAlert] = useStoredState<RouteAlert | null>(
+  const [storedAlert, saveAlert] = useStoredState<TodayAlert | null>(
     ALERT_KEY,
-    day.alert
+    null
   );
+  const alert = storedAlert?.identity ? storedAlert : null;
 
-  const liveReport = useLiveReport();
-
-  const [seenReportId, saveSeenReportId] = useStoredState<string | null>(
+  const [seenReportIdentity, saveSeenReportIdentity] = useStoredState<string | null>(
     "moway.lastLiveReport",
     null
   );
-
-  useEffect(() => {
-    if (
-      liveReport &&
-      liveReport.id !== seenReportId
-    ) {
-      saveSeenReportId(liveReport.id);
-      saveAlert(alertFromReport(liveReport));
-    }
-  }, [
-    liveReport,
-    seenReportId,
-    saveSeenReportId,
-    saveAlert,
-  ]);
 
   // --------------------
   // SCHEDULE
   // --------------------
 
-  const [added, setAdded] = useState<SavedEvent[]>([]);
-
-  useEffect(() => {
-    async function loadSchedule() {
-      try {
-        const savedEvents = await getScheduleForDate(day.date);
-
-        const formattedEvents: SavedEvent[] = savedEvents.map(
-          (event) => ({
-            id: event.id,
-            category: event.category,
-            title: event.title,
-            building: event.building,
-            room: event.room ?? undefined,
-            date: event.event_date,
-            start: event.start_time,
-            end: event.end_time,
-          })
-        );
-
-        setAdded(formattedEvents);
-      } catch (error) {
-        console.error(
-          "Could not load schedule:",
-          error
-        );
-      }
-    }
-
-    void loadSchedule();
-  }, [day.date]);
-
-  // Demo classes can be deleted (hidden) or edited on this device. Events saved in Supabase
-  // are edited and deleted in Supabase.
-  const [hiddenIds, saveHidden] = useStoredState<string[]>("moway.hiddenEvents.v1", []);
-  const [edits, saveEdits] = useStoredState<Record<string, ClassEvent>>("moway.eventEdits.v1", {});
+  const schedule = useDaySchedule(day.date);
   const [editing, setEditing] = useState<ClassEvent | null>(null);
-
-  const baseEvents = day.events
-    .filter((e) => !hiddenIds.includes(e.id))
-    .map((e) => edits[e.id] ?? e);
-
-  const events = [...baseEvents, ...added].sort((a, b) =>
-    a.start.localeCompare(b.start)
-  );
-
-  const hiddenCount = day.events.filter((e) => hiddenIds.includes(e.id)).length;
-
-  async function deleteEvent(ev: ClassEvent) {
-    if (added.some((a) => a.id === ev.id)) {
-      try {
-        await deleteScheduleEvent(ev.id);
-        setAdded((prev) => prev.filter((a) => a.id !== ev.id));
-      } catch (error) {
-        console.error("Could not delete event:", error);
-        window.alert("Sorry, that event could not be deleted. Try again.");
-      }
-    } else {
-      saveHidden([...hiddenIds, ev.id]);
-    }
-  }
-
-  async function saveEdit(updated: ClassEvent) {
-    const saved = added.find((a) => a.id === updated.id);
-    if (saved) {
-      try {
-        await updateScheduleEvent(updated.id, {
-          title: updated.title,
-          category: updated.category,
-          building: updated.building,
-          room: updated.room,
-          date: saved.date,
-          start: updated.start,
-          end: updated.end,
-        });
-        setAdded((prev) => prev.map((a) => (a.id === updated.id ? { ...a, ...updated } : a)));
-        setEditing(null);
-      } catch (error) {
-        console.error("Could not update event:", error);
-        window.alert("Sorry, that change could not be saved. Try again.");
-      }
-    } else {
-      saveEdits({ ...edits, [updated.id]: updated });
-      setEditing(null);
-    }
-  }
+  const events = [...schedule.events];
 
   // --------------------
   // PROFILE
@@ -215,6 +124,138 @@ export default function TodayPage() {
   const legs = buildDayLegs(events, garage, mode);
   const walkToCarMinutes = minutesBackToGarage(events, garage, mode) ?? 2;
 
+  const first = events[0];
+  const firstBuilding = first ? findBuildingByLabel(first.building) : undefined;
+  const routeOrigin: CampusPlace = garage ?? CAMPUS_GARAGES[0] ?? {
+    id: "today-garage",
+    name: "Campus garage",
+    position: { lat: 0, lng: 0 },
+  };
+  const routeDestination: CampusPlace = firstBuilding ?? CAMPUS_BUILDINGS[0] ?? {
+    id: "today-destination",
+    code: "",
+    name: "First class",
+    position: { lat: 0, lng: 0 },
+  };
+  const googleMapsKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
+  const {
+    state: routeState,
+    requestRoute,
+    resetRoute,
+  } = useWalkingRoute(googleMapsKey, routeOrigin, routeDestination);
+
+  useEffect(() => {
+    if (
+      !schedule.loaded ||
+      googleMapsKey.length === 0 ||
+      garage === undefined ||
+      firstBuilding === undefined ||
+      routeOrigin.id === routeDestination.id
+    ) {
+      return;
+    }
+    resetRoute();
+    void requestRoute();
+  }, [
+    firstBuilding,
+    garage,
+    googleMapsKey,
+    requestRoute,
+    resetRoute,
+    routeDestination.id,
+    routeOrigin.id,
+    schedule.loaded,
+  ]);
+
+  const { reports: reportRows, loading: reportsLoading, error: reportsError } = useActiveReports();
+  const reports = useMemo(
+    () => reportRows
+      .filter((row) => isNearCampus(row.latitude, row.longitude))
+      .map(rowToReport),
+    [reportRows],
+  );
+  const routeMatchesCurrentPlaces = schedule.loaded
+    && garage !== undefined
+    && firstBuilding !== undefined
+    && routeState.kind === "success"
+    && routeState.candidates.every(
+      (candidate) => candidate.originId === routeOrigin.id && candidate.destinationId === routeDestination.id,
+    );
+  const choice = routeMatchesCurrentPlaces && routeState.kind === "success"
+    ? chooseRoute(routeState.candidates, reports, mode)
+    : null;
+
+  const baselineFirstLeg = legs.find(
+    (leg) => leg.fromEventId === "parking" && leg.toEventId === first?.id,
+  );
+  const selectedFirstLeg = choice?.chosen && baselineFirstLeg
+    ? {
+        ...baselineFirstLeg,
+        minutes: minutesFor(choice.chosen.distanceMeters, mode),
+        distanceMeters: choice.chosen.distanceMeters,
+        tags: [...new Set([...choice.chips, `From ${routeOrigin.name}`, "Google route"])],
+      }
+    : baselineFirstLeg;
+  const displayLegs: Leg[] = selectedFirstLeg
+    ? legs.map((leg) => leg === baselineFirstLeg ? selectedFirstLeg : leg)
+    : legs;
+  const selectedFirstLegMinutes = selectedFirstLeg?.minutes ?? 0;
+  const baselineFirstLegMinutes = choice?.chosen
+    ? Math.max(0, selectedFirstLegMinutes - choice.extraMinutes)
+    : (baselineFirstLeg?.minutes ?? selectedFirstLegMinutes);
+
+  const routeReport = choice === null ? null : reportForChoice(choice, mode);
+  const reportsReady = !reportsLoading && reportsError === null;
+
+  useEffect(() => {
+    const transition = reconcileAlert({
+      storedAlert: alert,
+      seenIdentity: seenReportIdentity,
+      reports,
+      routeReport,
+      choice,
+      mode,
+      originId: routeOrigin.id,
+      destinationId: routeDestination.id,
+      refresh: reportsReady ? "success" : reportsError === null ? "pending" : "error",
+    });
+    if (transition === null) return;
+    saveSeenReportIdentity(transition.identity);
+    saveAlert({ ...transition.alert, identity: transition.identity });
+  }, [
+    alert,
+    choice,
+    reports,
+    reportsError,
+    reportsReady,
+    routeDestination.id,
+    routeOrigin.id,
+    routeReport,
+    mode,
+    saveAlert,
+    saveSeenReportIdentity,
+    seenReportIdentity,
+  ]);
+
+  async function deleteEvent(event: ClassEvent): Promise<void> {
+    try {
+      await schedule.deleteEvent(event);
+    } catch (error) {
+      console.error("Could not delete event:", error);
+      window.alert("Sorry, that event could not be deleted. Try again.");
+    }
+  }
+
+  async function saveEdit(event: ClassEvent): Promise<void> {
+    try {
+      await schedule.saveEdit(event);
+      setEditing(null);
+    } catch (error) {
+      console.error("Could not update event:", error);
+      window.alert("Sorry, that change could not be saved. Try again.");
+    }
+  }
+
   // --------------------
   // COMMUTE
   // --------------------
@@ -226,31 +267,27 @@ export default function TodayPage() {
   const driveMinutes =
     drive.minutes ?? day.driveMinutes;
 
-  const first = events[0];
-  const affectedId = pickAffectedLeg(events, legs);
-
   const arriveBy = first
     ? minusMinutes(first.start, profile.parkingBufferMinutes)
     : null;
 
   const baseLeaveBy = arriveBy
-    ? minusMinutes(arriveBy, driveMinutes)
+    ? leaveByForFirstLeg(arriveBy, driveMinutes, baselineFirstLegMinutes)
     : null;
 
-  if (!loaded || !onboarded) {
+  if (!loaded || !onboarded || !schedule.loaded) {
     return null;
   }
 
   const greeting = greetingFor(new Date().getHours());
 
-  const leaveBy =
-    baseLeaveBy && alert
-      ? minusMinutes(baseLeaveBy, alert.extraMinutes)
-      : baseLeaveBy;
+  const leaveBy = arriveBy
+    ? leaveByForFirstLeg(arriveBy, driveMinutes, selectedFirstLegMinutes)
+    : null;
 
-  const reason = alert
+  const reason = (choice?.extraMinutes ?? 0) > 0
     ? "Leaving earlier because of a new report on your route"
-    : day.leaveByReason;
+    : `Arrive by ${arriveBy ?? "your first class"} to allow for parking and your first ${mode} leg.`;
 
   return (
     <>
@@ -277,7 +314,6 @@ export default function TodayPage() {
         <DayAlert
           alert={alert}
           onDismiss={() => saveAlert(null)}
-          onReset={() => saveAlert(day.alert)}
         />
 
         {leaveBy && arriveBy ? (
@@ -288,7 +324,7 @@ export default function TodayPage() {
               arriveBy={arriveBy}
               reason={reason}
               hasHome={Boolean(profile.homeAddress?.trim())}
-              changedFrom={alert && baseLeaveBy ? baseLeaveBy : undefined}
+              changedFrom={(choice?.extraMinutes ?? 0) > 0 && baseLeaveBy ? baseLeaveBy : undefined}
             />
 
             <ParkingCard parking={parking} campusMode={mode} />
@@ -310,14 +346,14 @@ export default function TodayPage() {
 
         <Timeline
           events={events}
-          legs={legs}
+          legs={displayLegs}
           homeTrip={{ walkMinutes: walkToCarMinutes, driveMinutes }}
           campusMode={mode}
           onEdit={setEditing}
           onDelete={deleteEvent}
-          hiddenCount={hiddenCount}
-          onRestore={() => saveHidden([])}
-          affected={affectedId && alert ? { toEventId: affectedId, extraMinutes: alert.extraMinutes } : null}
+          hiddenCount={schedule.hiddenCount}
+          onRestore={() => schedule.saveHidden([])}
+          affected={null}
         />
       </div>
 

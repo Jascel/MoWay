@@ -1,9 +1,10 @@
 "use client";
 
-import type { CampusBuilding } from "@/lib/maps/types";
+import type { CampusBuilding, CampusGarage } from "@/lib/maps/types";
 
 type RouteControlsProps = {
   readonly buildings: readonly CampusBuilding[];
+  readonly garages?: readonly CampusGarage[];
   readonly originId: string;
   readonly destinationId: string;
   readonly isLoading: boolean;
@@ -18,6 +19,7 @@ const SELECT_CLASSES =
 
 export function RouteControls({
   buildings,
+  garages = [],
   originId,
   destinationId,
   isLoading,
@@ -44,11 +46,22 @@ export function RouteControls({
             value={originId}
             onChange={(event) => onOriginChange(event.target.value)}
           >
-            {buildings.map((building) => (
-              <option key={building.id} value={building.id}>
-                {building.name}
-              </option>
-            ))}
+            {garages.length > 0 ? (
+              <optgroup label="Parking garages">
+                {garages.map((garage) => (
+                  <option key={garage.id} value={garage.id}>
+                    {garage.name}
+                  </option>
+                ))}
+              </optgroup>
+            ) : null}
+            <optgroup label="Campus buildings">
+              {buildings.map((building) => (
+                <option key={building.id} value={building.id}>
+                  {building.name}
+                </option>
+              ))}
+            </optgroup>
           </select>
         </label>
 
@@ -59,11 +72,22 @@ export function RouteControls({
             value={destinationId}
             onChange={(event) => onDestinationChange(event.target.value)}
           >
-            {buildings.map((building) => (
-              <option key={building.id} value={building.id}>
-                {building.name}
-              </option>
-            ))}
+            {garages.length > 0 ? (
+              <optgroup label="Parking garages">
+                {garages.map((garage) => (
+                  <option key={garage.id} value={garage.id}>
+                    {garage.name}
+                  </option>
+                ))}
+              </optgroup>
+            ) : null}
+            <optgroup label="Campus buildings">
+              {buildings.map((building) => (
+                <option key={building.id} value={building.id}>
+                  {building.name}
+                </option>
+              ))}
+            </optgroup>
           </select>
         </label>
       </div>
