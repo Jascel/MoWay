@@ -99,7 +99,7 @@ export default function ProfilePage() {
           </div>
         </section>
 
-        <section className="rounded-3xl bg-petal p-5 shadow-sm">
+        <section className="rounded-3xl bg-steel p-5 shadow-sm">
           <h2 className="font-display text-lg font-bold">Account</h2>
           {accountEmail ? (
             <>
@@ -127,7 +127,7 @@ export default function ProfilePage() {
           )}
         </section>
 
-        <section className="rounded-3xl bg-petal p-5 shadow-sm">
+        <section className="rounded-3xl bg-steel p-5 shadow-sm">
           <label className="mb-2 block font-display text-lg font-bold" htmlFor="name">
             Your name
           </label>
@@ -139,7 +139,7 @@ export default function ProfilePage() {
           />
         </section>
 
-        <section className="rounded-3xl bg-petal p-5 shadow-sm">
+        <section className="rounded-3xl bg-steel p-5 shadow-sm">
           <label className="mb-1 block font-display text-lg font-bold" htmlFor="home">
             Where do you live?
           </label>
