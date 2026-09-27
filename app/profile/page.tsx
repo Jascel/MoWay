@@ -107,7 +107,7 @@ export default function ProfilePage() {
               <button
                 type="button"
                 onClick={() => void logOut()}
-                className="mt-3 rounded-full border border-ink/20 px-4 py-2 text-sm font-semibold"
+                className="mt-3 rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white active:bg-ink/80"
               >
                 Log out
               </button>
