@@ -68,10 +68,7 @@ export async function isGoogleEnabled(): Promise<boolean> {
   }
 }
 
-// Continues with a Google account. The browser leaves for Google and comes back to the app signed in.
-// If this browser is using the anonymous guest account, Google is linked to that SAME account (same
-// user id), so the person's profile, schedule and reports stay with them. That needs
-// "Manual linking" turned on in Supabase. Google itself must be enabled as a provider there too.
+// Signs in to MoWay with a Google account. Any existing anonymous guest remains a separate account.
 export async function signInWithGoogle(): Promise<void> {
   const supabase = getSupabaseClient();
 
@@ -81,16 +78,6 @@ export async function signInWithGoogle(): Promise<void> {
   }).then((response) => response.json() as Promise<{ external?: { google?: boolean } }>);
   if (!settings.external?.google) throw new Error("Unsupported provider: provider is not enabled");
   const redirectTo = `${window.location.origin}/`;
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  if (session?.user.is_anonymous) {
-    const { error } = await supabase.auth.linkIdentity({ provider: "google", options: { redirectTo } });
-    if (error) throw error;
-    return;
-  }
-
   const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo } });
   if (error) throw error;
 }
