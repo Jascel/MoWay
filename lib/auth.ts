@@ -58,8 +58,12 @@ export async function isGoogleEnabled(): Promise<boolean> {
       `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(window.location.origin)}`,
       { redirect: "manual", mode: "no-cors" }
     );
+    if (probe.type !== "opaqueredirect") {
+      console.warn("Google sign-in probe did not redirect (type:", probe.type, ")");
+    }
     return probe.type === "opaqueredirect";
-  } catch {
+  } catch (error) {
+    console.warn("Google sign-in probe failed:", error);
     return false;
   }
 }
