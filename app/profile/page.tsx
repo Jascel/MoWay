@@ -64,7 +64,7 @@ export default function ProfilePage() {
         right={<Avatar name={profile.name} photo={profile.photo} size="lg" />}
       />
       <div className="-mt-6 space-y-6 px-4">
-        <section className="flex items-center gap-4 rounded-3xl bg-sand p-5 shadow-sm">
+        <section className="flex items-center gap-4 rounded-3xl bg-white p-5 shadow-sm">
           <Avatar name={profile.name} photo={profile.photo} size="lg" />
           <div>
             <p className="font-display text-lg font-bold">Profile photo</p>
